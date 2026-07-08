@@ -1,9 +1,16 @@
 .ns-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 5px;
   padding: 1.5rem;
   align-content: start;
+  /* Tile-packed look — gap between tiles is the background colour */
+  background: var(--cds-border-subtle-01);
+}
+
+/* Each card sits on the layer-01 surface, seams show the background */
+.ns-grid > * {
+  background: var(--cds-layer-01);
 }
 
 .ns-grid-empty {
@@ -11,6 +18,6 @@
   align-items: center;
   justify-content: center;
   height: 50%;
-  color: var(--cds-text-secondary);
+  color: var(--cds-text-helper);
   font-size: var(--cds-body-short-01-font-size, 0.875rem);
 }

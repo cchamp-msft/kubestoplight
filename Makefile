@@ -3,6 +3,10 @@
 BINARY := kubestoplight
 WEB_DIR := web
 
+# On Windows, GNU make may not inherit the full system PATH.
+# Prepend the Go bin directory so `go` is always found.
+export PATH := C:/Program Files/Go/bin;$(PATH)
+
 ## web-build: build the React SPA into web/dist (required before go build)
 web-build:
 	cd $(WEB_DIR) && npm install && npm run build

@@ -1,24 +1,29 @@
 .ns-card {
   background: var(--cds-layer-01);
-  border: 1px solid var(--cds-border-subtle);
-  border-left: 4px solid var(--cds-border-subtle);
-  border-radius: 2px;
+  border: 1px solid var(--cds-border-subtle-01);
+  border-top: 3px solid var(--cds-border-subtle-01);
+  border-radius: 0;                 /* Carbon tiles are square-cornered */
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  transition: border-color 0.15s;
+  gap: 0.75rem;
+  cursor: default;
+  transition: background 0.1s, border-top-color 0.15s;
+  position: relative;
 }
 
 .ns-card:hover {
   background: var(--cds-layer-hover-01);
 }
 
-.ns-card--idle     { border-left-color: var(--cds-support-success); }
-.ns-card--busy     { border-left-color: var(--cds-support-info); }
-.ns-card--changing { border-left-color: var(--cds-support-warning); }
-.ns-card--failed   { border-left-color: var(--cds-support-error); }
+/* Status accent — top border stripe in Carbon semantic colours */
+.ns-card--idle     { border-top-color: var(--cds-support-success); }
+.ns-card--busy     { border-top-color: var(--cds-support-info); }
+.ns-card--changing { border-top-color: var(--cds-support-warning); }
+.ns-card--failed   { border-top-color: var(--cds-support-error); }
+.ns-card--unknown  { border-top-color: var(--cds-border-subtle-01); }
 
+/* ---- Header row ---- */
 .ns-card__header {
   display: flex;
   align-items: flex-start;
@@ -27,8 +32,10 @@
 }
 
 .ns-card__namespace {
-  font-size: var(--cds-body-short-01-font-size, 0.875rem);
-  font-weight: 600;
+  font-size: var(--cds-productive-heading-01-font-size, 0.875rem);
+  font-weight: var(--cds-productive-heading-01-font-weight, 600);
+  line-height: var(--cds-productive-heading-01-line-height, 1.28572);
+  letter-spacing: var(--cds-productive-heading-01-letter-spacing, 0.16px);
   color: var(--cds-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -40,6 +47,7 @@
   flex-shrink: 0;
 }
 
+/* ---- Progress bar (Carbon inline-loading style) ---- */
 .ns-card__progress-row {
   display: flex;
   align-items: center;
@@ -50,14 +58,13 @@
   flex: 1;
   height: 4px;
   background: var(--cds-layer-02);
-  border-radius: 2px;
   overflow: hidden;
+  /* No border-radius — flat Carbon aesthetic */
 }
 
 .ns-card__progress-fill {
   height: 100%;
   background: var(--cds-support-success);
-  border-radius: 2px;
   transition: width 0.4s ease;
 }
 
@@ -67,10 +74,16 @@
 
 .ns-card__progress-label {
   font-size: var(--cds-label-01-font-size, 0.75rem);
-  color: var(--cds-text-secondary);
+  line-height: var(--cds-label-01-line-height, 1.33333);
+  font-weight: var(--cds-label-01-font-weight, 400);
+  color: var(--cds-text-helper);
   white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 4.5rem;
+  text-align: right;
 }
 
+/* ---- Status / counts row ---- */
 .ns-card__status-row {
   display: flex;
   align-items: center;
@@ -80,11 +93,13 @@
 
 .ns-card__total {
   font-size: var(--cds-label-01-font-size, 0.75rem);
-  color: var(--cds-text-secondary);
+  font-weight: var(--cds-label-01-font-weight, 400);
+  color: var(--cds-text-helper);
 }
 
 .ns-card__counts {
   display: flex;
-  gap: 0.2rem;
+  gap: 0.25rem;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
