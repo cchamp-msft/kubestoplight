@@ -1,0 +1,16 @@
+.ns-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  align-content: start;
+}
+
+.ns-grid-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50%;
+  color: var(--cds-text-secondary);
+  font-size: var(--cds-body-short-01-font-size, 0.875rem);
+}

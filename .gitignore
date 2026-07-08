@@ -1,2 +1,9 @@
 *.yaml
 *kubestoplight
+
+# Node
+web/node_modules/
+web/dist/
+
+# Carbon source (local copy — only needed during initial dependency selection)
+carbon/

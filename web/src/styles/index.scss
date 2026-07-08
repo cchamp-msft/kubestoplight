@@ -1,0 +1,17 @@
+@use '@carbon/styles/scss/reset';
+@use '@carbon/styles/scss/type';
+@use '@carbon/styles/scss/themes' as themes;
+@use '@carbon/styles/scss/theme' with (
+  $theme: themes.$g100
+);
+@use '@carbon/styles/scss/components';
+@use '@carbon/styles/scss/utilities';
+
+// Full-height layout
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}

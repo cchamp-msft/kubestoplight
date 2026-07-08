@@ -1,0 +1,90 @@
+.ns-card {
+  background: var(--cds-layer-01);
+  border: 1px solid var(--cds-border-subtle);
+  border-left: 4px solid var(--cds-border-subtle);
+  border-radius: 2px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  transition: border-color 0.15s;
+}
+
+.ns-card:hover {
+  background: var(--cds-layer-hover-01);
+}
+
+.ns-card--idle     { border-left-color: var(--cds-support-success); }
+.ns-card--busy     { border-left-color: var(--cds-support-info); }
+.ns-card--changing { border-left-color: var(--cds-support-warning); }
+.ns-card--failed   { border-left-color: var(--cds-support-error); }
+
+.ns-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ns-card__namespace {
+  font-size: var(--cds-body-short-01-font-size, 0.875rem);
+  font-weight: 600;
+  color: var(--cds-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.ns-card__cluster-tag {
+  flex-shrink: 0;
+}
+
+.ns-card__progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ns-card__progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--cds-layer-02);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ns-card__progress-fill {
+  height: 100%;
+  background: var(--cds-support-success);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.ns-card--failed .ns-card__progress-fill   { background: var(--cds-support-error); }
+.ns-card--busy .ns-card__progress-fill     { background: var(--cds-support-info); }
+.ns-card--changing .ns-card__progress-fill { background: var(--cds-support-warning); }
+
+.ns-card__progress-label {
+  font-size: var(--cds-label-01-font-size, 0.75rem);
+  color: var(--cds-text-secondary);
+  white-space: nowrap;
+}
+
+.ns-card__status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.ns-card__total {
+  font-size: var(--cds-label-01-font-size, 0.75rem);
+  color: var(--cds-text-secondary);
+}
+
+.ns-card__counts {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+}

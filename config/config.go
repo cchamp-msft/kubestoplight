@@ -10,6 +10,37 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Save marshals cfg to YAML and writes it atomically to path.
+// It writes to a temp file in the same directory, then renames it over path.
+func Save(path string, cfg *Config) error {
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("marshal config: %w", err)
+	}
+
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".kubestoplight-cfg-*.yaml")
+	if err != nil {
+		return fmt.Errorf("create temp config: %w", err)
+	}
+	tmpName := tmp.Name()
+
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		os.Remove(tmpName)
+		return fmt.Errorf("write temp config: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpName)
+		return fmt.Errorf("close temp config: %w", err)
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		os.Remove(tmpName)
+		return fmt.Errorf("rename temp config: %w", err)
+	}
+	return nil
+}
+
 var envVarRe = regexp.MustCompile(`\{\{\s*env:([A-Za-z_][A-Za-z0-9_]*)\s*\}\}`)
 
 // Config is the top-level application configuration.
@@ -21,16 +52,16 @@ type Config struct {
 
 // Cluster defines a single Kubernetes cluster connection.
 type Cluster struct {
-	Name      string      `yaml:"name"`
-	Server    string      `yaml:"server"`
-	AuthType  AuthType    `yaml:"auth"`
-	KubeCfg   *KubeCfg    `yaml:"kubeconfig,omitempty"`
-	Bearer    string      `yaml:"bearer_token,omitempty"`
-	TLS       *TLSAuth    `yaml:"tls,omitempty"`
-	OIDC      *OIDCAuth   `yaml:"oidc,omitempty"`
-	Namespace string      `yaml:"namespace"`
-	Enabled   bool        `yaml:"enabled"`
-	Color     string      `yaml:"color,omitempty"`
+	Name      string    `yaml:"name"           json:"name"`
+	Server    string    `yaml:"server"          json:"server,omitempty"`
+	AuthType  AuthType  `yaml:"auth"            json:"auth"`
+	KubeCfg   *KubeCfg  `yaml:"kubeconfig,omitempty" json:"kubeconfig,omitempty"`
+	Bearer    string    `yaml:"bearer_token,omitempty" json:"bearer_token,omitempty"`
+	TLS       *TLSAuth  `yaml:"tls,omitempty"   json:"tls,omitempty"`
+	OIDC      *OIDCAuth `yaml:"oidc,omitempty"  json:"oidc,omitempty"`
+	Namespace string    `yaml:"namespace"       json:"namespace,omitempty"`
+	Enabled   bool      `yaml:"enabled"         json:"enabled"`
+	Color     string    `yaml:"color,omitempty" json:"color,omitempty"`
 }
 
 // AuthType identifies the authentication method.
@@ -46,25 +77,25 @@ const (
 
 // KubeCfg holds kubeconfig-specific options.
 type KubeCfg struct {
-	Path     string `yaml:"path"`
-	Context  string `yaml:"context"`
+	Path    string `yaml:"path"    json:"path"`
+	Context string `yaml:"context" json:"context,omitempty"`
 }
 
 // TLSAuth holds TLS certificate options.
 type TLSAuth struct {
-	CertFile string `yaml:"cert_file"`
-	KeyFile  string `yaml:"key_file"`
-	CAFile   string `yaml:"ca_file"`
-	Skip     bool   `yaml:"insecure_skip_verify"`
+	CertFile string `yaml:"cert_file"           json:"cert_file,omitempty"`
+	KeyFile  string `yaml:"key_file"            json:"key_file,omitempty"`
+	CAFile   string `yaml:"ca_file"             json:"ca_file,omitempty"`
+	Skip     bool   `yaml:"insecure_skip_verify" json:"insecure_skip_verify,omitempty"`
 }
 
 // OIDCAuth holds OpenID Connect options.
 type OIDCAuth struct {
-	ClientID     string `yaml:"client_id"`
-	ClientSecret string `yaml:"client_secret"`
-	AccessToken  string `yaml:"access_token"`
-	IDToken      string `yaml:"id_token"`
-	IssuerURL    string `yaml:"issuer_url"`
+	ClientID     string `yaml:"client_id"     json:"client_id,omitempty"`
+	ClientSecret string `yaml:"client_secret" json:"client_secret,omitempty"`
+	AccessToken  string `yaml:"access_token"  json:"access_token,omitempty"`
+	IDToken      string `yaml:"id_token"      json:"id_token,omitempty"`
+	IssuerURL    string `yaml:"issuer_url"    json:"issuer_url,omitempty"`
 }
 
 // ResolveEnabled returns only clusters with Enabled set to true (or unset, defaulting to true).
