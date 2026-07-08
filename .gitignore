@@ -1,9 +1,14 @@
+# Config files (contain secrets)
 *.yaml
-*kubestoplight
+
+# Compiled binaries
+kubestoplight
+kubestoplight.exe
+kubestoplight.exe~
 
 # Node
 web/node_modules/
 web/dist/
 
-# Carbon source (local copy — only needed during initial dependency selection)
+# Carbon source (local copy)
 carbon/
