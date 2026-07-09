@@ -47,7 +47,14 @@ go build -o kubestoplight .
 ./kubestoplight --web --config /path/to/cfg.yaml
 ```
 
-Open `http://127.0.0.1:8080` in your browser. Clusters are listed in the left sidebar.
+Open `http://127.0.0.1:8080` in your browser. The dashboard features:
+
+- **Summary strip** — four stat tiles (total pods, healthy %, failed count, in-progress) with color-coded accent borders
+- **Sidebar** — cluster list with per-cluster status dots; click to filter the main view
+- **Filter bar** — live search (`/` to focus), status checkboxes with counts, hide-idle and hide-empty toggles
+- **Namespace cards** — pod grid (8×8 colored squares), stacked status bar, expand/collapse with pod detail rows
+- **Auto-expand** — namespaces with failed pods expand automatically on first load
+
 Pod status cards update live every polling interval (default 3 s).
 
 ### First-time setup (no config file)
@@ -122,6 +129,12 @@ direct config file editing.
 | Failed   | Red    | CrashLoopBackOff, image errors, or terminated with error |
 | Empty    | Gray   | No container status data |
 
+## Web UI key bindings
+
+| Key | Action |
+|-----|--------|
+| `/` | Focus the namespace search filter |
+
 ## TUI key bindings
 
 | Key | Action |
@@ -132,10 +145,24 @@ direct config file editing.
 | `pgup` / `pgdn` | Page up/down |
 | `home` / `end` | Jump to top/bottom |
 
+## Development — web UI
+
+```bash
+cd web && npm install && npm run dev
+```
+
+Vite runs on `:5173` with proxy rules that forward `/ws` and `/api` to the Go
+backend on `:8080`. Start the backend separately:
+
+```bash
+go run . --web
+```
+
 ## Design
 
 - **Backend:** Go stdlib `net/http` + `nhooyr.io/websocket`; no framework
-- **Frontend:** React 19 + TypeScript, built with Vite, embedded via `go:embed`
-- **UI kit:** [IBM Carbon Design System](https://carbondesignsystem.com/) v11 (Gray 100 theme)
-- **Live updates:** WebSocket pushes `NamespaceGroup` snapshots every polling interval
+- **Frontend:** React 19 + TypeScript 6, built with Vite, embedded via `go:embed`
+- **UI kit:** [IBM Carbon Design System](https://carbondesignsystem.com/) v11 — `@carbon/react` with Gray 100 (G100) dark theme
+- **Live updates:** WebSocket at `/ws/pods` pushes `NamespaceGroup` snapshots every polling interval
 - **Single binary:** `go build` produces one self-contained executable
+- **Dual mode:** Same binary, same config file — TUI for terminals, web for browsers
