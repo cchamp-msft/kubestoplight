@@ -1,94 +1,102 @@
-.cluster-sidebar {
+/* ClusterSidebar — Carbon G100 redesign */
+
+.ksl-sidebar {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--cds-layer);
+  background-color: var(--cds-layer-01);
 }
 
-/* ---- Section heading ---- */
-.sidebar-header {
+/* ── Header ── */
+.ksl-sidebar__header {
+  padding: 12px 16px 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.875rem 1rem 0.75rem;
-  border-bottom: 1px solid var(--cds-border-subtle);
+  border-bottom: 1px solid var(--cds-border-subtle-01);
 }
 
-.sidebar-title {
-  font-size: var(--cds-label-01-font-size, 0.75rem);
+.ksl-sidebar__title {
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--cds-text-helper);
 }
 
-.sidebar-header-actions {
+.ksl-sidebar__status {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 6px;
 }
 
-.add-cluster-btn {
-  min-height: unset !important;
-  padding: 0.25rem !important;
+.ksl-sidebar__dot {
+  width: 8px;
+  height: 8px;
 }
 
-/* ---- Per-cluster list item ---- */
-.cluster-nav-item {
-  position: relative;
+.ksl-sidebar__status-label {
+  font-size: 0.75rem;
+  color: var(--cds-text-helper);
 }
 
-.cluster-nav-item.active > .bx--side-nav__link,
-.cluster-nav-item.active > a {
-  background: var(--cds-layer-selected);
-}
-
-.cluster-nav-label {
+/* ── Nav items ── */
+.ksl-sidebar__item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  width: 100%;
+  gap: 8px;
+  padding: 0 16px;
+  height: 32px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  font-size: 0.875rem;
+  color: var(--cds-text-primary);
+  letter-spacing: 0.16px;
+  line-height: 1.29;
+  transition: background-color 110ms;
 }
 
-.cluster-name {
+.ksl-sidebar__item:hover {
+  background-color: var(--cds-layer-hover-01);
+}
+
+.ksl-sidebar__item--active {
+  background-color: var(--cds-layer-selected-01);
+  border-left-color: var(--cds-interactive);
+}
+
+.ksl-sidebar__item--active:hover {
+  background-color: var(--cds-layer-selected-01);
+}
+
+.ksl-sidebar__count {
+  font-size: 0.75rem;
+  color: var(--cds-text-helper);
+  font-variant-numeric: tabular-nums;
+}
+
+.ksl-sidebar__cluster-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+.ksl-sidebar__cluster-name {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.disabled-badge {
-  font-size: var(--cds-label-01-font-size, 0.75rem);
-  padding: 0.1rem 0.35rem;
-  border-radius: 0;              /* Carbon is sharp-cornered */
-  background: var(--cds-tag-background-gray);
-  color: var(--cds-tag-color-gray);
-  flex-shrink: 0;
+/* ── Footer ── */
+.ksl-sidebar__spacer {
+  flex: 1;
 }
 
-/* ---- Hover actions ---- */
-.cluster-actions {
-  display: flex;
-  gap: 0.1rem;
-  padding: 0 0.5rem 0.25rem;
-  opacity: 0;
-  transition: opacity 0.15s;
+.ksl-sidebar__footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--cds-border-subtle-01);
+  font-size: 0.75rem;
+  color: var(--cds-text-helper);
+  letter-spacing: 0.32px;
 }
-
-.cluster-nav-item:hover .cluster-actions {
-  opacity: 1;
-}
-
-.cluster-action-btn {
-  min-height: unset !important;
-  padding: 0.2rem 0.5rem !important;
-  font-size: var(--cds-label-01-font-size, 0.75rem) !important;
-}
-
-/* ---- Status icon colours (Carbon semantic palette) ---- */
-.status-icon    { flex-shrink: 0; }
-.status-idle    { color: var(--cds-support-success); }
-.status-busy    { color: var(--cds-support-info); }
-.status-changing{ color: var(--cds-support-warning); }
-.status-failed  { color: var(--cds-support-error); }
-.status-unknown { color: var(--cds-text-helper); }

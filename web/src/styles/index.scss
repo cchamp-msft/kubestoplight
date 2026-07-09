@@ -5,8 +5,6 @@
 @use '@carbon/styles/scss/components';
 @use '@carbon/styles/scss/utilities';
 
-// Emit the g100 dark token values at :root so all CDS custom properties
-// resolve to dark-theme colours across the entire document.
 :root {
   @include theme.theme(themes.$g100);
 }
@@ -18,6 +16,7 @@ body {
   padding: 0;
   background-color: var(--cds-background);
   color: var(--cds-text-primary);
+  font-family: var(--cds-font-sans, 'IBM Plex Sans', sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -27,4 +26,34 @@ body {
   margin: 0;
   padding: 0;
   background-color: var(--cds-background);
+}
+
+/* Dark scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cds-border-subtle-01);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cds-border-strong-01);
+}
+
+/* Card expand animation */
+@keyframes kslFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

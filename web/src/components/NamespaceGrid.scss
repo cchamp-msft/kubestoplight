@@ -1,23 +1,37 @@
-.ns-grid {
+/* Namespace card grid — Carbon G100 redesign */
+
+.ksl-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 5px;
-  padding: 1.5rem;
-  align-content: start;
-  /* Tile-packed look — gap between tiles is the background colour */
-  background: var(--cds-border-subtle-01);
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+  background-color: var(--cds-background);
 }
 
-/* Each card sits on the layer-01 surface, seams show the background */
-.ns-grid > * {
-  background: var(--cds-layer-01);
-}
-
-.ns-grid-empty {
+/* Empty state */
+.ksl-empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 50%;
+  padding: 64px 24px;
   color: var(--cds-text-helper);
-  font-size: var(--cds-body-short-01-font-size, 0.875rem);
+}
+
+.ksl-empty__icon {
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.ksl-empty__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--cds-text-primary);
+}
+
+.ksl-empty__message {
+  font-size: 0.875rem;
+  text-align: center;
+  max-width: 320px;
 }

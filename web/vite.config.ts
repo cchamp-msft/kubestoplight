@@ -8,4 +8,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
   },
+  server: {
+    proxy: {
+      '/ws': {
+        target: 'http://localhost:8080',
+        ws: true,
+      },
+      '/api': {
+        target: 'http://localhost:8080',
+      },
+    },
+  },
 })

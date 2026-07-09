@@ -1,123 +1,76 @@
-import {
-  SideNavItems,
-  SideNavLink,
-  Button,
-} from '@carbon/react';
-import {
-  CheckmarkFilled,
-  ErrorFilled,
-  Add,
-} from '@carbon/icons-react';
-import type { Cluster, NamespaceGroup, NamespaceStatusKind } from '../types/api';
+import { useMemo } from 'react';
+import type { NamespaceGroup } from '../types/api';
+import { STATUS_COLORS } from '../constants/status';
 import './ClusterSidebar.scss';
 
 interface Props {
-  clusters: Cluster[];
   groups: NamespaceGroup[];
-  selected: string | null;
-  connected: boolean;
+  selectedCluster: string | null;
   onSelect: (name: string | null) => void;
-  onAddCluster: () => void;
-  onEditCluster: (cluster: Cluster) => void;
-  onRemoveCluster: (name: string) => void;
+  connected: boolean;
 }
 
-/** Derives the worst status across all groups for a given cluster. */
-function clusterStatus(
-  clusterName: string,
-  groups: NamespaceGroup[]
-): NamespaceStatusKind {
-  const clusterGroups = groups.filter((g) => g.cluster === clusterName);
-  if (clusterGroups.length === 0) return 'Idle';
-  const order: NamespaceStatusKind[] = ['Failed', 'Busy', 'Changing', 'Idle'];
-  for (const s of order) {
-    if (clusterGroups.some((g) => g.status === s)) return s;
-  }
-  return 'Idle';
-}
+export default function ClusterSidebar({ groups, selectedCluster, onSelect, connected }: Props) {
+  const clusters = useMemo(() => {
+    const map = new Map<string, { pods: number; worst: string }>();
+    for (const g of groups) {
+      if (!map.has(g.cluster)) map.set(g.cluster, { pods: 0, worst: 'Idle' });
+      const c = map.get(g.cluster)!;
+      c.pods += g.totalPods;
+      const sev = ['Failed', 'Changing', 'Busy', 'Idle'];
+      if (sev.indexOf(g.status) < sev.indexOf(c.worst)) c.worst = g.status;
+    }
+    return map;
+  }, [groups]);
 
-const STATUS_ICONS: Record<NamespaceStatusKind, React.ReactNode> = {
-  Idle:     <CheckmarkFilled size={16} className="status-icon status-idle" />,
-  Busy:     <CheckmarkFilled size={16} className="status-icon status-busy" />,
-  Changing: <CheckmarkFilled size={16} className="status-icon status-changing" />,
-  Failed:   <ErrorFilled     size={16} className="status-icon status-failed" />,
-  Unknown:  <ErrorFilled     size={16} className="status-icon status-unknown" />,
-};
+  const totalPods = groups.reduce((n, g) => n + g.totalPods, 0);
 
-export default function ClusterSidebar({
-  clusters,
-  groups,
-  selected,
-  connected,
-  onSelect,
-  onAddCluster,
-  onEditCluster,
-  onRemoveCluster,
-}: Props) {
   return (
-    <div className="cluster-sidebar">
-      <div className="sidebar-header">
-        <span className="sidebar-title">Clusters</span>
-        <div className="sidebar-header-actions">
-          {connected
-            ? <CheckmarkFilled size={16} className="status-icon status-idle" title="Connected" />
-            : <ErrorFilled     size={16} className="status-icon status-failed" title="Disconnected" />
-          }
-          <Button
-            kind="ghost"
-            size="sm"
-            renderIcon={Add}
-            iconDescription="Add cluster"
-            hasIconOnly
-            onClick={onAddCluster}
-            className="add-cluster-btn"
+    <nav className="ksl-sidebar">
+      {/* Section label */}
+      <div className="ksl-sidebar__header">
+        <span className="ksl-sidebar__title">Clusters</span>
+        <div className="ksl-sidebar__status">
+          <span
+            className="ksl-sidebar__dot"
+            style={{
+              backgroundColor: connected ? 'var(--cds-support-success)' : 'var(--cds-support-error)',
+            }}
           />
+          <span className="ksl-sidebar__status-label">{connected ? 'Live' : 'Offline'}</span>
         </div>
       </div>
 
-      <SideNavItems>
-        <SideNavLink
-          href="#"
-          isActive={selected === null}
-          onClick={(e: React.MouseEvent) => { e.preventDefault(); onSelect(null); }}
-        >
-          All clusters
-        </SideNavLink>
+      {/* All clusters */}
+      <div
+        className={`ksl-sidebar__item${!selectedCluster ? ' ksl-sidebar__item--active' : ''}`}
+        onClick={() => onSelect(null)}
+      >
+        <span style={{ flex: 1 }}>All clusters</span>
+        <span className="ksl-sidebar__count">{totalPods}</span>
+      </div>
 
-        {clusters.map((c) => {
-          const status = clusterStatus(c.name, groups);
-          return (
-            <div
-              key={c.name}
-              className={`cluster-nav-item${selected === c.name ? ' active' : ''}`}
-            >
-              <SideNavLink
-                href="#"
-                isActive={selected === c.name}
-                onClick={(e: React.MouseEvent) => { e.preventDefault(); onSelect(c.name); }}
-              >
-                <span className="cluster-nav-label">
-                  {STATUS_ICONS[status]}
-                  <span className="cluster-name">{c.name}</span>
-                  {!c.enabled && <span className="disabled-badge">disabled</span>}
-                </span>
-              </SideNavLink>
-              <div className="cluster-actions">
-                <Button
-                  kind="ghost" size="sm"
-                  onClick={() => onEditCluster(c)}
-                  className="cluster-action-btn"
-                >Edit</Button>
-                <Button
-                  kind="danger--ghost" size="sm"
-                  onClick={() => onRemoveCluster(c.name)}
-                  className="cluster-action-btn"
-                >Remove</Button>
-              </div>
-            </div>
-          );
-        })}
-      </SideNavItems>
-    </div>
+      {/* Individual clusters */}
+      {[...clusters.entries()].map(([name, info]) => (
+        <div
+          key={name}
+          className={`ksl-sidebar__item${selectedCluster === name ? ' ksl-sidebar__item--active' : ''}`}
+          onClick={() => onSelect(name)}
+        >
+          <span
+            className="ksl-sidebar__cluster-dot"
+            style={{ backgroundColor: STATUS_COLORS[info.worst] }}
+          />
+          <span className="ksl-sidebar__cluster-name">{name}</span>
+          <span className="ksl-sidebar__count">{info.pods}</span>
+        </div>
+      ))}
+
+      {/* Footer */}
+      <div className="ksl-sidebar__spacer" />
+      <div className="ksl-sidebar__footer">
+        kubestoplight <span style={{ opacity: 0.6 }}>v0.2.0</span>
+      </div>
+    </nav>
   );
 }

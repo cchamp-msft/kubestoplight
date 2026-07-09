@@ -1,35 +1,42 @@
 import type { NamespaceGroup } from '../types/api';
 import NamespaceCard from './NamespaceCard';
+import EmptyState from './EmptyState';
 import './NamespaceGrid.scss';
 
 interface Props {
   groups: NamespaceGroup[];
-  selectedCluster: string | null;
+  expandedCards: Set<string>;
+  onToggleCard: (key: string) => void;
+  hasSearch: boolean;
 }
 
-export default function NamespaceGrid({ groups, selectedCluster }: Props) {
-  const filtered = selectedCluster
-    ? groups.filter((g) => g.cluster === selectedCluster)
-    : groups;
-
-  if (filtered.length === 0) {
+export default function NamespaceGrid({ groups, expandedCards, onToggleCard, hasSearch }: Props) {
+  if (groups.length === 0) {
     return (
-      <div className="ns-grid-empty">
-        {groups.length === 0
-          ? 'No data yet — waiting for the first poll…'
-          : `No namespaces for cluster "${selectedCluster}".`}
-      </div>
+      <EmptyState
+        title={hasSearch ? 'No matches' : 'All filtered out'}
+        message={
+          hasSearch
+            ? 'No namespaces match your search query.'
+            : 'Adjust status filters or toggle "Hide all-idle" to see namespaces.'
+        }
+      />
     );
   }
 
   return (
-    <div className="ns-grid">
-      {filtered.map((g) => (
-        <NamespaceCard
-          key={`${g.cluster}/${g.namespace}`}
-          group={g}
-        />
-      ))}
+    <div className="ksl-grid">
+      {groups.map((g) => {
+        const key = `${g.cluster}/${g.namespace}`;
+        return (
+          <NamespaceCard
+            key={key}
+            group={g}
+            expanded={expandedCards.has(key)}
+            onToggle={() => onToggleCard(key)}
+          />
+        );
+      })}
     </div>
   );
 }

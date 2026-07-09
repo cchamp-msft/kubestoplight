@@ -1,63 +1,104 @@
+import { useState, useMemo } from 'react';
 import { Tag } from '@carbon/react';
-import type { NamespaceGroup, NamespaceStatusKind } from '../types/api';
+import type { NamespaceGroup } from '../types/api';
+import { STATUS_COLORS, SEVERITY_ORDER } from '../constants/status';
+import PodGrid from './PodGrid';
+import StatusBar from './StatusBar';
+import PodRow from './PodRow';
 import './NamespaceCard.scss';
 
 interface Props {
   group: NamespaceGroup;
+  expanded: boolean;
+  onToggle: () => void;
 }
 
-const STATUS_TAG_TYPE: Record<NamespaceStatusKind, string> = {
-  Idle:     'green',
-  Busy:     'blue',
-  Changing: 'warm-gray',
-  Failed:   'red',
-  Unknown:  'gray',
-};
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      className={`ksl-chevron${open ? ' ksl-chevron--open' : ''}`}
+    >
+      <path d="M8 11L3 6l.7-.7L8 9.6l4.3-4.3.7.7z" />
+    </svg>
+  );
+}
 
-export default function NamespaceCard({ group }: Props) {
-  const { namespace, cluster, totalPods, readyPods, activePods, status, statusCounts } = group;
-  const progressPct = activePods > 0 ? Math.round((readyPods / activePods) * 100) : 100;
+export default function NamespaceCard({ group, expanded, onToggle }: Props) {
+  const { namespace, cluster, totalPods, activePods, readyPods, status, statusCounts, pods } = group;
+  const statusColor = STATUS_COLORS[status] ?? STATUS_COLORS.Unknown;
+  const [hovered, setHovered] = useState(false);
+
+  const sortedPods = useMemo(
+    () => [...pods].sort((a, b) => (SEVERITY_ORDER[a.status] ?? 5) - (SEVERITY_ORDER[b.status] ?? 5)),
+    [pods],
+  );
 
   return (
-    <div className={`ns-card ns-card--${status.toLowerCase()}`}>
-      <div className="ns-card__header">
-        <span className="ns-card__namespace">{namespace}</span>
-        <Tag type={STATUS_TAG_TYPE[status] as any} size="sm" className="ns-card__cluster-tag">
-          {cluster}
-        </Tag>
-      </div>
-
-      <div className="ns-card__progress-row">
-        <div className="ns-card__progress-bar">
-          <div
-            className="ns-card__progress-fill"
-            style={{ width: `${progressPct}%` }}
-            role="progressbar"
-            aria-valuenow={progressPct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          />
-        </div>
-        <span className="ns-card__progress-label">{readyPods}/{activePods} ready</span>
-      </div>
-
-      <div className="ns-card__status-row">
-        <span className="ns-card__total">{totalPods} pods</span>
-        <div className="ns-card__counts">
-          {(statusCounts['Failed'] ?? 0) > 0 && (
-            <Tag type="red" size="sm">✗ {statusCounts['Failed']}</Tag>
-          )}
-          {(statusCounts['Busy'] ?? 0) > 0 && (
-            <Tag type="blue" size="sm">◉ {statusCounts['Busy']}</Tag>
-          )}
-          {(statusCounts['Changing'] ?? 0) > 0 && (
-            <Tag type="warm-gray" size="sm">◆ {statusCounts['Changing']}</Tag>
-          )}
-          {(statusCounts['Idle'] ?? 0) > 0 && (
-            <Tag type="green" size="sm">● {statusCounts['Idle']}</Tag>
-          )}
+    <div
+      className="ksl-card"
+      onClick={onToggle}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        backgroundColor: hovered ? 'var(--cds-layer-hover-01)' : 'var(--cds-layer-01)',
+        borderLeftColor: statusColor,
+      }}
+    >
+      {/* Header */}
+      <div className="ksl-card__header">
+        <span className="ksl-card__namespace">{namespace}</span>
+        <div className="ksl-card__header-right">
+          <Tag type="cool-gray" size="sm">{cluster}</Tag>
+          <Chevron open={expanded} />
         </div>
       </div>
+
+      {/* Pod grid */}
+      <div className="ksl-card__pod-grid">
+        <PodGrid pods={sortedPods} />
+      </div>
+
+      {/* Status bar + ready label */}
+      <div className="ksl-card__bar-row">
+        <div style={{ flex: 1 }}>
+          <StatusBar statusCounts={statusCounts} total={totalPods} />
+        </div>
+        <span className="ksl-card__ready">
+          {readyPods}/{activePods} ready
+        </span>
+      </div>
+
+      {/* Pod count + status tags */}
+      <div className="ksl-card__status-row">
+        <span className="ksl-card__total">
+          {totalPods} pod{totalPods !== 1 ? 's' : ''}
+        </span>
+        <div className="ksl-card__tags">
+          {(statusCounts.Failed ?? 0) > 0 && <Tag type="red" size="sm">{statusCounts.Failed} failed</Tag>}
+          {(statusCounts.Changing ?? 0) > 0 && <Tag type="teal" size="sm">{statusCounts.Changing} changing</Tag>}
+          {(statusCounts.Busy ?? 0) > 0 && <Tag type="blue" size="sm">{statusCounts.Busy} busy</Tag>}
+          {(statusCounts.Idle ?? 0) > 0 && <Tag type="green" size="sm">{statusCounts.Idle} idle</Tag>}
+        </div>
+      </div>
+
+      {/* Expanded pod detail */}
+      {expanded && (
+        <div className="ksl-card__detail ksl-card-expand">
+          <div className="ksl-card__detail-header">
+            <span>Name</span>
+            <span>Status</span>
+            <span>Ready</span>
+            <span>Age</span>
+          </div>
+          {sortedPods.map((pod) => (
+            <PodRow key={pod.name} pod={pod} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
