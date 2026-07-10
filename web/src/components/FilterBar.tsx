@@ -11,6 +11,8 @@ interface Props {
   hideEmpty: boolean;
   onHideEmpty: (v: boolean) => void;
   nsCounts: Record<string, number>;
+  allExpanded: boolean;
+  onToggleAll: () => void;
 }
 
 const STATUSES: NamespaceStatusKind[] = ['Failed', 'Changing', 'Busy', 'Idle'];
@@ -25,6 +27,8 @@ export default function FilterBar({
   hideEmpty,
   onHideEmpty,
   nsCounts,
+  allExpanded,
+  onToggleAll,
 }: Props) {
   return (
     <div className="ksl-filter">
@@ -54,6 +58,15 @@ export default function FilterBar({
       </div>
 
       <div className="ksl-filter__toggles">
+        <Toggle
+          id="expand-all"
+          size="sm"
+          labelText={allExpanded ? 'Collapse all' : 'Expand all'}
+          labelA=""
+          labelB=""
+          toggled={allExpanded}
+          onToggle={onToggleAll}
+        />
         <Toggle
           id="hide-idle"
           size="sm"

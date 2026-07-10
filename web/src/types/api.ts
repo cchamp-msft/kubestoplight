@@ -47,6 +47,23 @@ export interface PodItem {
 }
 
 // -------------------------------------------------------------------------
+// Mirrors model.JobStatus / model.Job from model/job.go
+// -------------------------------------------------------------------------
+export type JobStatusKind = 'Active' | 'Succeeded' | 'Failed' | 'Suspended' | 'Unknown';
+
+export interface JobItem {
+  name: string;
+  namespace: string;
+  cluster: string;
+  status: JobStatusKind;
+  completions: number;
+  succeeded: number;
+  failed: number;
+  active: number;
+  age: string;
+}
+
+// -------------------------------------------------------------------------
 // Mirrors webserver.nsGroupJSON — the shape pushed over WebSocket and REST
 // -------------------------------------------------------------------------
 export interface NamespaceGroup {
@@ -58,6 +75,9 @@ export interface NamespaceGroup {
   status: NamespaceStatusKind;
   statusCounts: Record<NamespaceStatusKind, number>;
   pods: PodItem[];
+  jobs: JobItem[];
+  totalJobs: number;
+  jobStatusCounts: Record<JobStatusKind, number>;
 }
 
 // -------------------------------------------------------------------------

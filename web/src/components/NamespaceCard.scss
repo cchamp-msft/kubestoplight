@@ -44,17 +44,28 @@
   transform: rotate(180deg);
 }
 
-/* ── Pod grid area ── */
-.ksl-card__pod-grid {
-  padding: 12px 16px 0;
-}
-
-/* ── Status bar + ready ── */
-.ksl-card__bar-row {
+/* ── Donut charts ── */
+.ksl-card__donuts {
   display: flex;
+  justify-content: space-evenly;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px 0;
+  padding: 8px 16px;
+}
+
+.ksl-donut {
+  flex: 1;
+  max-width: 140px;
+  min-width: 0;
+}
+
+.ksl-donut--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 92px;
+  color: var(--cds-text-helper);
+  font-size: 0.75rem;
 }
 
 .ksl-card__ready {
@@ -62,6 +73,7 @@
   color: var(--cds-text-helper);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  margin-left: 8px;
 }
 
 /* ── Status row ── */

@@ -270,7 +270,7 @@ func (m Model) handleClusterRefresh(msg polling.ClusterRefreshMsg) (tea.Model, t
 		for _, pods := range m.clusterPods {
 			allPods = append(allPods, pods...)
 		}
-		m.namespaceGroups = GroupByNamespace(allPods)
+		m.namespaceGroups = GroupByNamespace(allPods, nil)
 	}
 
 	return m, nil

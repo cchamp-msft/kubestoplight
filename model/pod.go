@@ -204,50 +204,53 @@ func (s NamespaceStatus) String() string {
 	}
 }
 
-// NamespaceGroup holds aggregated pod data for a single namespace in a single cluster.
+// NamespaceGroup holds aggregated pod and job data for a single namespace in a single cluster.
 type NamespaceGroup struct {
-	Name         string
-	Cluster      string
-	Pods         []Pod
-	TotalPods    int
-	ActivePods   int
-	ReadyPods    int
-	Status       NamespaceStatus
-	StatusCounts map[NamespaceStatus]int
-	FailedPods   []Pod
+	Name            string
+	Cluster         string
+	Pods            []Pod
+	TotalPods       int
+	ActivePods      int
+	ReadyPods       int
+	Status          NamespaceStatus
+	StatusCounts    map[NamespaceStatus]int
+	FailedPods      []Pod
+	Jobs            []Job
+	TotalJobs       int
+	JobStatusCounts map[JobStatus]int
 }
 
-// GroupByNamespace groups all pods by namespace and cluster, computing status per group.
-func GroupByNamespace(pods []Pod) []NamespaceGroup {
+// GroupByNamespace groups all pods and jobs by namespace and cluster, computing status per group.
+func GroupByNamespace(pods []Pod, jobs []Job) []NamespaceGroup {
 	type nsClusterKey struct {
 		namespace string
 		cluster   string
 	}
 
-	byKey := make(map[nsClusterKey][]Pod)
+	groups := make(map[nsClusterKey]*NamespaceGroup)
 	var order []nsClusterKey
+
+	ensureGroup := func(key nsClusterKey) *NamespaceGroup {
+		if ng, ok := groups[key]; ok {
+			return ng
+		}
+		ng := &NamespaceGroup{
+			Name:            key.namespace,
+			Cluster:         key.cluster,
+			StatusCounts:    map[NamespaceStatus]int{0: 0, 1: 0, 2: 0, 3: 0},
+			JobStatusCounts: map[JobStatus]int{0: 0, 1: 0, 2: 0, 3: 0},
+		}
+		groups[key] = ng
+		order = append(order, key)
+		return ng
+	}
 
 	for _, p := range pods {
 		key := nsClusterKey{namespace: p.Namespace, cluster: p.Cluster}
-		if _, ok := byKey[key]; !ok {
-			order = append(order, key)
-		}
-		byKey[key] = append(byKey[key], p)
-	}
+		ng := ensureGroup(key)
+		ng.Pods = append(ng.Pods, p)
+		ng.TotalPods++
 
-	result := make([]NamespaceGroup, 0, len(order))
-	for _, key := range order {
-		pods := byKey[key]
-		ng := NamespaceGroup{
-		Name:         key.namespace,
-		Cluster:      key.cluster,
-		Pods:         pods,
-		TotalPods:    len(pods),
-		ReadyPods:    0,
-		StatusCounts: map[NamespaceStatus]int{0: 0, 1: 0, 2: 0, 3: 0},
-	}
-
-	for _, p := range pods {
 		if p.Phase != v1.PodSucceeded {
 			ng.ActivePods++
 		}
@@ -257,17 +260,25 @@ func GroupByNamespace(pods []Pod) []NamespaceGroup {
 		if nsStatus == NsStatusFailed {
 			ng.FailedPods = append(ng.FailedPods, p)
 		}
-	}
 
-	ng.ReadyPods = 0
-	for _, p := range pods {
 		if p.Phase != v1.PodSucceeded && p.Ready == p.Total && p.Total > 0 {
 			ng.ReadyPods++
 		}
 	}
 
+	for _, j := range jobs {
+		key := nsClusterKey{namespace: j.Namespace, cluster: j.Cluster}
+		ng := ensureGroup(key)
+		ng.Jobs = append(ng.Jobs, j)
+		ng.TotalJobs++
+		ng.JobStatusCounts[j.Status]++
+	}
+
+	result := make([]NamespaceGroup, 0, len(order))
+	for _, key := range order {
+		ng := groups[key]
 		ng.Status = worstStatus(ng.StatusCounts)
-		result = append(result, ng)
+		result = append(result, *ng)
 	}
 
 	return result

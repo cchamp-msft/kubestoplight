@@ -5,6 +5,7 @@ package webserver
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
@@ -23,14 +24,30 @@ import (
 
 // nsGroupJSON is the JSON-serialisable form of model.NamespaceGroup.
 type nsGroupJSON struct {
-	Namespace    string         `json:"namespace"`
-	Cluster      string         `json:"cluster"`
-	TotalPods    int            `json:"totalPods"`
-	ActivePods   int            `json:"activePods"`
-	ReadyPods    int            `json:"readyPods"`
-	Status       string         `json:"status"`
-	StatusCounts map[string]int `json:"statusCounts"`
-	Pods         []podJSON      `json:"pods"`
+	Namespace       string         `json:"namespace"`
+	Cluster         string         `json:"cluster"`
+	TotalPods       int            `json:"totalPods"`
+	ActivePods      int            `json:"activePods"`
+	ReadyPods       int            `json:"readyPods"`
+	Status          string         `json:"status"`
+	StatusCounts    map[string]int `json:"statusCounts"`
+	Pods            []podJSON      `json:"pods"`
+	Jobs            []jobJSON      `json:"jobs"`
+	TotalJobs       int            `json:"totalJobs"`
+	JobStatusCounts map[string]int `json:"jobStatusCounts"`
+}
+
+// jobJSON is the JSON-serialisable form of model.Job.
+type jobJSON struct {
+	Name        string `json:"name"`
+	Namespace   string `json:"namespace"`
+	Cluster     string `json:"cluster"`
+	Status      string `json:"status"`
+	Completions int    `json:"completions"`
+	Succeeded   int    `json:"succeeded"`
+	Failed      int    `json:"failed"`
+	Active      int    `json:"active"`
+	Age         string `json:"age"`
 }
 
 // podJSON is the JSON-serialisable form of model.Pod.
@@ -374,26 +391,61 @@ func toGroupsJSON(groups []model.NamespaceGroup) []nsGroupJSON {
 				QOS:       p.QOS,
 			})
 		}
+		jobs := make([]jobJSON, 0, len(g.Jobs))
+		for _, j := range g.Jobs {
+			jobs = append(jobs, jobJSON{
+				Name:        j.Name,
+				Namespace:   j.Namespace,
+				Cluster:     j.Cluster,
+				Status:      j.Status.String(),
+				Completions: j.Completions,
+				Succeeded:   j.Succeeded,
+				Failed:      j.Failed,
+				Active:      j.Active,
+				Age:         formatAge(j.Age),
+			})
+		}
+		jsc := make(map[string]int, len(g.JobStatusCounts))
+		for k, v := range g.JobStatusCounts {
+			jsc[k.String()] = v
+		}
 		out = append(out, nsGroupJSON{
-			Namespace:    g.Name,
-			Cluster:      g.Cluster,
-			TotalPods:    g.TotalPods,
-			ActivePods:   g.ActivePods,
-			ReadyPods:    g.ReadyPods,
-			Status:       g.Status.String(),
-			StatusCounts: sc,
-			Pods:         pods,
+			Namespace:       g.Name,
+			Cluster:         g.Cluster,
+			TotalPods:       g.TotalPods,
+			ActivePods:      g.ActivePods,
+			ReadyPods:       g.ReadyPods,
+			Status:          g.Status.String(),
+			StatusCounts:    sc,
+			Pods:            pods,
+			Jobs:            jobs,
+			TotalJobs:       g.TotalJobs,
+			JobStatusCounts: jsc,
 		})
 	}
 	return out
 }
 
 func formatAge(d time.Duration) string {
-	if d < time.Minute {
-		return d.Round(time.Second).String()
+	totalMin := int(d.Minutes())
+	if totalMin < 1 {
+		return "<1m"
 	}
-	if d < time.Hour {
-		return d.Round(time.Minute).String()
+	days := totalMin / (60 * 24)
+	hours := (totalMin % (60 * 24)) / 60
+	mins := totalMin % 60
+
+	if days > 0 {
+		if hours > 0 {
+			return fmt.Sprintf("%dd%dh", days, hours)
+		}
+		return fmt.Sprintf("%dd", days)
 	}
-	return d.Round(time.Hour).String()
+	if hours > 0 {
+		if mins > 0 {
+			return fmt.Sprintf("%dh%dm", hours, mins)
+		}
+		return fmt.Sprintf("%dh", hours)
+	}
+	return fmt.Sprintf("%dm", mins)
 }

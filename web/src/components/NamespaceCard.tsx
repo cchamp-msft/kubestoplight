@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Tag } from '@carbon/react';
 import type { NamespaceGroup } from '../types/api';
-import { STATUS_COLORS, SEVERITY_ORDER } from '../constants/status';
-import PodGrid from './PodGrid';
-import StatusBar from './StatusBar';
+import { STATUS_COLORS, SEVERITY_ORDER, STATUS_COLORS_HEX, JOB_STATUS_COLORS_HEX } from '../constants/status';
+import ResourceDonut from './ResourceDonut';
 import PodRow from './PodRow';
 import './NamespaceCard.scss';
 
@@ -29,6 +28,8 @@ function Chevron({ open }: { open: boolean }) {
 
 export default function NamespaceCard({ group, expanded, onToggle }: Props) {
   const { namespace, cluster, totalPods, activePods, readyPods, status, statusCounts, pods } = group;
+  const totalJobs = group.totalJobs ?? 0;
+  const jobStatusCounts = group.jobStatusCounts ?? {};
   const statusColor = STATUS_COLORS[status] ?? STATUS_COLORS.Unknown;
   const [hovered, setHovered] = useState(false);
 
@@ -57,31 +58,38 @@ export default function NamespaceCard({ group, expanded, onToggle }: Props) {
         </div>
       </div>
 
-      {/* Pod grid */}
-      <div className="ksl-card__pod-grid">
-        <PodGrid pods={sortedPods} />
-      </div>
-
-      {/* Status bar + ready label */}
-      <div className="ksl-card__bar-row">
-        <div style={{ flex: 1 }}>
-          <StatusBar statusCounts={statusCounts} total={totalPods} />
-        </div>
-        <span className="ksl-card__ready">
-          {readyPods}/{activePods} ready
-        </span>
+      {/* Donut charts */}
+      <div className="ksl-card__donuts">
+        <ResourceDonut
+          title="Pods"
+          total={totalPods}
+          statusCounts={statusCounts}
+          colorMap={STATUS_COLORS_HEX}
+        />
+        <ResourceDonut
+          title="Jobs"
+          total={totalJobs}
+          statusCounts={jobStatusCounts}
+          colorMap={JOB_STATUS_COLORS_HEX}
+        />
       </div>
 
       {/* Pod count + status tags */}
       <div className="ksl-card__status-row">
         <span className="ksl-card__total">
           {totalPods} pod{totalPods !== 1 ? 's' : ''}
+          {' · '}
+          {totalJobs} job{totalJobs !== 1 ? 's' : ''}
+          <span className="ksl-card__ready">
+            {readyPods}/{activePods} ready
+          </span>
         </span>
         <div className="ksl-card__tags">
           {(statusCounts.Failed ?? 0) > 0 && <Tag type="red" size="sm">{statusCounts.Failed} failed</Tag>}
           {(statusCounts.Changing ?? 0) > 0 && <Tag type="teal" size="sm">{statusCounts.Changing} changing</Tag>}
           {(statusCounts.Busy ?? 0) > 0 && <Tag type="blue" size="sm">{statusCounts.Busy} busy</Tag>}
           {(statusCounts.Idle ?? 0) > 0 && <Tag type="green" size="sm">{statusCounts.Idle} idle</Tag>}
+          {(jobStatusCounts.Failed ?? 0) > 0 && <Tag type="red" size="sm">{jobStatusCounts.Failed} job fail</Tag>}
         </div>
       </div>
 

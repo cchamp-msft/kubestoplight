@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -50,6 +51,15 @@ func (c *K8sClient) DeletePod(ns, name string) error {
 // RestartPod deletes a pod to trigger a restart (lets the controller recreate it).
 func (c *K8sClient) RestartPod(ns, name string) error {
 	return c.client.CoreV1().Pods(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
+}
+
+// ListJobs fetches all jobs across all namespaces.
+func (c *K8sClient) ListJobs() ([]batchv1.Job, error) {
+	result, err := c.client.BatchV1().Jobs("").List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return result.Items, nil
 }
 
 // RefreshAllMsg is fired every polling interval.

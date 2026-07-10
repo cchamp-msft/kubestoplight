@@ -93,6 +93,20 @@ export default function App() {
     });
   }, []);
 
+  const allExpanded = useMemo(() => {
+    if (filtered.length === 0) return false;
+    return filtered.every((g) => expandedCards.has(`${g.cluster}/${g.namespace}`));
+  }, [filtered, expandedCards]);
+
+  const toggleAll = useCallback(() => {
+    setExpandedCards((prev) => {
+      if (allExpanded) return new Set<string>();
+      const next = new Set(prev);
+      for (const g of filtered) next.add(`${g.cluster}/${g.namespace}`);
+      return next;
+    });
+  }, [allExpanded, filtered]);
+
   const onStatusFilter = useCallback((status: string, checked: boolean) => {
     setStatusFilters((prev) => ({ ...prev, [status]: checked }));
   }, []);
@@ -151,6 +165,8 @@ export default function App() {
                 hideEmpty={hideEmpty}
                 onHideEmpty={setHideEmpty}
                 nsCounts={nsCounts}
+                allExpanded={allExpanded}
+                onToggleAll={toggleAll}
               />
 
               <NamespaceGrid

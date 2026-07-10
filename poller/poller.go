@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 
 	"kubestoplight/clusters"
@@ -15,10 +16,11 @@ import (
 	"kubestoplight/polling"
 )
 
-// clusterResult carries raw pod data from a single cluster poll cycle.
+// clusterResult carries raw pod and job data from a single cluster poll cycle.
 type clusterResult struct {
 	cluster string
 	pods    []v1.Pod
+	jobs    []batchv1.Job
 	err     error
 }
 
@@ -158,18 +160,28 @@ func (p *Poller) pollCluster(ctx context.Context, name string) {
 		return
 	}
 	pods, err := client.ListPods()
+	if err != nil {
+		select {
+		case p.resultCh <- clusterResult{cluster: name, err: err}:
+		case <-ctx.Done():
+		case <-p.stopCh:
+		}
+		return
+	}
+	jobs, _ := client.ListJobs()
 	select {
-	case p.resultCh <- clusterResult{cluster: name, pods: pods, err: err}:
+	case p.resultCh <- clusterResult{cluster: name, pods: pods, jobs: jobs}:
 	case <-ctx.Done():
 	case <-p.stopCh:
 	}
 }
 
-// mergeLoop accumulates per-cluster pod caches and emits updated snapshots.
+// mergeLoop accumulates per-cluster pod and job caches and emits updated snapshots.
 func (p *Poller) mergeLoop() {
 	defer close(p.C)
 
 	podCache := make(map[string][]model.Pod)
+	jobCache := make(map[string][]model.Job)
 
 	for {
 		select {
@@ -180,24 +192,32 @@ func (p *Poller) mergeLoop() {
 				return
 			}
 			if res.err != nil {
-				// Remove stale data for this cluster on error.
 				delete(podCache, res.cluster)
+				delete(jobCache, res.cluster)
 			} else {
 				pods := make([]model.Pod, 0, len(res.pods))
 				for _, raw := range res.pods {
 					pods = append(pods, model.ExtractPod(raw, res.cluster))
 				}
 				podCache[res.cluster] = pods
+
+				jobs := make([]model.Job, 0, len(res.jobs))
+				for _, raw := range res.jobs {
+					jobs = append(jobs, model.ExtractJob(raw, res.cluster))
+				}
+				jobCache[res.cluster] = jobs
 			}
 
-			// Flatten all cached pods and group by namespace.
-			var all []model.Pod
+			var allPods []model.Pod
 			for _, clPods := range podCache {
-				all = append(all, clPods...)
+				allPods = append(allPods, clPods...)
 			}
-			snapshot := model.GroupByNamespace(all)
+			var allJobs []model.Job
+			for _, clJobs := range jobCache {
+				allJobs = append(allJobs, clJobs...)
+			}
+			snapshot := model.GroupByNamespace(allPods, allJobs)
 
-			// Non-blocking send: drop if consumer is behind.
 			select {
 			case p.C <- snapshot:
 			default:

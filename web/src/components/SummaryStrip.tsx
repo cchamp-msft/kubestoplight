@@ -31,9 +31,11 @@ export default function SummaryStrip({ groups }: Props) {
         a.failed += g.statusCounts.Failed ?? 0;
         a.busy += g.statusCounts.Busy ?? 0;
         a.changing += g.statusCounts.Changing ?? 0;
+        a.jobs += g.totalJobs ?? 0;
+        a.jobsFailed += g.jobStatusCounts?.Failed ?? 0;
         return a;
       },
-      { pods: 0, idle: 0, failed: 0, busy: 0, changing: 0 },
+      { pods: 0, idle: 0, failed: 0, busy: 0, changing: 0, jobs: 0, jobsFailed: 0 },
     );
   }, [groups]);
 
@@ -53,6 +55,12 @@ export default function SummaryStrip({ groups }: Props) {
         value={t.busy + t.changing}
         accent="var(--cds-support-info)"
         subtext={t.busy || t.changing ? `${t.busy} busy, ${t.changing} changing` : null}
+      />
+      <SummaryTile
+        label="Total jobs"
+        value={t.jobs}
+        accent="var(--cds-border-interactive)"
+        subtext={t.jobsFailed > 0 ? `${t.jobsFailed} failed` : null}
       />
     </div>
   );
