@@ -87,3 +87,75 @@ export interface WebSocketMessage {
   type: 'snapshot';
   groups: NamespaceGroup[];
 }
+
+// -------------------------------------------------------------------------
+// Pod describe detail (webserver.podDescribeJSON)
+// -------------------------------------------------------------------------
+export interface ContainerDetail {
+  name: string;
+  image: string;
+  ready: boolean;
+  restartCount: number;
+  state: 'running' | 'waiting' | 'terminated';
+  stateReason: string;
+  startedAt?: string;
+  ports: { containerPort: number; protocol: string }[];
+  resources: {
+    requests: Record<string, string>;
+    limits: Record<string, string>;
+  };
+  volumeMounts: { name: string; mountPath: string; readOnly: boolean }[];
+}
+
+export interface PodCondition {
+  type: string;
+  status: string;
+  lastTransition: string;
+  reason?: string;
+  message?: string;
+}
+
+export interface PodEvent {
+  type: string;
+  reason: string;
+  message: string;
+  count: number;
+  lastSeen: string;
+  firstSeen: string;
+}
+
+export interface PodVolume {
+  name: string;
+  type: string;
+  source: string;
+}
+
+export interface OwnerRef {
+  kind: string;
+  name: string;
+}
+
+export interface PodDescribe {
+  name: string;
+  namespace: string;
+  cluster: string;
+  node: string;
+  status: string;
+  phase: string;
+  qos: string;
+  age: string;
+  createdAt: string;
+  labels: Record<string, string>;
+  annotations: Record<string, string>;
+  containers: ContainerDetail[];
+  initContainers: ContainerDetail[];
+  conditions: PodCondition[];
+  events: PodEvent[];
+  volumes: PodVolume[];
+  ownerReferences: OwnerRef[];
+  serviceAccount: string;
+  podIP: string;
+  hostIP: string;
+  nodeSelector?: Record<string, string>;
+  deploymentName?: string;
+}

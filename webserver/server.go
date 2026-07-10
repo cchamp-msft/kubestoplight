@@ -3,12 +3,15 @@
 package webserver
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,10 +19,13 @@ import (
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 
+	v1 "k8s.io/api/core/v1"
+
 	"kubestoplight/clusters"
 	"kubestoplight/config"
 	"kubestoplight/model"
 	"kubestoplight/poller"
+	"kubestoplight/polling"
 )
 
 // nsGroupJSON is the JSON-serialisable form of model.NamespaceGroup.
@@ -111,6 +117,7 @@ func (s *Server) Start(ctx context.Context, addr string) error {
 	// REST API
 	mux.HandleFunc("/api/clusters", s.handleClusters)
 	mux.HandleFunc("/api/clusters/", s.handleClusterByName)
+	mux.HandleFunc("/api/pods/", s.handlePodAPI)
 
 	// WebSocket
 	mux.HandleFunc("/ws/pods", s.handleWebSocket)
@@ -277,6 +284,377 @@ func (s *Server) deleteCluster(w http.ResponseWriter, r *http.Request, name stri
 		log.Printf("webserver: save config: %v", err)
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// -------------------------------------------------------------------------
+// Pod API types
+// -------------------------------------------------------------------------
+
+type podDescribeJSON struct {
+	Name           string            `json:"name"`
+	Namespace      string            `json:"namespace"`
+	Cluster        string            `json:"cluster"`
+	Node           string            `json:"node"`
+	Status         string            `json:"status"`
+	Phase          string            `json:"phase"`
+	QOS            string            `json:"qos"`
+	Age            string            `json:"age"`
+	CreatedAt      string            `json:"createdAt"`
+	Labels         map[string]string `json:"labels"`
+	Annotations    map[string]string `json:"annotations"`
+	Containers     []containerJSON   `json:"containers"`
+	InitContainers []containerJSON   `json:"initContainers"`
+	Conditions     []conditionJSON   `json:"conditions"`
+	Events         []eventJSON       `json:"events"`
+	Volumes        []volumeJSON      `json:"volumes"`
+	OwnerRefs      []ownerRefJSON    `json:"ownerReferences"`
+	ServiceAccount string            `json:"serviceAccount"`
+	PodIP          string            `json:"podIP"`
+	HostIP         string            `json:"hostIP"`
+	NodeSelector   map[string]string `json:"nodeSelector,omitempty"`
+	DeploymentName string            `json:"deploymentName,omitempty"`
+}
+
+type containerJSON struct {
+	Name         string            `json:"name"`
+	Image        string            `json:"image"`
+	Ready        bool              `json:"ready"`
+	RestartCount int32             `json:"restartCount"`
+	State        string            `json:"state"`
+	StateReason  string            `json:"stateReason"`
+	StartedAt    string            `json:"startedAt,omitempty"`
+	Ports        []portJSON        `json:"ports"`
+	Resources    resourcesJSON     `json:"resources"`
+	VolumeMounts []volumeMountJSON `json:"volumeMounts"`
+}
+
+type portJSON struct {
+	ContainerPort int32  `json:"containerPort"`
+	Protocol      string `json:"protocol"`
+}
+
+type resourcesJSON struct {
+	Requests map[string]string `json:"requests"`
+	Limits   map[string]string `json:"limits"`
+}
+
+type volumeMountJSON struct {
+	Name      string `json:"name"`
+	MountPath string `json:"mountPath"`
+	ReadOnly  bool   `json:"readOnly"`
+}
+
+type conditionJSON struct {
+	Type           string `json:"type"`
+	Status         string `json:"status"`
+	LastTransition string `json:"lastTransition"`
+	Reason         string `json:"reason,omitempty"`
+	Message        string `json:"message,omitempty"`
+}
+
+type eventJSON struct {
+	Type      string `json:"type"`
+	Reason    string `json:"reason"`
+	Message   string `json:"message"`
+	Count     int32  `json:"count"`
+	LastSeen  string `json:"lastSeen"`
+	FirstSeen string `json:"firstSeen"`
+}
+
+type volumeJSON struct {
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Source string `json:"source"`
+}
+
+type ownerRefJSON struct {
+	Kind string `json:"kind"`
+	Name string `json:"name"`
+}
+
+// -------------------------------------------------------------------------
+// Pod API handlers
+// -------------------------------------------------------------------------
+
+func (s *Server) handlePodAPI(w http.ResponseWriter, r *http.Request) {
+	// Parse: /api/pods/{cluster}/{namespace}/{pod}[/logs]
+	path := strings.TrimPrefix(r.URL.Path, "/api/pods/")
+	parts := strings.SplitN(path, "/", 4)
+	if len(parts) < 3 {
+		writeError(w, http.StatusBadRequest, "expected /api/pods/{cluster}/{namespace}/{pod}")
+		return
+	}
+	cluster, ns, pod := parts[0], parts[1], parts[2]
+
+	suffix := ""
+	if len(parts) == 4 {
+		suffix = parts[3]
+	}
+
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	switch suffix {
+	case "":
+		s.describePod(w, r, cluster, ns, pod)
+	case "logs":
+		s.streamPodLogs(w, r, cluster, ns, pod)
+	default:
+		writeError(w, http.StatusNotFound, "unknown sub-resource: "+suffix)
+	}
+}
+
+func (s *Server) newK8sClient(clusterName string) (*polling.K8sClient, error) {
+	cfg, err := s.cm.GetConfig(clusterName)
+	if err != nil {
+		return nil, fmt.Errorf("cluster %q: %w", clusterName, err)
+	}
+	return polling.NewClient(cfg)
+}
+
+func (s *Server) describePod(w http.ResponseWriter, r *http.Request, cluster, ns, podName string) {
+	ctx := r.Context()
+
+	kc, err := s.newK8sClient(cluster)
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	pod, err := kc.GetPod(ctx, ns, podName)
+	if err != nil {
+		writeError(w, http.StatusNotFound, fmt.Sprintf("pod %s/%s: %v", ns, podName, err))
+		return
+	}
+
+	events, _ := kc.GetEvents(ctx, ns, "involvedObject.name="+podName)
+
+	desc := buildPodDescribe(pod, events, cluster)
+	writeJSON(w, http.StatusOK, desc)
+}
+
+func buildPodDescribe(pod *v1.Pod, events []v1.Event, cluster string) podDescribeJSON {
+	age := time.Since(pod.CreationTimestamp.Time)
+	if pod.CreationTimestamp.Time.After(time.Now()) {
+		age = 0
+	}
+
+	desc := podDescribeJSON{
+		Name:           pod.Name,
+		Namespace:      pod.Namespace,
+		Cluster:        cluster,
+		Node:           pod.Spec.NodeName,
+		Status:         model.DetermineStatus(*pod).String(),
+		Phase:          string(pod.Status.Phase),
+		QOS:            string(pod.Status.QOSClass),
+		Age:            formatAge(age),
+		CreatedAt:      pod.CreationTimestamp.Format(time.RFC3339),
+		Labels:         pod.Labels,
+		Annotations:    pod.Annotations,
+		ServiceAccount: pod.Spec.ServiceAccountName,
+		PodIP:          pod.Status.PodIP,
+		HostIP:         pod.Status.HostIP,
+		NodeSelector:   pod.Spec.NodeSelector,
+	}
+
+	if desc.Labels == nil {
+		desc.Labels = map[string]string{}
+	}
+	if desc.Annotations == nil {
+		desc.Annotations = map[string]string{}
+	}
+
+	desc.Containers = buildContainers(pod.Spec.Containers, pod.Status.ContainerStatuses)
+	desc.InitContainers = buildContainers(pod.Spec.InitContainers, pod.Status.InitContainerStatuses)
+
+	for _, c := range pod.Status.Conditions {
+		desc.Conditions = append(desc.Conditions, conditionJSON{
+			Type:           string(c.Type),
+			Status:         string(c.Status),
+			LastTransition: c.LastTransitionTime.Format(time.RFC3339),
+			Reason:         c.Reason,
+			Message:        c.Message,
+		})
+	}
+	if desc.Conditions == nil {
+		desc.Conditions = []conditionJSON{}
+	}
+
+	for _, e := range events {
+		desc.Events = append(desc.Events, eventJSON{
+			Type:      e.Type,
+			Reason:    e.Reason,
+			Message:   e.Message,
+			Count:     e.Count,
+			LastSeen:  e.LastTimestamp.Format(time.RFC3339),
+			FirstSeen: e.FirstTimestamp.Format(time.RFC3339),
+		})
+	}
+	if desc.Events == nil {
+		desc.Events = []eventJSON{}
+	}
+
+	for _, v := range pod.Spec.Volumes {
+		vj := volumeJSON{Name: v.Name}
+		switch {
+		case v.ConfigMap != nil:
+			vj.Type, vj.Source = "ConfigMap", v.ConfigMap.Name
+		case v.Secret != nil:
+			vj.Type, vj.Source = "Secret", v.Secret.SecretName
+		case v.PersistentVolumeClaim != nil:
+			vj.Type, vj.Source = "PVC", v.PersistentVolumeClaim.ClaimName
+		case v.EmptyDir != nil:
+			vj.Type, vj.Source = "EmptyDir", ""
+		case v.HostPath != nil:
+			vj.Type, vj.Source = "HostPath", v.HostPath.Path
+		case v.Projected != nil:
+			vj.Type, vj.Source = "Projected", ""
+		case v.DownwardAPI != nil:
+			vj.Type, vj.Source = "DownwardAPI", ""
+		default:
+			vj.Type = "Other"
+		}
+		desc.Volumes = append(desc.Volumes, vj)
+	}
+	if desc.Volumes == nil {
+		desc.Volumes = []volumeJSON{}
+	}
+
+	for _, ref := range pod.OwnerReferences {
+		desc.OwnerRefs = append(desc.OwnerRefs, ownerRefJSON{Kind: ref.Kind, Name: ref.Name})
+		if ref.Kind == "ReplicaSet" {
+			// Infer deployment name: ReplicaSet names are typically {deployment}-{hash}
+			parts := strings.Split(ref.Name, "-")
+			if len(parts) > 1 {
+				desc.DeploymentName = strings.Join(parts[:len(parts)-1], "-")
+			}
+		}
+	}
+	if desc.OwnerRefs == nil {
+		desc.OwnerRefs = []ownerRefJSON{}
+	}
+
+	return desc
+}
+
+func buildContainers(specs []v1.Container, statuses []v1.ContainerStatus) []containerJSON {
+	statusMap := make(map[string]v1.ContainerStatus, len(statuses))
+	for _, cs := range statuses {
+		statusMap[cs.Name] = cs
+	}
+
+	out := make([]containerJSON, 0, len(specs))
+	for _, spec := range specs {
+		cj := containerJSON{
+			Name:  spec.Name,
+			Image: spec.Image,
+		}
+
+		for _, p := range spec.Ports {
+			cj.Ports = append(cj.Ports, portJSON{
+				ContainerPort: p.ContainerPort,
+				Protocol:      string(p.Protocol),
+			})
+		}
+		if cj.Ports == nil {
+			cj.Ports = []portJSON{}
+		}
+
+		cj.Resources = resourcesJSON{
+			Requests: resourceMapToStrings(spec.Resources.Requests),
+			Limits:   resourceMapToStrings(spec.Resources.Limits),
+		}
+
+		for _, vm := range spec.VolumeMounts {
+			cj.VolumeMounts = append(cj.VolumeMounts, volumeMountJSON{
+				Name:      vm.Name,
+				MountPath: vm.MountPath,
+				ReadOnly:  vm.ReadOnly,
+			})
+		}
+		if cj.VolumeMounts == nil {
+			cj.VolumeMounts = []volumeMountJSON{}
+		}
+
+		if cs, ok := statusMap[spec.Name]; ok {
+			cj.Ready = cs.Ready
+			cj.RestartCount = cs.RestartCount
+			switch {
+			case cs.State.Running != nil:
+				cj.State = "running"
+				cj.StartedAt = cs.State.Running.StartedAt.Format(time.RFC3339)
+			case cs.State.Waiting != nil:
+				cj.State = "waiting"
+				cj.StateReason = cs.State.Waiting.Reason
+			case cs.State.Terminated != nil:
+				cj.State = "terminated"
+				cj.StateReason = cs.State.Terminated.Reason
+			}
+		}
+
+		out = append(out, cj)
+	}
+	return out
+}
+
+func resourceMapToStrings(rl v1.ResourceList) map[string]string {
+	if rl == nil {
+		return map[string]string{}
+	}
+	m := make(map[string]string, len(rl))
+	for k, v := range rl {
+		m[string(k)] = v.String()
+	}
+	return m
+}
+
+func (s *Server) streamPodLogs(w http.ResponseWriter, r *http.Request, cluster, ns, podName string) {
+	ctx := r.Context()
+
+	kc, err := s.newK8sClient(cluster)
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	container := r.URL.Query().Get("container")
+	tailStr := r.URL.Query().Get("tail")
+	followStr := r.URL.Query().Get("follow")
+
+	var tailLines int64 = 500
+	if tailStr != "" {
+		if n, err := strconv.ParseInt(tailStr, 10, 64); err == nil && n > 0 {
+			tailLines = n
+		}
+	}
+	follow := followStr == "true"
+
+	stream, err := kc.GetPodLogs(ctx, ns, podName, container, tailLines, follow)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("logs: %v", err))
+		return
+	}
+	defer stream.Close()
+
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.WriteHeader(http.StatusOK)
+
+	flusher, canFlush := w.(http.Flusher)
+
+	scanner := bufio.NewScanner(stream)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		if _, err := io.WriteString(w, scanner.Text()+"\n"); err != nil {
+			return
+		}
+		if canFlush {
+			flusher.Flush()
+		}
+	}
 }
 
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {

@@ -10,6 +10,8 @@ interface Props {
   group: NamespaceGroup;
   expanded: boolean;
   onToggle: () => void;
+  onPodDescribe: (pod: import('../types/api').PodItem) => void;
+  onPodLogs: (pod: import('../types/api').PodItem) => void;
 }
 
 function Chevron({ open }: { open: boolean }) {
@@ -26,7 +28,7 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-export default function NamespaceCard({ group, expanded, onToggle }: Props) {
+export default function NamespaceCard({ group, expanded, onToggle, onPodDescribe, onPodLogs }: Props) {
   const { namespace, cluster, totalPods, activePods, readyPods, status, statusCounts, pods } = group;
   const totalJobs = group.totalJobs ?? 0;
   const jobStatusCounts = group.jobStatusCounts ?? {};
@@ -101,9 +103,10 @@ export default function NamespaceCard({ group, expanded, onToggle }: Props) {
             <span>Status</span>
             <span>Ready</span>
             <span>Age</span>
+            <span></span>
           </div>
           {sortedPods.map((pod) => (
-            <PodRow key={pod.name} pod={pod} />
+            <PodRow key={pod.name} pod={pod} onDescribe={onPodDescribe} onLogs={onPodLogs} />
           ))}
         </div>
       )}

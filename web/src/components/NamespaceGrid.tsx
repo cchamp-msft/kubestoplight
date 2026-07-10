@@ -1,4 +1,4 @@
-import type { NamespaceGroup } from '../types/api';
+import type { NamespaceGroup, PodItem } from '../types/api';
 import NamespaceCard from './NamespaceCard';
 import EmptyState from './EmptyState';
 import './NamespaceGrid.scss';
@@ -8,9 +8,11 @@ interface Props {
   expandedCards: Set<string>;
   onToggleCard: (key: string) => void;
   hasSearch: boolean;
+  onPodDescribe: (pod: PodItem) => void;
+  onPodLogs: (pod: PodItem) => void;
 }
 
-export default function NamespaceGrid({ groups, expandedCards, onToggleCard, hasSearch }: Props) {
+export default function NamespaceGrid({ groups, expandedCards, onToggleCard, hasSearch, onPodDescribe, onPodLogs }: Props) {
   if (groups.length === 0) {
     return (
       <EmptyState
@@ -34,6 +36,8 @@ export default function NamespaceGrid({ groups, expandedCards, onToggleCard, has
             group={g}
             expanded={expandedCards.has(key)}
             onToggle={() => onToggleCard(key)}
+            onPodDescribe={onPodDescribe}
+            onPodLogs={onPodLogs}
           />
         );
       })}

@@ -1,0 +1,237 @@
+/* PodDescribeTab — structured pod metadata */
+
+.ksl-desc {
+  font-size: 0.8125rem;
+}
+
+.ksl-desc__loading {
+  display: flex;
+  justify-content: center;
+  padding: 32px;
+}
+
+.ksl-desc__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+/* ── Section ── */
+.ksl-desc__section {
+  margin-bottom: 16px;
+}
+
+.ksl-desc__section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+  margin-bottom: 8px;
+}
+
+/* ── Key-value rows ── */
+.ksl-desc__kv {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+}
+
+.ksl-desc__kv-label {
+  flex: 0 0 130px;
+  font-size: 0.75rem;
+  color: var(--cds-text-helper);
+  text-align: right;
+}
+
+.ksl-desc__kv-value {
+  flex: 1;
+  color: var(--cds-text-primary);
+  word-break: break-all;
+}
+
+.ksl-desc__mono {
+  font-family: var(--cds-font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.75rem;
+}
+
+/* ── Containers ── */
+.ksl-desc__container-wrapper {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+}
+
+.ksl-desc__container-wrapper:last-child {
+  border-bottom: none;
+}
+
+.ksl-desc__container-name {
+  font-family: var(--cds-font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--cds-text-primary);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.ksl-desc__container {
+  padding-left: 8px;
+}
+
+.ksl-desc__resources {
+  display: flex;
+  gap: 24px;
+  padding: 8px 0 4px 142px;
+}
+
+.ksl-desc__resource-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ksl-desc__resource-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+}
+
+.ksl-desc__resource-item {
+  font-family: var(--cds-font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+}
+
+.ksl-desc__mounts {
+  padding: 8px 0 4px 142px;
+}
+
+.ksl-desc__mounts-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.ksl-desc__mount-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+  padding: 2px 0;
+}
+
+/* ── Table ── */
+.ksl-desc__table-header {
+  display: grid;
+  grid-template-columns: 1fr 0.6fr 1fr 1fr;
+  gap: 8px;
+  padding: 4px 0 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  color: var(--cds-text-helper);
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+}
+
+.ksl-desc__table-row {
+  display: grid;
+  grid-template-columns: 1fr 0.6fr 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 0.75rem;
+  color: var(--cds-text-primary);
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+}
+
+.ksl-desc__table-row--3col {
+  grid-template-columns: 1fr 0.6fr 1.6fr;
+}
+
+.ksl-desc__table-row--3col > .ksl-desc__table-header {
+  grid-template-columns: 1fr 0.6fr 1.6fr;
+}
+
+.ksl-desc__time {
+  font-size: 0.6875rem;
+  color: var(--cds-text-helper);
+  white-space: nowrap;
+}
+
+/* ── Events ── */
+.ksl-desc__events {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ksl-desc__event {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+}
+
+.ksl-desc__event:last-child {
+  border-bottom: none;
+}
+
+.ksl-desc__event-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.ksl-desc__event-reason {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--cds-text-primary);
+}
+
+.ksl-desc__event-message {
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+  line-height: 1.4;
+}
+
+/* ── Tags / Labels ── */
+.ksl-desc__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ── Annotations ── */
+.ksl-desc__annotation {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--cds-border-subtle-01);
+}
+
+.ksl-desc__annotation:last-child {
+  border-bottom: none;
+}
+
+.ksl-desc__annotation-key {
+  font-family: var(--cds-font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.6875rem;
+  color: var(--cds-text-helper);
+  word-break: break-all;
+}
+
+.ksl-desc__annotation-value {
+  font-size: 0.75rem;
+  color: var(--cds-text-secondary);
+  word-break: break-all;
+}

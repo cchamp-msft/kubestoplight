@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import { Tag, Theme } from '@carbon/react';
-import type { Cluster } from './types/api';
+import type { Cluster, PodItem } from './types/api';
 import { SEVERITY_ORDER } from './constants/status';
 import { useClusters } from './hooks/useClusters';
 import { useWebSocket } from './hooks/useWebSocket';
@@ -12,6 +12,7 @@ import './App.scss';
 
 const ClusterFormModal = lazy(() => import('./components/ClusterFormModal'));
 const RemoveClusterModal = lazy(() => import('./components/RemoveClusterModal'));
+const PodDetailPanel = lazy(() => import('./components/PodDetailPanel'));
 
 export default function App() {
   const { addCluster, updateCluster, removeCluster } = useClusters();
@@ -21,6 +22,20 @@ export default function App() {
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Cluster | null>(null);
   const [removeTarget, setRemoveTarget] = useState<string | null>(null);
+
+  // Pod detail panel
+  const [panelPod, setPanelPod] = useState<PodItem | null>(null);
+  const [panelTab, setPanelTab] = useState(0);
+
+  const onPodDescribe = useCallback((pod: PodItem) => {
+    setPanelPod(pod);
+    setPanelTab(0);
+  }, []);
+
+  const onPodLogs = useCallback((pod: PodItem) => {
+    setPanelPod(pod);
+    setPanelTab(1);
+  }, []);
 
   // Cluster selection
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
@@ -174,6 +189,8 @@ export default function App() {
                 expandedCards={expandedCards}
                 onToggleCard={toggleCard}
                 hasSearch={!!searchQuery}
+                onPodDescribe={onPodDescribe}
+                onPodLogs={onPodLogs}
               />
             </div>
           </main>
@@ -213,6 +230,17 @@ export default function App() {
           />
         )}
       </Suspense>
+
+      {/* ── Pod Detail Panel ── */}
+      {panelPod && (
+        <Suspense fallback={null}>
+          <PodDetailPanel
+            pod={panelPod}
+            initialTab={panelTab}
+            onClose={() => setPanelPod(null)}
+          />
+        </Suspense>
+      )}
     </Theme>
   );
 }
