@@ -17,6 +17,19 @@ A dual-mode Kubernetes pod monitor — run as a terminal TUI or a self-hosted we
 | Node | 20+            | Build the React frontend |
 | npm  | 9+             | Install frontend dependencies |
 
+## Try it without a cluster
+
+Only Node is needed — the UI runs against a built-in fake backend:
+
+```bash
+cd web
+npm install
+npm run dev:mock      # http://localhost:5173
+```
+
+Scenarios (`MOCK_SCENARIO=mixed|healthy|failing|empty|large`) and agent/contributor
+guidance are in [AGENTS.md](AGENTS.md).
+
 ## Build
 
 ```bash

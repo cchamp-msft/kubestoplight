@@ -1,32 +1,16 @@
-# React + TypeScript + Vite
+# kubestoplight web UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + TypeScript + Vite SPA, built on IBM Carbon. The Go binary embeds the
+built `dist/` and serves it with `kubestoplight --web`.
 
-Currently, two official plugins are available:
+| Command | What it does |
+|---------|--------------|
+| `npm run dev:mock` | Dev server with a fake backend — **no Go or Kubernetes needed** |
+| `npm run dev` | Dev server proxying `/api` and `/ws` to a Go server on `:8080` |
+| `npm test` | Vitest |
+| `npm run lint` | Oxlint |
+| `npm run build` | Typecheck + production build into `dist/` |
+| `npm run preview:mock` | Serve the production build with the fake backend |
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Mock scenarios (`MOCK_SCENARIO=mixed|healthy|failing|empty|large`) and the
+rest of the details are in [`../AGENTS.md`](../AGENTS.md).
