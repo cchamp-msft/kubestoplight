@@ -1,0 +1,124 @@
+/* Dropdown — a button that opens a short menu of actions or choices.
+   Behavior: js/components/dropdown.js (menu-button pattern: arrow keys,
+   Home/End, type-ahead, Esc returns focus, closes on outside click).
+   For picking a value in a form, prefer the native .select (input.css).
+
+   <div class="dropdown" data-component="dropdown">
+     <button class="btn btn--ghost dropdown__trigger" type="button">Sort</button>
+     <div class="dropdown__menu" role="menu" aria-label="Sort by" hidden>
+       <button class="dropdown__item" role="menuitemradio" aria-checked="true" type="button" data-value="new">Newest</button>
+       <button class="dropdown__item" role="menuitemradio" aria-checked="false" type="button" data-value="old">Oldest</button>
+       <hr class="dropdown__divider">
+       <a class="dropdown__item" role="menuitem" href="/export/">Export…</a>
+       <button class="dropdown__item dropdown__item--danger" role="menuitem" type="button">Delete</button>
+       <button class="dropdown__item" role="menuitem" type="button" aria-disabled="true">Archive</button>
+     </div>
+   </div>
+   The trigger gets a chevron automatically. data-align="end" on .dropdown
+   lines the menu up with the trigger's right edge. If there's no room
+   below, the script opens it above (data-side="top"). */
+
+.dropdown {
+  --dropdown-min-w: var(--layer-w-sm);
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown__trigger::after {
+  content: "";
+  width: var(--space-2);
+  height: var(--space-2);
+  margin-left: var(--space-1);
+  border-right: var(--hairline) solid currentColor;
+  border-bottom: var(--hairline) solid currentColor;
+  transform: translateY(-25%) rotate(45deg);
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+.dropdown__trigger[aria-expanded="true"]::after { transform: translateY(25%) rotate(-135deg); }
+.dropdown__trigger.btn--icon::after { display: none; }
+
+.dropdown__menu {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  top: calc(100% + var(--space-1));
+  left: 0;
+  display: grid;
+  min-width: max(100%, var(--dropdown-min-w));
+  max-width: min(var(--layer-w-md), calc(100vw - 2 * var(--space-4)));
+  max-height: min(var(--layer-h), 60dvh);
+  overflow-y: auto;
+  padding: var(--space-1);
+  /* Solid, not glass: a menu over content must stay readable. */
+  background: var(--surface-solid);
+  border: var(--hairline) solid var(--field-border);
+  border-radius: var(--radius-1);
+  box-shadow: var(--shadow-float);
+  transform-origin: top left;
+}
+.dropdown[data-align="end"] .dropdown__menu { left: auto; right: 0; transform-origin: top right; }
+.dropdown[data-side="top"] .dropdown__menu { top: auto; bottom: calc(100% + var(--space-1)); }
+
+.dropdown__menu:not([hidden]) {
+  transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+@starting-style {
+  .dropdown__menu:not([hidden]) { opacity: 0; transform: translateY(calc(-1 * var(--space-1))); }
+}
+
+.dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--control-h);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  text-decoration: none;
+  color: var(--text-default);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-1);
+  cursor: pointer;
+}
+@media (pointer: coarse) { .dropdown__item { min-height: var(--control-h-touch); } }
+.dropdown__item:hover,
+.dropdown__item:focus-visible { background: var(--state-hover-fill); color: var(--text-default); outline: none; }
+.dropdown__item:focus-visible { box-shadow: inset 0 0 0 var(--hairline) var(--field-focus); }
+.dropdown__item:active { background: var(--state-pressed-fill); }
+.dropdown__item[aria-disabled="true"] { opacity: var(--state-disabled-opacity); cursor: not-allowed; background: none; }
+.dropdown__item--danger { color: var(--field-error); }
+.dropdown__item--danger:hover { color: var(--field-error); }
+.dropdown__item svg { width: var(--icon-sm); height: var(--icon-sm); flex: none; color: var(--text-muted); }
+/* Keyboard hint on the right: <kbd class="dropdown__hint">⌘K</kbd> */
+.dropdown__hint { margin-left: auto; font: inherit; font-size: var(--text-xs); color: var(--text-muted); }
+
+/* Checkable items: a tick column on the left. */
+.dropdown__item[role="menuitemradio"],
+.dropdown__item[role="menuitemcheckbox"] { padding-left: calc(var(--space-3) + var(--icon-sm) + var(--space-2)); position: relative; }
+.dropdown__item[aria-checked="true"]::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--space-3) + var(--space-1));
+  top: 50%;
+  width: calc(var(--space-2) * 0.75);
+  height: var(--space-3);
+  border-right: var(--hairline) solid var(--text-accent);
+  border-bottom: var(--hairline) solid var(--text-accent);
+  transform: translateY(-60%) rotate(45deg);
+}
+.dropdown__item[aria-checked="true"] { color: var(--text-default); }
+
+.dropdown__divider { margin: var(--space-1) calc(-1 * var(--space-1)); }
+.dropdown__label {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Opened in the top layer by Jewel.float (js/jewel.js): fixed, placed by
+   the script, so no panel can clip it. */
+.dropdown__menu.is-floating { position: fixed; inset: auto; margin: 0; color: var(--text-default); max-width: min(var(--layer-w-md), calc(100vw - 2 * var(--space-4))); }

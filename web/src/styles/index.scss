@@ -1,59 +1,86 @@
-@use '@carbon/styles/scss/reset';
-@use '@carbon/styles/scss/type';
-@use '@carbon/styles/scss/themes' as themes;
-@use '@carbon/styles/scss/theme' as theme;
-@use '@carbon/styles/scss/components';
-@use '@carbon/styles/scss/utilities';
+/* App-level tokens and globals on top of Jewel (src/vendor/jewel).
+   Jewel sits in cascade layers, so anything here (unlayered) wins without
+   !important. Components read Jewel's resolved tokens plus the --status-*
+   set below; keep raw colors out of component styles. */
 
 :root {
-  @include theme.theme(themes.$g100);
+  --font-sans: "Inter Variable", "Inter", "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+
+  /* A dashboard wants more width and tighter panels than an editorial page. */
+  --page-max: 110rem;
+  --panel-padding: var(--space-5);
+  --side-nav-w: 16rem;
+
+  /* ---- Pod / job status ------------------------------------------------
+     Jewel has no success / info / warning tokens (only --field-error), so
+     kubestoplight maps its status semantics onto Jewel's validated chart
+     palette. Meanings are fixed; don't reuse these for decoration.
+       Idle = healthy, Busy = restarting, Changing = pending/terminating,
+       Failed = error, Empty/Unknown = no data.                            */
+  --status-idle: var(--chart-1);      /* teal   */
+  --status-busy: var(--chart-2);      /* purple */
+  --status-changing: var(--chart-5);  /* orange */
+  --status-failed: var(--chart-3);    /* red    */
+  --status-empty: var(--chart-context);
+
+  /* Text in a status tone (log lines). Marks above only need 3:1; text
+     needs 4.5:1 on solid and glass, which Jewel only provides for errors. */
+  --status-failed-text: var(--field-error);
+  --status-warn-text: #fdba74;        /* gap: Jewel has no warning text token */
 }
 
-html,
-body {
+/* Scrollbars inside panels: thin and quiet, matching Jewel's own regions. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--field-border) transparent;
+}
+
+/* Status dot — the one place a status color is shown on its own. */
+.ksl-dot {
+  flex: none;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-round);
+  background: var(--tone, var(--status-empty));
+}
+
+/* Monospace runs (pod names, images, paths). */
+.ksl-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-code);
+}
+
+/* Destructive button: Jewel has none, but a variant is three tokens. */
+.btn--danger {
+  --btn-bg: var(--field-error);
+  --btn-fg: var(--text-inverse);
+  --btn-border: var(--field-error);
+  --btn-bg-hover: var(--text-default);
+  --btn-border-hover: var(--text-default);
+}
+
+/* Small icon buttons for dense rows and toolbars (Jewel's are 40px). */
+.btn--icon.ksl-btn-sm {
+  width: var(--control-h-sm);
+  min-height: var(--control-h-sm);
+}
+
+/* Right-hand drawer: Jewel has .sheet--start (left) only; this mirrors it. */
+.sheet--end {
+  --sheet-max-w: 60rem;
+  width: min(calc(100% - var(--hit-min)), var(--sheet-max-w));
+  height: 100dvh;
+  max-height: none;
+  margin: 0 0 0 auto;
+  inset: 0 0 0 auto;
+}
+.sheet--end .sheet__panel {
   height: 100%;
-  margin: 0;
-  padding: 0;
-  background-color: var(--cds-background);
-  color: var(--cds-text-primary);
-  font-family: var(--cds-font-sans, 'IBM Plex Sans', sans-serif);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  border-right: 0;
+  border-radius: var(--panel-radius-bottom) var(--radius-0) var(--radius-0) var(--panel-radius-bottom);
 }
-
-#root {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  background-color: var(--cds-background);
-}
-
-/* Dark scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--cds-border-subtle-01);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--cds-border-strong-01);
-}
-
-/* Card expand animation */
-@keyframes kslFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.sheet--end:not([open]) { transform: translateX(100%); }
+@starting-style {
+  .sheet--end[open] { transform: translateX(100%); }
 }

@@ -1,11 +1,16 @@
-.modal-notification {
-  margin-bottom: 1rem;
+/* Bearer token: input with a Show/Hide text button inside its right edge. */
+.ksl-password {
+  position: relative;
 }
 
-.form-field {
-  margin-bottom: 1rem;
+.ksl-password .input {
+  padding-right: calc(var(--space-4) * 4);
 }
 
-.form-field:last-child {
-  margin-bottom: 0;
+.ksl-password__toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  min-height: 0;
+  translate: 0 -50%;
 }

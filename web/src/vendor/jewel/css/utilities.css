@@ -1,0 +1,25 @@
+/* ==========================================================================
+   Utilities — single-purpose attributes and classes. This layer sits last,
+   so these win over component styles.
+   ========================================================================== */
+
+/* [hidden] always hides. Components set their own display (.btn is
+   inline-flex, .badge is inline-flex…), and any author display rule beats
+   the browser's own [hidden] rule. This layer comes last, so it wins over
+   every component. until-found is left alone: browsers hide it with
+   content-visibility so find-in-page can still reveal it.
+   Unlayered page CSS that sets display on a hidden element still wins. */
+[hidden]:not([hidden="until-found"]) { display: none; }
+
+/* Text variants — data-text="default|muted|accent|inverse" */
+[data-text="default"] { color: var(--text-default); }
+[data-text="muted"]   { color: var(--text-muted); }
+[data-text="accent"]  { color: var(--text-accent); }
+[data-text="inverse"] { color: var(--text-inverse); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

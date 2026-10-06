@@ -1,0 +1,144 @@
+/* Sheet — a <dialog> that slides up from the bottom (tearsheet), or a
+   centered modal with the same insides. Behavior: js/components/sheet.js
+   (open/close, unsaved-changes guard, scroll lock, keyboard-aware height).
+
+   <dialog class="sheet sheet--bottom" id="post-sheet" data-component="sheet"
+           aria-labelledby="post-sheet-title">
+     <div class="sheet__panel panel panel--content">
+       <header class="sheet__head">
+         <h2 class="sheet__title label" id="post-sheet-title">New post</h2>
+         <button class="btn btn--ghost btn--icon" type="button" data-sheet-close aria-label="Close">×</button>
+       </header>
+       <div class="sheet__body">…form…</div>
+     </div>
+   </dialog>
+   Swap .sheet--bottom for .sheet--center to get the modal, or .sheet--start
+   for a drawer from the left edge (the side nav on phones, side-nav.css). */
+
+.sheet {
+  --sheet-max-w: 40rem;
+  --sheet-gap: var(--space-4);
+  /* Visible height: sheet.js keeps --sheet-vh in step with the on-screen
+     keyboard (visualViewport); 100dvh is the fallback. */
+  --sheet-vh: 100dvh;
+
+  /* Reset the UA dialog box; the panel inside is the surface. */
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-default);
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+}
+.sheet::backdrop {
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.sheet__panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+.sheet__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--panel-padding);
+  border-bottom: var(--hairline) solid var(--panel-border);
+}
+.sheet__title { margin: 0; color: var(--text-default); }
+.sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--panel-padding);
+  padding-bottom: calc(var(--panel-padding) + env(safe-area-inset-bottom, 0px));
+  scroll-padding-block: var(--space-7);
+}
+
+/* In-sheet "discard changes?" bar. */
+.sheet__confirm {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--panel-padding);
+  border-bottom: var(--hairline) solid var(--panel-border);
+  font-size: var(--text-sm);
+}
+
+/* ---- Bottom sheet (tearsheet) ------------------------------------------ */
+.sheet--bottom {
+  width: min(100%, var(--sheet-max-w));
+  height: auto;
+  max-height: calc(var(--sheet-vh) - var(--sheet-gap) - env(safe-area-inset-top, 0px));
+  margin: auto auto 0;              /* pinned to the bottom edge */
+  inset: auto 0 0;
+}
+@media (max-width: 40rem) {   /* below --bp-sm */
+  /* Phones: full height, so the keyboard never crowds the form. */
+  .sheet--bottom { height: calc(var(--sheet-vh) - var(--sheet-gap) - env(safe-area-inset-top, 0px)); }
+}
+.sheet--bottom .sheet__panel { height: 100%; }
+
+/* ---- Centered modal ------------------------------------------------------ */
+.sheet--center {
+  width: min(calc(100% - 2 * var(--space-4)), var(--sheet-max-w));
+  max-height: calc(var(--sheet-vh) - 2 * var(--space-6));
+  margin: auto;
+}
+.sheet--center .sheet__panel { max-height: calc(var(--sheet-vh) - 2 * var(--space-6)); }
+
+/* ---- Start drawer (side nav on phones) ---------------------------------- */
+.sheet--start {
+  --sheet-max-w: var(--layer-w-md);
+  width: min(calc(100% - var(--hit-min)), var(--sheet-max-w));  /* leave a strip to tap out */
+  height: 100dvh;
+  max-height: none;
+  margin: 0 auto 0 0;
+  inset: 0 auto 0 0;
+}
+.sheet--start .sheet__panel {
+  height: 100%;
+  border-radius: var(--radius-0) var(--panel-radius-bottom) var(--panel-radius-bottom) var(--radius-0);
+  border-left: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.sheet--start .sheet__body { padding: var(--space-3) var(--space-4); padding-left: max(var(--space-4), env(safe-area-inset-left, 0px)); }
+
+/* ---- Motion: enter and exit both animate (display/overlay discrete) ---- */
+.sheet,
+.sheet::backdrop {
+  transition:
+    transform var(--duration-slow) var(--ease-standard),
+    opacity var(--duration-slow) var(--ease-standard),
+    overlay var(--duration-slow) allow-discrete,
+    display var(--duration-slow) allow-discrete;
+}
+.sheet--bottom:not([open]) { transform: translateY(100%); }
+.sheet--center:not([open]) { opacity: 0; transform: translateY(var(--space-4)); }
+.sheet--start:not([open]) { transform: translateX(-100%); }
+.sheet:not([open])::backdrop { opacity: 0; }
+@starting-style {
+  .sheet--bottom[open] { transform: translateY(100%); }
+  .sheet--center[open] { opacity: 0; transform: translateY(var(--space-4)); }
+  .sheet--start[open] { transform: translateX(-100%); }
+  .sheet[open]::backdrop { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .sheet::backdrop { transition: none; }
+}
+
+/* Scroll lock while a sheet is open (set on <html> by sheet.js). */
+.has-open-sheet { overflow: hidden; }

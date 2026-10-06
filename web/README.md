@@ -1,6 +1,6 @@
 # kubestoplight web UI
 
-React + TypeScript + Vite SPA, built on IBM Carbon. The Go binary embeds the
+React + TypeScript + Vite SPA, styled with the [Jewel](https://github.com/willchambers/jewel-design-system) design system. The Go binary embeds the
 built `dist/` and serves it with `kubestoplight --web`.
 
 | Command | What it does |

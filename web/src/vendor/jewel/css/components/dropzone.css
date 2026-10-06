@@ -1,0 +1,103 @@
+/* Drop zone — one image, by drag-and-drop or the native picker, with a
+   preview you can replace or remove. Behavior: js/components/dropzone.js.
+   The corner carries the knockout lines instead of a heavy dashed border.
+
+   <div class="dropzone knockout" data-component="dropzone" data-max-size="20">
+     <input class="dropzone__input" id="photo" name="photo" type="file" accept="image/*" required>
+     <label class="dropzone__empty" for="photo">
+       <span class="dropzone__title">Drop a photo, or <u>browse</u></span>
+       <span class="dropzone__hint">JPG, PNG, HEIC or WebP · up to 20 MB</span>
+     </label>
+     <figure class="dropzone__preview" hidden>
+       <img alt="">
+       <figcaption class="dropzone__meta"></figcaption>
+     </figure>
+     <div class="dropzone__actions" hidden>
+       <label class="btn btn--ghost" for="photo">Replace</label>
+       <button class="btn btn--text" type="button" data-dropzone-remove>Remove</button>
+     </div>
+   </div>
+   No capture attribute, so phones offer both the library and the camera. */
+
+.dropzone {
+  --dropzone-border: var(--field-border);
+  --dropzone-ring: transparent;
+  --dropzone-min-h: 11rem;
+
+  position: relative;
+  display: grid;
+  background: var(--field-fill);
+  border: var(--hairline) solid var(--dropzone-border);
+  box-shadow: inset 0 0 0 var(--hairline) var(--dropzone-ring);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+.dropzone:hover { --dropzone-border: var(--field-border-hover); }
+.dropzone:focus-within { --dropzone-border: var(--field-focus); --dropzone-ring: var(--field-focus); }
+.dropzone[data-state="dragover"] {
+  --dropzone-border: var(--field-focus);
+  --dropzone-ring: var(--field-focus);
+  background: color-mix(in srgb, var(--field-focus) 8%, transparent);
+}
+.dropzone:has(.dropzone__input[aria-invalid="true"]) { --dropzone-border: var(--field-error); --dropzone-ring: var(--field-error); }
+
+/* The real input stays in the page for keyboard and form submission. */
+.dropzone__input {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dropzone__empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  min-height: var(--dropzone-min-h);
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+  cursor: pointer;
+}
+.dropzone__empty svg { width: var(--icon-lg); height: var(--icon-lg); color: var(--text-muted); margin-bottom: var(--space-2); }
+.dropzone__title { font-size: var(--text-base); color: var(--text-default); }
+.dropzone__title u {
+  text-decoration-thickness: var(--hairline);
+  text-underline-offset: 0.28em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+.dropzone__empty:hover .dropzone__title u { color: var(--text-accent); text-decoration-color: currentColor; }
+.dropzone__hint { font-size: var(--text-sm); color: var(--text-muted); }
+.dropzone[data-state="dragover"] .dropzone__title { color: var(--text-accent); }
+
+.dropzone__preview { margin: 0; padding: var(--space-3); display: grid; gap: var(--space-2); }
+.dropzone__preview img {
+  width: 100%;
+  max-height: 22rem;
+  object-fit: contain;
+  background: var(--media-bg);
+}
+.dropzone__meta { font-size: var(--text-sm); color: var(--text-muted); }
+
+.dropzone__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+/* Pressed and disabled. Disable the input: <input … disabled>. */
+.dropzone__empty:active { background: var(--state-pressed-fill); }
+.dropzone:has(.dropzone__input:disabled) {
+  --dropzone-border: var(--field-border);
+  border-style: dashed;
+  background: transparent;
+  opacity: var(--state-disabled-opacity);
+}
+.dropzone:has(.dropzone__input:disabled) .dropzone__empty { cursor: not-allowed; }
+.dropzone:has(.dropzone__input:disabled) .dropzone__empty:active { background: none; }
+.dropzone:has(.dropzone__input:disabled) .dropzone__title u { color: inherit; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }

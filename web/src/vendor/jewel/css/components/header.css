@@ -1,0 +1,73 @@
+/* Site header — sticky glass bar with wordmark, nav and actions.
+   <header class="site-header">
+     <div class="panel site-header__inner">
+       <a class="wordmark" href="/">Name</a>
+       <nav class="nav" aria-label="Primary">
+         <span class="nav__links">…links…</span>
+         <button class="btn btn--ghost btn--icon nav__menu" type="button"
+                 data-sheet-open="site-nav" aria-label="Menu" aria-controls="site-nav">
+           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+         </button>
+       </nav>
+     </div>
+   </header>
+   Below --bp-md (48rem) the links hide and the menu button opens the side
+   nav as a drawer (side-nav.css), so phones always have navigation. With
+   only two or three links, add .nav--keep (and no menu button) to let
+   them wrap instead of hiding.
+
+   Options (see the specimen's Header page):
+   - Links:           the default above.
+   - Links + action:  a .btn after .nav__links, e.g. "New post".
+   - Search:          a .search.nav__search inside .nav. It
+                      hides below --bp-md; put a search in the drawer there.
+   - Menu only:       .nav--drawer keeps the menu button at every width and
+                      never shows the links (apps with many sections). */
+
+.site-header {
+  position: sticky;
+  top: var(--sticky-offset);
+  z-index: var(--z-sticky);
+  margin-top: var(--sticky-offset);
+}
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--header-h);
+  padding: var(--space-3) var(--space-5);
+}
+
+.wordmark {
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-heading);
+  text-decoration: none;
+}
+
+.nav { display: flex; gap: var(--space-5); align-items: center; }
+.nav__links { display: flex; gap: var(--space-5); }
+.nav__links a {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-decoration-color: transparent;
+}
+.nav__links a:hover,
+.nav__links a[aria-current="page"] { color: var(--text-default); text-decoration-color: currentColor; }
+/* Menu button: phones and small tablets only. */
+.nav__menu svg { width: var(--icon-md); height: var(--icon-md); fill: none; stroke: currentColor; stroke-width: var(--icon-stroke); stroke-linecap: square; }
+@media (min-width: 48rem) { .nav__menu { display: none; } }   /* --bp-md */
+@media (width < 48rem) {                                       /* below --bp-md */
+  .nav:not(.nav--keep) .nav__links { display: none; }
+  .nav--keep .nav__links { flex-wrap: wrap; column-gap: var(--space-4); }
+}
+
+/* Search in the header: takes the spare width, up to a comfortable size. */
+.nav:has(.nav__search) { flex: 1; justify-content: flex-end; }
+.nav__search { flex: 0 1 18rem; min-width: 0; }
+@media (width < 48rem) { .nav .nav__search { display: none; } }   /* below --bp-md */
+
+/* Menu only: the drawer at every width. */
+.nav--drawer .nav__links { display: none; }
+@media (min-width: 48rem) { .nav--drawer .nav__menu { display: inline-flex; } }   /* --bp-md */
+

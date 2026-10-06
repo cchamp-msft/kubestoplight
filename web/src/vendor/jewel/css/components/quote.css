@@ -1,0 +1,14 @@
+/* Quote — pull quote with a hairline accent rule.
+   <blockquote class="quote">
+     <p>…</p>
+     <footer class="label">Source</footer>
+   </blockquote> */
+
+.quote {
+  padding-left: var(--space-5);
+  border-left: var(--hairline) solid var(--text-accent);
+  font-size: var(--text-xl);
+  line-height: 1.35;
+  letter-spacing: var(--tracking-heading);
+}
+.quote footer { margin-top: var(--space-3); }

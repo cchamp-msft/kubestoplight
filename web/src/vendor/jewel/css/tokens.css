@@ -1,0 +1,302 @@
+/* ==========================================================================
+   Jewel Design System — Tokens
+
+   Three tiers:
+   1. Primitives   raw values (palette, type scale, spacing…)        :root
+   2. Theme        color set (dark)                                 [data-theme]
+   3. Resolved     what components read: --panel-*, --text-*          :root, [data-theme]
+
+   Components only ever use tier 3 (plus scale tokens like --space-*),
+   so they keep working if a theme is added or scoped to one element.
+
+   Theme: dark only for now (light is parked in css/parked/).
+   Panels are glass by default; [data-panel="solid"] opts a subtree out.
+   ========================================================================== */
+
+/* --- Registered properties (interpolatable, used by the animated background) */
+@property --bg-c1 { syntax: "<color>"; inherits: true; initial-value: #6D28D9; }
+@property --bg-c2 { syntax: "<color>"; inherits: true; initial-value: #C026D3; }
+@property --bg-c3 { syntax: "<color>"; inherits: true; initial-value: #0F9488; }
+@property --bg-c4 { syntax: "<color>"; inherits: true; initial-value: #DC2626; }
+@property --bg-x1 { syntax: "<percentage>"; inherits: true; initial-value: 18%; }
+@property --bg-y1 { syntax: "<percentage>"; inherits: true; initial-value: 22%; }
+@property --bg-x2 { syntax: "<percentage>"; inherits: true; initial-value: 82%; }
+@property --bg-y2 { syntax: "<percentage>"; inherits: true; initial-value: 12%; }
+@property --bg-x3 { syntax: "<percentage>"; inherits: true; initial-value: 70%; }
+@property --bg-y3 { syntax: "<percentage>"; inherits: true; initial-value: 88%; }
+@property --bg-x4 { syntax: "<percentage>"; inherits: true; initial-value: 8%; }
+@property --bg-y4 { syntax: "<percentage>"; inherits: true; initial-value: 78%; }
+
+/* ==========================================================================
+   1. Primitives
+   ========================================================================== */
+:root {
+  /* ---- Jewel gradient palette ------------------------------------------ */
+  --jewel-purple:  #6D28D9;
+  --jewel-magenta: #C026D3;
+  --jewel-teal:    #0F9488;
+  --jewel-red:     #DC2626;
+  --jewel-orange:  #EA580C;
+
+  /* ---- Background motion (tune these) ---------------------------------- */
+  --bg-speed: 32s;          /* one full color/position cycle; 20–40s reads as "slow" */
+  --bg-intensity: 1;        /* 0–1: opacity of the gradient layers over the base */
+  --bg-blur: 0px;           /* optional extra softening; 0 keeps it cheapest */
+  /* The base sits inside the jewel luminance range so glass contrast holds. */
+  --bg-base: #7A2E9E;
+
+  /* ---- Typography ------------------------------------------------------ */
+  --font-sans: "Inter", "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Fluid type scale (min … max across 360–1280px viewports) */
+  --text-2xs:  0.625rem;                                  /* 10  micro badges only */
+  --text-xs:   0.75rem;                                   /* 12  labels */
+  --text-sm:   0.875rem;                                  /* 14  captions */
+  --text-base: 1rem;                                      /* 16  body */
+  --text-lg:   clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem); /* 18–20 lede */
+  --text-xl:   clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);  /* h3 */
+  --text-2xl:  clamp(1.75rem, 1.4rem + 1.6vw, 2.75rem);   /* h2 */
+  --text-3xl:  clamp(2.5rem, 1.6rem + 4vw, 5rem);         /* h1 */
+  --text-display: clamp(3rem, 1.5rem + 7vw, 8rem);        /* hero */
+  --text-code: 0.9em;                                     /* monospace runs a little large next to Inter */
+
+  --leading-display: 0.95;  /* .display hero */
+  --leading-tight: 1.02;    /* h1 */
+  --leading-heading: 1.08;  /* h2 */
+  --leading-snug: 1.2;      /* h3, h4 */
+  --leading-label: 1.4;     /* .label, field labels */
+  --leading-compact: 1.5;   /* lede, captions, small text */
+  --leading-body: 1.6;
+
+  --tracking-display: -0.045em;
+  --tracking-heading: -0.025em;
+  --tracking-subheading: -0.01em;
+  --tracking-body: -0.006em;
+  --tracking-label: 0.12em;
+  --tracking-tag: 0.04em;   /* tags and chips: a touch of air, not label-wide */
+
+  --measure: 64ch;
+
+  /* ---- Spacing (4px base) --------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+  --space-10: 8rem;
+
+  /* ---- Layout ---------------------------------------------------------- */
+  --grid-columns: 12;
+  --grid-gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
+  --page-max: 80rem;
+  --page-margin: clamp(1rem, 0.25rem + 3.5vw, 3.5rem);
+  --panel-padding: clamp(var(--space-5), 3vw, var(--space-7));
+  /* Gap above the sticky header; .jewel-cap fills it. It includes the iPhone
+     status bar when a home-screen app draws under it (viewport-fit=cover +
+     black-translucent), so the gradient fills the status bar too. */
+  --sticky-offset: calc(var(--space-4) + env(safe-area-inset-top, 0px));
+  --header-h: 4.125rem;     /* the sticky header bar's height (66px) */
+  /* ---- Breakpoints -----------------------------------------------------
+     Custom properties can't be read inside @media, so components write the
+     value and name the token beside it in a comment, e.g. "48rem, md".
+     JS can read them: getComputedStyle(root).getPropertyValue('--bp-md').
+     Mobile first: style the phone, then add min-width rules.
+       sm  40rem  640px   large phones: phone-only tweaks use max-width: 40rem
+       md  48rem  768px   tablets: the grid opens up, nav moves to the header
+       lg  64rem  1024px  laptops: persistent side nav, wider tables
+       xl  80rem  1280px  = --page-max: the page stops growing */
+  --bp-sm: 40rem;
+  --bp-md: 48rem;
+  --bp-lg: 64rem;
+  --bp-xl: 80rem;
+
+  /* ---- Control sizes -------------------------------------------------- */
+  --control-h-xs: 1.5rem;     /* 24  tags, chips (labels you can't press) */
+  --control-h-sm: 2rem;       /* 32  touch-size tags and compact controls */
+  --control-h: 2.5rem;        /* 40  buttons, tabs, menu items with a mouse */
+  --control-h-touch: 2.75rem; /* 44  fields, and every control on touch screens */
+  --control-h-lg: 3.5rem;     /* 56  the fab, the chat composer */
+  --hit-min: 2.75rem;         /* 44  minimum tap area (WCAG 2.5.5) */
+
+  /* ---- Icon sizes ----------------------------------------------------- */
+  --icon-xs: 0.875rem;  /* 14  inline spinners, chevrons */
+  --icon-sm: 1rem;      /* 16  icons in buttons and fields */
+  --icon-md: 1.375rem;  /* 22  the fab, header actions */
+  --icon-lg: 1.75rem;   /* 28  drop zone, empty states */
+  --icon-stroke: 1.25;  /* hairline icon stroke (SVG units) */
+
+  /* ---- Z-index scale -------------------------------------------------- */
+  --z-below: -1;     /* the animated background */
+  --z-base: 0;
+  --z-raised: 1;     /* badges over photos, a sticky table header */
+  --z-overlay: 3;    /* hover cards inside a component (chart tooltips) */
+  --z-cap: 9;        /* .jewel-cap, under the header */
+  --z-sticky: 10;    /* the sticky header */
+  --z-fab: 20;       /* the floating action button */
+  --z-dropdown: 30;  /* menus, date picker, search suggestions */
+  --z-drawer: 40;    /* side nav drawer (a <dialog> also gets the top layer) */
+  --z-toast: 50;
+
+  /* ---- Radius ---------------------------------------------------------- */
+  --radius-0: 0;
+  --radius-1: 2px;
+  --radius-2: 4px;
+  --radius-3: 8px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
+  /* ---- Panel shape ---------------------------------------------------- */
+  --panel-radius: var(--radius-0);  /* all panels: square by default */
+  /* Content panels (.panel--content / .panel-stack > .panel) */
+  --panel-radius-top-right: 2px;    /* knockout corner, just softened */
+  --panel-radius-bottom: 10px;      /* bottom-left and bottom-right */
+
+  /* ---- Knockout lines (content panels' top-right corner) -------------- */
+  --knockout-offset: 6px;           /* corner → first line */
+  --knockout-width: 1px;            /* line thickness */
+  --knockout-gap: 2px;              /* space between the lines */
+
+  /* ---- Borders --------------------------------------------------------- */
+  --hairline: 1px;
+  --rule-strong: 2px;       /* selected tab, current nav item, tone edges, focus rings */
+
+  /* ---- Layer and region sizes ----------------------------------------- */
+  --layer-w-sm: 12rem;      /* menus: minimum width */
+  --layer-w-md: 20rem;      /* menus: maximum width; the side nav drawer */
+  --layer-w-lg: 26rem;      /* the floating chat window */
+  --layer-h: 24rem;         /* menus and suggestion lists scroll past this */
+  --region-h: 28rem;        /* tall code blocks and tables scroll past this */
+  --side-nav-w: 15rem;      /* the persistent side nav column */
+  --chat-h: 40rem;          /* the chat shell in a page */
+
+  /* ---- Shadow (deliberately near-absent) ------------------------------- */
+  --shadow-none: none;
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px -12px rgb(0 0 0 / 0.12);
+
+  /* ---- Motion ---------------------------------------------------------- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+  --duration-spin: 800ms;   /* one turn of a busy spinner */
+  --duration-pulse: 1.4s;   /* busy badge dot */
+
+  /* ---- Glass ----------------------------------------------------------- */
+  --glass-blur: 24px;
+  --glass-saturate: 140%;
+}
+
+/* ==========================================================================
+   2. Theme color set — dark is the only active theme.
+   The light theme is parked in css/parked/light-theme.css (not loaded).
+   The [data-theme] attribute mechanism stays in place, so another theme
+   can be added later and scoped to a page or a single element.
+   ========================================================================== */
+
+:root,
+[data-theme="dark"] {
+  --color-surface:        #111114;
+  --color-surface-muted:  #1C1C21;
+  --color-border:         #2A2A31;
+  --color-text:           #F4F4F5;
+  --color-text-muted:     #A1A1AA;
+  --color-text-accent:    #C4B5FD;
+  --color-text-inverse:   #18181B;
+
+  /* Glass variants — see docs/accessibility.md "Contrast" for why these differ */
+  --glass-fill:           rgb(17 17 20 / 0.86);
+  --glass-border:         rgb(244 244 245 / 0.10);
+  --glass-text-muted:     #B4B4BD;
+  --glass-text-accent:    #C4B5FD;
+
+  /* Form fields — see docs/accessibility.md "Contrast". The 10% panel hairline is only
+     1.27:1, below the 3:1 that input edges need, so fields get their own. */
+  --color-field-border:       rgb(244 244 245 / 0.40); /* 3.25:1 */
+  --color-field-border-hover: rgb(244 244 245 / 0.60); /* 5.35:1 */
+  --color-field-fill:         rgb(244 244 245 / 0.03); /* texture only */
+  --color-error:              #FCA5A5;                 /* 6.86:1 text and edge */
+
+  /* Charts — categorical series, in this fixed order (never cycled).
+     Jewel's hues, stepped for the dark surface and ordered by the dataviz
+     validator: worst adjacent color-blind ΔE 18.9 (target 8), normal-vision
+     ΔE 25.0 (floor 15), ≥ 3.07:1 on the lightest glass. See docs/charts.md "Colors". */
+  --color-chart-1:        #0D9488;   /* teal */
+  --color-chart-2:        #8B5CF6;   /* purple */
+  --color-chart-3:        #EF4444;   /* red */
+  --color-chart-4:        #D946EF;   /* magenta */
+  --color-chart-5:        #EA580C;   /* orange */
+  /* Context gray: sparkline lines, and any series past the fifth (colors
+     never cycle). ΔE 24.4 from the accent, 3.06:1 on the lightest glass. */
+  --color-chart-context:  #7A7A84;
+
+  --color-scrim:          rgb(11 11 14);
+  --bg-dim:               0;     /* 0–1 dark scrim over the background */
+
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   3. Resolved tokens — the only color tokens components should use.
+   Re-declared on every [data-theme] so a scoped theme resolves against
+   its own palette.
+   ========================================================================== */
+
+:root,
+[data-theme] {
+  --panel-bg:          var(--glass-fill);
+  --panel-border:      var(--glass-border);
+  --panel-backdrop:    blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  --media-bg:          var(--color-surface-muted);
+  --text-default:      var(--color-text);
+  --text-muted:        var(--glass-text-muted);
+  --text-accent:       var(--glass-text-accent);
+  --text-inverse:      var(--color-text-inverse);
+  --surface-solid:     var(--color-surface);   /* opaque backing: native dropdowns, insets */
+  --scrim:             color-mix(in srgb, var(--color-scrim) 55%, transparent);   /* behind modal sheets */
+
+  /* Interaction states — every component uses these, so hover, pressed,
+     selected and disabled feel the same everywhere. */
+  --state-hover-fill:    color-mix(in srgb, var(--text-default) 6%, transparent);
+  --state-pressed-fill:  color-mix(in srgb, var(--text-default) 12%, transparent);
+  --state-selected-fill: color-mix(in srgb, var(--text-accent) 14%, transparent);
+  --state-pressed-solid: color-mix(in srgb, var(--text-accent) 78%, var(--text-inverse));
+  --state-disabled-opacity: 0.55;
+  --state-pressed-scale: 0.98;    /* small controls (fab, icon buttons) dip on press */
+
+  --field-border:       var(--color-field-border);
+  --field-border-hover: var(--color-field-border-hover);
+  --field-fill:         var(--color-field-fill);
+  --field-focus:        var(--text-accent);
+  --field-error:        var(--color-error);
+  --field-placeholder:  var(--text-muted);
+
+  --chart-1:            var(--color-chart-1);
+  --chart-2:            var(--color-chart-2);
+  --chart-3:            var(--color-chart-3);
+  --chart-4:            var(--color-chart-4);
+  --chart-5:            var(--color-chart-5);
+  --chart-accent:       var(--text-accent);
+  --chart-context:      var(--color-chart-context);
+  --chart-grid:         var(--panel-border);    /* hairline gridlines, recessive */
+  --chart-ring:         var(--surface-solid);   /* the 2px gap/ring between marks */
+}
+
+/* Opt-out: an opaque surface for places glass doesn't suit
+   (e.g. over photography, or when printing). */
+[data-panel="solid"],
+[data-panel="solid"] [data-theme] {
+  --panel-bg:          var(--color-surface);
+  --panel-border:      var(--color-border);
+  --panel-backdrop:    none;
+  --text-muted:        var(--color-text-muted);
+  --text-accent:       var(--color-text-accent);
+}

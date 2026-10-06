@@ -1,102 +1,78 @@
-/* ClusterSidebar — Carbon G100 redesign */
+/* ClusterSidebar — Jewel side-nav with per-cluster status dots and actions. */
 
-.ksl-sidebar {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background-color: var(--cds-layer-01);
-}
-
-/* ── Header ── */
-.ksl-sidebar__header {
-  padding: 12px 16px 8px;
+.ksl-sidebar__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--cds-border-subtle-01);
+  margin-bottom: var(--space-1);
 }
 
-.ksl-sidebar__title {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--cds-text-helper);
+.ksl-sidebar__head .side-nav__heading {
+  margin: 0;
 }
 
-.ksl-sidebar__status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+/* Jewel styles links; these are buttons, so reset the UA button look. */
+.ksl-sidebar__link {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  justify-content: flex-start;
 }
 
-.ksl-sidebar__dot {
-  width: 8px;
-  height: 8px;
-}
-
-.ksl-sidebar__status-label {
-  font-size: 0.75rem;
-  color: var(--cds-text-helper);
-}
-
-/* ── Nav items ── */
-.ksl-sidebar__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 16px;
-  height: 32px;
-  cursor: pointer;
-  border-left: 3px solid transparent;
-  font-size: 0.875rem;
-  color: var(--cds-text-primary);
-  letter-spacing: 0.16px;
-  line-height: 1.29;
-  transition: background-color 110ms;
-}
-
-.ksl-sidebar__item:hover {
-  background-color: var(--cds-layer-hover-01);
-}
-
-.ksl-sidebar__item--active {
-  background-color: var(--cds-layer-selected-01);
-  border-left-color: var(--cds-interactive);
-}
-
-.ksl-sidebar__item--active:hover {
-  background-color: var(--cds-layer-selected-01);
-}
-
-.ksl-sidebar__count {
-  font-size: 0.75rem;
-  color: var(--cds-text-helper);
-  font-variant-numeric: tabular-nums;
-}
-
-.ksl-sidebar__cluster-dot {
-  width: 8px;
-  height: 8px;
-  flex-shrink: 0;
-}
-
-.ksl-sidebar__cluster-name {
+.ksl-sidebar__name {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ── Footer ── */
-.ksl-sidebar__spacer {
-  flex: 1;
+.ksl-sidebar__count {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Edit / remove appear over the count on hover or keyboard focus. */
+.ksl-sidebar__row {
+  position: relative;
+}
+
+.ksl-sidebar__actions {
+  position: absolute;
+  top: 50%;
+  right: var(--space-1);
+  display: flex;
+  translate: 0 -50%;
+  background: var(--surface-solid);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.ksl-sidebar__row:hover .ksl-sidebar__actions,
+.ksl-sidebar__row:focus-within .ksl-sidebar__actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (pointer: coarse) {
+  .ksl-sidebar__actions {
+    position: static;
+    translate: none;
+    opacity: 1;
+    pointer-events: auto;
+    background: none;
+  }
+  .ksl-sidebar__row {
+    display: flex;
+  }
 }
 
 .ksl-sidebar__footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--cds-border-subtle-01);
-  font-size: 0.75rem;
-  color: var(--cds-text-helper);
-  letter-spacing: 0.32px;
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-3) 0;
+  border-top: var(--hairline) solid var(--panel-border);
 }

@@ -1,0 +1,37 @@
+/* Index list — numbered project rows; the title nudges right on hover.
+   <ol class="index">
+     <li><a class="index__row" href="…">
+       <span class="label">01</span>
+       <span class="index__title">Project</span>
+       <span class="label">Type · Year</span>
+     </a></li>
+   </ol> */
+
+.index {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: var(--hairline) solid var(--panel-border);
+}
+.index__row {
+  display: grid;
+  grid-template-columns: 3rem 1fr auto;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding-block: var(--space-4);
+  border-bottom: var(--hairline) solid var(--panel-border);
+  text-decoration: none;
+}
+.index__title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-heading);
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+.index__row:hover .index__title { transform: translateX(var(--space-2)); }
+.index__row:active .index__title { color: var(--text-accent); }
+
+@media (max-width: 40rem) {   /* below --bp-sm */
+  .index__row { grid-template-columns: 2rem 1fr; }
+  .index__row .label:last-child { grid-column: 2; }
+}

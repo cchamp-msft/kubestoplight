@@ -1,0 +1,78 @@
+/* Input — text inputs, textarea and select in the hairline-box style.
+   <input class="input" type="text">
+   <textarea class="input" rows="3"></textarea>          grows with content
+   <div class="select"><select class="input">…</select></div>
+
+   States come from the element itself: :hover, :focus-visible, :disabled,
+   [aria-invalid="true"]. Tune one instance with the --input-* properties. */
+
+.input {
+  --input-border: var(--field-border);
+  --input-ring: transparent;
+  --input-pad-y: var(--space-2);
+  --input-pad-x: var(--space-3);
+
+  display: block;
+  width: 100%;
+  min-height: var(--control-h-touch);   /* 44px touch target */
+  margin: 0;
+  padding: var(--input-pad-y) var(--input-pad-x);
+  font: inherit;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  letter-spacing: var(--tracking-body);
+  color: var(--text-default);
+  background: var(--field-fill);
+  border: var(--hairline) solid var(--input-border);
+  border-radius: 0;
+  box-shadow: inset 0 0 0 var(--hairline) var(--input-ring);   /* second pixel on focus/error */
+  outline: none;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+.input::placeholder { color: var(--field-placeholder); opacity: 1; }
+
+.input:hover { --input-border: var(--field-border-hover); }
+.input:focus-visible,
+.input:focus { --input-border: var(--field-focus); --input-ring: var(--field-focus); }
+.input[aria-invalid="true"] { --input-border: var(--field-error); --input-ring: var(--field-error); }
+
+.input:disabled {
+  color: var(--text-muted);
+  background: transparent;
+  border-style: dashed;
+  cursor: not-allowed;
+  --input-border: var(--field-border);
+}
+
+/* Textarea: grows with its content where supported; form.js covers the rest. */
+textarea.input {
+  min-height: 6.5rem;
+  max-height: 24rem;
+  resize: vertical;
+  line-height: var(--leading-body);
+  field-sizing: content;
+}
+
+/* Select: native element, restyled, with a hairline chevron. */
+.select { position: relative; }
+.select .input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: calc(var(--input-pad-x) * 2 + 0.5rem);
+  cursor: pointer;
+}
+.select .input option { color: var(--text-default); background: var(--surface-solid); }
+.select::after {
+  content: "";
+  position: absolute;
+  right: var(--space-4);
+  top: 50%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: var(--hairline) solid var(--text-muted);
+  border-bottom: var(--hairline) solid var(--text-muted);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}

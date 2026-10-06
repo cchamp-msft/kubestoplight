@@ -1,37 +1,8 @@
-/* Namespace card grid — Carbon G100 redesign */
+/* Namespace card grid */
 
 .ksl-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 8px;
-  margin-top: 16px;
-  background-color: var(--cds-background);
-}
-
-/* Empty state */
-.ksl-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 24px;
-  color: var(--cds-text-helper);
-}
-
-.ksl-empty__icon {
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.ksl-empty__title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--cds-text-primary);
-}
-
-.ksl-empty__message {
-  font-size: 0.875rem;
-  text-align: center;
-  max-width: 320px;
+  grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr));
+  gap: var(--space-4);
+  align-items: start;
 }

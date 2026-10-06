@@ -1,0 +1,83 @@
+/* Accordion — stacked sections that open in place. Native <details>, so
+   it works without JS, find-in-page opens the right section, and the
+   keyboard behavior comes free.
+
+   <div class="accordion">
+     <details class="accordion__item" name="faq" open>
+       <summary class="accordion__head">What sizes can I upload?</summary>
+       <div class="accordion__body"><p>…</p></div>
+     </details>
+     <details class="accordion__item" name="faq">…</details>
+   </div>
+
+   Only one open at a time: give every item the same name="…" (native
+   exclusive accordion). Disabled item: add aria-disabled="true" to the
+   summary; js/components/accordion.js keeps it shut (optional script).
+   .accordion--flush drops the outer rules (inside a list or a panel edge). */
+
+.accordion {
+  border-top: var(--hairline) solid var(--panel-border);
+  /* lets the body animate open where interpolate-size is supported */
+  interpolate-size: allow-keywords;
+}
+.accordion--flush { border-top: 0; }
+.accordion--flush .accordion__item:last-child { border-bottom: 0; }
+
+.accordion__item { border-bottom: var(--hairline) solid var(--panel-border); }
+
+.accordion__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--control-h-touch);
+  padding-block: var(--space-3);
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-default);
+  list-style: none;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+.accordion__head::-webkit-details-marker { display: none; }
+/* Chevron: two hairlines, turns on open. */
+.accordion__head::after {
+  content: "";
+  flex: none;
+  width: var(--space-2);
+  height: var(--space-2);
+  margin-right: var(--space-1);
+  border-right: var(--hairline) solid var(--text-muted);
+  border-bottom: var(--hairline) solid var(--text-muted);
+  transform: translateY(-25%) rotate(45deg);
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+.accordion__item[open] > .accordion__head::after { transform: translateY(25%) rotate(-135deg); }
+.accordion__head:hover { color: var(--text-accent); }
+.accordion__head:active { background: var(--state-pressed-fill); }
+.accordion__head:focus-visible { outline-offset: calc(-1 * var(--hairline)); }
+.accordion__head[aria-disabled="true"] {
+  color: var(--text-muted);
+  opacity: var(--state-disabled-opacity);
+  cursor: not-allowed;
+}
+.accordion__head[aria-disabled="true"]:hover { color: var(--text-muted); }
+
+/* Optional meta on the right of the head: <span class="accordion__meta">3 files</span> */
+.accordion__meta { margin-left: auto; font-size: var(--text-sm); font-weight: var(--weight-regular); color: var(--text-muted); }
+
+.accordion__body {
+  padding: 0 0 var(--space-5);
+  color: var(--text-muted);
+}
+.accordion__body > * + * { margin-top: var(--space-3); }
+
+/* Smooth open/close where supported (Chromium). Others just snap. */
+.accordion__item::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  transition:
+    block-size var(--duration-base) var(--ease-standard),
+    content-visibility var(--duration-base) allow-discrete;
+}
+.accordion__item[open]::details-content { block-size: auto; }

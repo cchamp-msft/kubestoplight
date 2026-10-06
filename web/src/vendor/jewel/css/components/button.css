@@ -1,0 +1,120 @@
+/* Button — primary (filled), ghost (outlined), text (underlined), icon.
+   <a class="btn" href="…">Label</a>
+   <button class="btn btn--ghost" type="button">Label</button>
+   <button class="btn btn--ghost btn--icon" type="button" aria-label="…"><svg…></button>
+
+   Each variant only sets --btn-bg / --btn-fg / --btn-border, so a new
+   variant is three lines. */
+
+.btn {
+  --btn-bg: var(--text-default);
+  --btn-fg: var(--text-inverse);
+  --btn-border: var(--text-default);
+  --btn-bg-hover: var(--text-accent);
+  --btn-fg-hover: var(--text-inverse);
+  --btn-border-hover: var(--text-accent);
+  --btn-bg-active: var(--state-pressed-solid);
+  --btn-border-active: var(--btn-bg-active);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  text-decoration: none;
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  border: var(--hairline) solid var(--btn-border);
+  border-radius: var(--radius-2);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    text-underline-offset var(--duration-base) var(--ease-standard);
+}
+.btn:hover {
+  color: var(--btn-fg-hover);
+  background: var(--btn-bg-hover);
+  border-color: var(--btn-border-hover);
+}
+
+.btn--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--text-default);
+  --btn-border: var(--panel-border);
+  --btn-bg-hover: transparent;
+  --btn-fg-hover: var(--text-accent);
+  --btn-border-hover: currentColor;
+  --btn-bg-active: var(--state-pressed-fill);
+  --btn-border-active: currentColor;
+}
+
+.btn--text {
+  --btn-bg: transparent;
+  --btn-fg: var(--text-default);
+  --btn-border: transparent;
+  --btn-bg-hover: transparent;
+  --btn-fg-hover: var(--text-accent);
+  --btn-border-hover: transparent;
+  --btn-bg-active: transparent;
+  --btn-border-active: transparent;
+  padding-inline: 0;
+  text-decoration: underline;
+  text-decoration-thickness: var(--hairline);
+  text-underline-offset: 0.3em;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+}
+.btn--text:hover { text-underline-offset: 0.18em; }
+
+.btn--icon { padding: 0; width: var(--control-h); justify-content: center; }
+
+/* Touch screens: 44px minimum targets. */
+@media (pointer: coarse) {
+  .btn { min-height: var(--control-h-touch); }
+  .btn--icon { width: var(--control-h-touch); }
+}
+.btn svg { width: var(--icon-sm); height: var(--icon-sm); flex: none; }
+
+/* Busy: set aria-busy="true" (form.js does this on submit). The label
+   stays readable; a hairline spinner sits before it. */
+.btn[aria-busy="true"] { cursor: progress; }
+.btn[aria-busy="true"]::before {
+  content: "";
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  border: var(--hairline) solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-round);
+  animation: btn-spin var(--duration-spin) linear infinite;
+}
+@keyframes btn-spin { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) {
+  .btn[aria-busy="true"]::before { animation: none; border-right-color: currentColor; opacity: 0.6; }
+}
+.btn:disabled,
+.btn[aria-disabled="true"] { opacity: var(--state-disabled-opacity); cursor: not-allowed; }
+.btn[aria-busy="true"]:disabled { opacity: 1; cursor: progress; }
+
+/* Two-state button: show .toggle__on when pressed, .toggle__off otherwise. */
+.toggle .toggle__on,
+.toggle .toggle__off { display: none; }
+.toggle[aria-pressed="true"] .toggle__on,
+.toggle[aria-pressed="false"] .toggle__off { display: inline; }
+
+/* Pressed (:active): filled buttons darken toward the accent's shade,
+   ghost buttons take the pressed fill, icon buttons dip slightly. */
+.btn:active:not(:disabled, [aria-disabled="true"], [aria-busy="true"]) {
+  background: var(--btn-bg-active);
+  border-color: var(--btn-border-active);
+}
+.btn--text:active:not(:disabled, [aria-disabled="true"]) { text-underline-offset: 0.12em; }
+.btn--icon { transition-property: background-color, border-color, color, transform; }
+.btn--icon:active:not(:disabled, [aria-disabled="true"]) { transform: scale(var(--state-pressed-scale)); }
+
+/* Toggle on: an accent edge, so "on" reads without relying on the label. */
+.btn.toggle[aria-pressed="true"] { --btn-border: var(--text-accent); --btn-fg: var(--text-accent); }
+.btn--ghost.toggle[aria-pressed="true"] { --btn-bg: var(--state-selected-fill); }

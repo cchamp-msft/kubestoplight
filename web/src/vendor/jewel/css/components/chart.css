@@ -1,0 +1,216 @@
+/* Chart — line, area, bar, pie/donut and sparkline, drawn as SVG from an
+   HTML table. Behavior: js/components/chart.js.
+
+   <figure class="chart" data-component="chart" data-type="line">
+     <figcaption>
+       <span class="chart__title">Monthly rides</span>
+       <span class="chart__subtitle">By bike type, 2026</span>
+     </figcaption>
+     <table>
+       <thead><tr><th>Month</th><th>Classic</th><th>Electric</th></tr></thead>
+       <tbody><tr><th>Jan</th><td>120,400</td><td>61,200</td></tr>…</tbody>
+     </table>
+   </figure>
+
+   The first column is the categories (x axis, or pie slices); each further
+   column is a series. The table stays on the page as the chart's data view
+   (behind "Show data"), and still shows if scripts don't run.
+
+   data-type     line | area | bar | pie | donut | sparkline
+   data-stacked  stack area or bar series on top of each other
+   data-prefix / data-suffix  for axis ticks: "$", "%", "h"…
+   data-height   plot height in px (default 260)
+
+   Marks follow the dataviz specs: 2px lines, bars ≤ 24px with a 4px rounded
+   end, area washes at ~12%, hairline solid gridlines, a 2px gap/ring in the
+   surface color between marks. Text never wears a series color. */
+
+.chart {
+  --chart-height: 260px;
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* ---- Series colors: fixed order, by entity (never by rank or value) --- */
+.chart [data-series="1"] { --c: var(--chart-1); }
+.chart [data-series="2"] { --c: var(--chart-2); }
+.chart [data-series="3"] { --c: var(--chart-3); }
+.chart [data-series="4"] { --c: var(--chart-4); }
+.chart [data-series="5"] { --c: var(--chart-5); }
+.chart [data-series="x"] { --c: var(--chart-context); }   /* beyond 5: folded, never a 6th hue */
+
+/* ---- Head --------------------------------------------------------------- */
+.chart figcaption { display: grid; gap: var(--space-1); }
+.chart__title { font-size: var(--text-base); font-weight: var(--weight-medium); color: var(--text-default); }
+.chart__subtitle { font-size: var(--text-sm); color: var(--text-muted); }
+
+/* ---- Plot ---------------------------------------------------------------- */
+.chart__plot {
+  position: relative;
+  min-width: 0;
+  border-radius: var(--radius-1);
+  touch-action: pan-y;               /* vertical scrolling still works on touch */
+}
+.chart__plot:focus-visible { outline: 2px solid var(--field-focus); outline-offset: 4px; }
+.chart__plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart svg text { font-family: inherit; }
+
+.chart__grid  { stroke: var(--chart-grid); stroke-width: 1; shape-rendering: crispEdges; }
+.chart__axis  { stroke: var(--field-border); stroke-width: 1; shape-rendering: crispEdges; }
+.chart__tick  { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.chart__value { fill: var(--text-default); font-size: 12px; font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; }
+.chart__end-label { fill: var(--text-muted); font-size: 12px; }
+.chart__cross { stroke: var(--field-border-hover); stroke-width: 1; shape-rendering: crispEdges; pointer-events: none; }
+.chart__hit   { fill: transparent; cursor: crosshair; }
+
+.chart__line  { fill: none; stroke: var(--c); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart__area  { fill: var(--c); fill-opacity: 0.12; stroke: none; }
+.chart__dot   { fill: var(--c); stroke: var(--chart-ring); stroke-width: 2; opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard); }
+.chart__dot.is-end,
+.chart__dot.is-active { opacity: 1; }
+.chart__dot.is-active { r: 5; }
+.chart__bar   { fill: var(--c); transition: filter var(--duration-fast) var(--ease-standard); }
+.chart__band[data-active] .chart__bar { filter: brightness(1.25); }
+.chart__band  { cursor: default; }
+.chart__slice {
+  fill: var(--c);
+  transition: transform var(--duration-base) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
+}
+.chart__slice[data-active] { transform: translate(var(--lift-x, 0), var(--lift-y, 0)); filter: brightness(1.15); }
+.chart__center-value { fill: var(--text-default); font-size: 28px; font-weight: var(--weight-semibold); letter-spacing: var(--tracking-heading); }
+.chart__center-label { fill: var(--text-muted); font-size: 11px; font-weight: var(--weight-medium); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+
+/* ---- Load animation: plays once, when the chart scrolls into view ------- */
+:is(.chart, .sparkline) [data-anim="draw"]  { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1100ms var(--ease-out) var(--d, 0ms); }
+:is(.chart, .sparkline) [data-anim="grow"]  { transform: scaleY(0); transform-box: fill-box; transform-origin: 50% 100%; transition: transform 700ms var(--ease-out) var(--d, 0ms); }
+:is(.chart, .sparkline) [data-anim="fade"]  { opacity: 0; transition: opacity 600ms var(--ease-standard) var(--d, 0ms); }
+:is(.chart, .sparkline) [data-anim="sweep"] { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1100ms var(--ease-out); }
+:is(.chart, .sparkline).is-in [data-anim="draw"],
+:is(.chart, .sparkline).is-in [data-anim="sweep"] { stroke-dashoffset: 0; }
+:is(.chart, .sparkline).is-in [data-anim="grow"]  { transform: none; }
+:is(.chart, .sparkline).is-in [data-anim="fade"]  { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  :is(.chart, .sparkline) [data-anim] { transition: none !important; }
+}
+
+/* ---- Hover card --------------------------------------------------------- */
+.chart__tip {
+  position: absolute;
+  z-index: var(--z-overlay);
+  top: 0;
+  left: 0;
+  display: grid;
+  gap: var(--space-2);
+  min-width: 9rem;
+  max-width: 16rem;
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  color: var(--text-default);
+  background: var(--panel-bg);
+  border: var(--hairline) solid var(--field-border);
+  border-radius: var(--radius-2);
+  -webkit-backdrop-filter: var(--panel-backdrop);
+  backdrop-filter: var(--panel-backdrop);
+  box-shadow: var(--shadow-float);
+  pointer-events: none;
+}
+.chart__tip-title {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.chart__tip-rows { display: grid; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.chart__tip-row {
+  display: grid;
+  grid-template-columns: 0.875rem auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--space-2);
+}
+.chart__tip-row strong { font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
+.chart__tip-row span:last-child { color: var(--text-muted); }
+.chart__tip-row.is-plain { grid-template-columns: auto minmax(0, 1fr); }
+.chart__tip-row.is-total { padding-top: var(--space-1); border-top: var(--hairline) solid var(--panel-border); }
+.chart__key { width: 0.875rem; height: 2px; border-radius: 1px; background: var(--c, transparent); }
+
+/* ---- Legend ------------------------------------------------------------- */
+.chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+.chart__legend li { display: inline-flex; align-items: center; gap: var(--space-2); }
+.chart__legend .chart__swatch { width: 0.75rem; height: 0.75rem; border-radius: 2px; background: var(--c); flex: none; }
+.chart__legend .chart__swatch--line { height: 2px; width: 0.875rem; border-radius: 1px; }
+.chart__legend b { color: var(--text-default); font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; }
+
+/* ---- Pie / donut: chart beside its legend on wide screens --------------- */
+.chart--round { container-type: inline-size; }
+.chart--round .chart__body { display: grid; gap: var(--space-5); align-items: center; }
+/* Legend beside the chart when the chart itself has room (not the screen). */
+@container (min-width: 30rem) {
+  .chart--round .chart__body { grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); }
+}
+.chart--round .chart__legend { display: grid; gap: var(--space-3); }
+.chart--round .chart__legend li { justify-content: space-between; gap: var(--space-4); border-bottom: var(--hairline) solid var(--panel-border); padding-bottom: var(--space-2); }
+.chart--round .chart__legend li > span:first-child { display: inline-flex; align-items: center; gap: var(--space-2); }
+
+/* ---- Data view ---------------------------------------------------------- */
+/* Wide tables scroll sideways inside the panel instead of widening the page. */
+.chart__data { min-width: 0; overflow-x: auto; }
+.chart__data summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hit-min);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-decoration-thickness: var(--hairline);
+  text-underline-offset: 0.3em;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  cursor: pointer;
+  list-style: none;
+}
+.chart__data summary::-webkit-details-marker { display: none; }
+.chart__data summary:hover { color: var(--text-accent); text-decoration-color: currentColor; }
+.chart__data[open] summary { margin-bottom: var(--space-2); }
+.chart table,
+.chart__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.chart table th,
+.chart table td {
+  padding: var(--space-2) var(--space-3) var(--space-2) 0;
+  text-align: right;
+  border-bottom: var(--hairline) solid var(--panel-border);
+}
+.chart table th:first-child,
+.chart table td:first-child { text-align: left; }
+.chart table thead th { color: var(--text-muted); font-weight: var(--weight-medium); }
+
+/* ---- Sparkline (inside a .stat, or inline) ------------------------------
+   data-values, data-labels (one per value), data-name (the card's label),
+   and an aria-label that says the trend. */
+.sparkline {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 10rem;
+  height: 2rem;
+  margin-top: var(--space-1);
+}
+.sparkline svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.sparkline .chart__line { stroke: var(--chart-context); stroke-width: 1.5; }
+.sparkline .chart__dot { fill: var(--chart-accent); opacity: 1; }

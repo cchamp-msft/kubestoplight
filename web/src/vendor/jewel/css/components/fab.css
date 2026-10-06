@@ -1,0 +1,66 @@
+/* Floating action button — one primary action, fixed bottom-right.
+   Glass surface, hairline edge, hairline icon. Clears the iPhone home
+   indicator and notch via safe-area insets (needs viewport-fit=cover).
+
+   <button class="fab" type="button" aria-label="New post" data-sheet-open="post-sheet">
+     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+   </button>
+   Add .fab--extended and a <span class="fab__label">New post</span> for a text label. */
+
+.fab {
+  --fab-size: var(--control-h-lg);
+  --fab-offset: var(--space-5);
+
+  position: fixed;
+  right: calc(var(--fab-offset) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--fab-offset) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--z-fab);          /* above content; the sticky header sits at the top */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: var(--fab-size);
+  height: var(--fab-size);
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-default);
+  background: var(--panel-bg);
+  border: var(--hairline) solid var(--field-border);
+  border-radius: var(--radius-2);
+  -webkit-backdrop-filter: var(--panel-backdrop);
+  backdrop-filter: var(--panel-backdrop);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.fab svg {
+  width: var(--icon-md);
+  height: var(--icon-md);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+}
+.fab:hover { color: var(--text-accent); border-color: var(--field-border-hover); }
+.fab { transition-property: border-color, color, transform, background-color; }
+.fab:active:not(:disabled) {
+  transform: scale(var(--state-pressed-scale));
+  background: color-mix(in srgb, var(--panel-bg), var(--text-default) 8%);
+}
+.fab:disabled,
+.fab[aria-disabled="true"] {
+  opacity: var(--state-disabled-opacity);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+.fab:disabled:hover { color: var(--text-default); border-color: var(--field-border); }
+.fab:focus-visible { outline: 2px solid var(--field-focus); outline-offset: 3px; }
+
+.fab--extended { padding: 0 var(--space-5) 0 var(--space-4); }
+.fab__label { white-space: nowrap; }
+
+/* Keeps page content clear of the button at the very bottom of a page. */
+.has-fab { padding-bottom: calc(var(--fab-size, var(--control-h-lg)) + var(--space-7)); }

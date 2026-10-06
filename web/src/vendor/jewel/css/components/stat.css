@@ -1,0 +1,114 @@
+/* Stat — a property/value pair: the property in small uppercase text, the
+   value large. For the key numbers in a report, dashboard or landing page.
+   Real <dl> markup, so a screen reader reads each pair as one fact.
+
+   <dl class="stats">
+     <div class="stat">
+       <dt class="stat__label">Stations</dt>
+       <dd class="stat__value">148</dd>
+     </div>
+     <div class="stat">
+       <dt class="stat__label">Members</dt>
+       <dd class="stat__value">12.4<span class="stat__unit">K</span></dd>
+       <dd class="stat__note">Up a third since January</dd>
+     </div>
+   </dl>
+
+   Layouts
+   - default   label above the value (stacked)
+   - --inline  the value first, the label beside it, bottom-aligned
+   - --hero    one headline figure per page, display size
+   Parts
+   - .stat__unit  a smaller suffix or prefix: +, %, K, M, yrs, $
+   - .stat__note  an optional quiet line of context under the value
+
+   Values are text, written as you want them read: "12", "40+", "3.2M".
+   Nothing is counted or formatted by script. Big numbers keep the font's
+   proportional figures; tabular figures would space "121" too loosely. */
+
+.stats {
+  --stats-min: 8rem;                /* narrowest column: 4 across on desktop, 2 on phones */
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--stats-min), 100%), 1fr));
+  gap: var(--space-6) var(--grid-gutter);
+}
+
+.stat {
+  --stat-size: var(--text-2xl);
+
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: var(--hairline) solid var(--panel-border);
+  min-width: 0;
+}
+
+/* Stacked stats in a row share their label, value and note rows (subgrid),
+   so the numbers line up even when one label wraps onto two lines. */
+@supports (grid-template-rows: subgrid) {
+  .stats > .stat:not(.stat--inline):not(.stat--hero) {
+    grid-row: span 3;
+    grid-template-rows: subgrid;
+    row-gap: var(--space-2);
+    align-content: normal;
+  }
+}
+
+.stat__label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: 1.4;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.stat__value {
+  font-size: var(--stat-size);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-heading);
+  color: var(--text-default);
+  overflow-wrap: anywhere;
+}
+
+/* A suffix or prefix, smaller and quieter than the number it qualifies. */
+.stat__unit {
+  font-size: 0.5em;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0;
+  color: var(--text-muted);
+  margin-inline: 0.08em;
+}
+
+.stat__note {
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-muted);
+  max-width: 32ch;
+}
+
+/* ---- Inline: value first, label beside it ------------------------------- */
+.stat--inline {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "value label"
+    "value note";
+  align-items: end;
+  column-gap: var(--space-4);
+  row-gap: var(--space-1);
+}
+.stat--inline .stat__value { grid-area: value; }
+.stat--inline .stat__label { grid-area: label; max-width: 24ch; padding-bottom: 0.2em; text-wrap: balance; }
+.stat--inline .stat__note  { grid-area: note; }
+.stat--inline:not(:has(.stat__note)) { grid-template-areas: "value label"; }
+
+/* ---- Hero: the one headline figure on a page ------------------------------ */
+.stat--hero {
+  --stat-size: var(--text-display);    /* 48px at the smallest */
+  border-top: 0;
+  padding-top: 0;
+}
+.stat--hero .stat__value { font-weight: var(--weight-bold); letter-spacing: var(--tracking-display); line-height: 0.95; }

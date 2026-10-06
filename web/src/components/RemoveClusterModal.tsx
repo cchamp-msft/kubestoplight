@@ -1,11 +1,5 @@
-import {
-  ComposedModal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  InlineNotification,
-} from '@carbon/react';
 import { useState } from 'react';
+import Sheet from './ui/Sheet';
 
 interface Props {
   open: boolean;
@@ -30,34 +24,26 @@ export default function RemoveClusterModal({ open, clusterName, onClose, onConfi
   }
 
   return (
-    <ComposedModal open={open} onClose={onClose} size="xs" danger>
-      <ModalHeader
-        title="Remove cluster"
-        label={clusterName}
-      />
-      <ModalBody>
-        {error && (
-          <InlineNotification
-            kind="error"
-            title="Error"
-            subtitle={error}
-            lowContrast
-            style={{ marginBottom: '1rem' }}
-          />
-        )}
+    <Sheet open={open} onClose={onClose} title="Remove cluster">
+      <div className="form">
+        {error && <p className="form__error" role="alert">{error}</p>}
         <p>
-          Remove <strong>{clusterName}</strong> from kubestoplight? This will delete the
-          entry from your config file. The cluster itself is not affected.
+          Remove <strong>{clusterName}</strong> from kubestoplight? This deletes the entry from your
+          config file. The cluster itself is not affected.
         </p>
-      </ModalBody>
-      <ModalFooter
-        danger
-        primaryButtonText="Remove"
-        secondaryButtonText="Cancel"
-        onRequestSubmit={handleConfirm}
-        onRequestClose={onClose}
-        primaryButtonDisabled={submitting}
-      >{null}</ModalFooter>
-    </ComposedModal>
+        <div className="form__actions">
+          <button className="btn btn--ghost" type="button" onClick={onClose}>Cancel</button>
+          <button
+            className="btn btn--danger"
+            type="button"
+            disabled={submitting}
+            aria-busy={submitting}
+            onClick={handleConfirm}
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    </Sheet>
   );
 }

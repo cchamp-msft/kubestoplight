@@ -1,0 +1,135 @@
+/* Tag input — chips plus a text box, in the hairline-box style.
+   Behavior: js/components/tag-input.js (Enter or comma adds, Backspace
+   removes, duplicates rejected, max count, suggestions).
+
+   <div class="tag-input" data-component="tag-input" data-max="10"
+        data-suggestions='["Street","Dayton"]'>
+     <ul class="tag-input__list" aria-label="Tags"></ul>
+     <input class="tag-input__text" id="tags" type="text" placeholder="Add a tag">
+     <input type="hidden" name="tags">
+   </div>
+   Suggestions render after it as a row of tap-to-add chips. */
+
+.tag-input {
+  --tag-input-border: var(--field-border);
+  --tag-input-ring: transparent;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h-touch);
+  padding: var(--space-1) var(--space-3);
+  background: var(--field-fill);
+  border: var(--hairline) solid var(--tag-input-border);
+  box-shadow: inset 0 0 0 var(--hairline) var(--tag-input-ring);
+  cursor: text;
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.tag-input:hover { --tag-input-border: var(--field-border-hover); }
+.tag-input:focus-within { --tag-input-border: var(--field-focus); --tag-input-ring: var(--field-focus); }
+.tag-input:has([aria-invalid="true"]) { --tag-input-border: var(--field-error); --tag-input-ring: var(--field-error); }
+
+.tag-input__list {
+  display: contents;       /* chips flow inline with the text box */
+  list-style: none;
+}
+.tag-input__text {
+  flex: 1 1 8rem;
+  min-width: 6rem;
+  min-height: calc(var(--control-h-touch) - 2 * var(--space-1));
+  padding: 0;
+  font: inherit;
+  color: var(--text-default);
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+.tag-input__text::placeholder { color: var(--field-placeholder); opacity: 1; }
+.tag-input__text:disabled { cursor: not-allowed; }
+
+/* ---- Chip --------------------------------------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: calc(var(--control-h-xs) + var(--space-1));
+  padding: 0 var(--space-1) 0 var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-tag);
+  line-height: 1;
+  color: var(--text-default);
+  border: var(--hairline) solid var(--field-border);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.chip__remove {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--control-h-xs);
+  height: var(--control-h-xs);
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-base);
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-round);
+  cursor: pointer;
+}
+.chip__remove::after { content: ""; position: absolute; inset: -0.625rem; } /* 44px hit area */
+.chip__remove:hover { color: var(--text-default); background: var(--state-hover-fill); }
+.chip__remove:active { background: var(--state-pressed-fill); }
+.chip--suggest:active::before { background: var(--state-pressed-fill); }
+.tag-input:has(.tag-input__text:disabled) {
+  --tag-input-border: var(--field-border);
+  border-style: dashed;
+  background: transparent;
+  cursor: not-allowed;
+  opacity: var(--state-disabled-opacity);
+}
+.tag-input:has(.tag-input__text:disabled) .chip__remove { pointer-events: none; }
+
+/* A chip that was just rejected as a duplicate flashes its border. */
+.chip.is-duplicate { border-color: var(--field-focus); }
+
+/* ---- Suggestions ------------------------------------------------------- */
+.tag-input__suggest { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--space-3); }
+.tag-input__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chip--suggest {
+  min-height: var(--hit-min);   /* tap target; the pill stays visually small */
+  height: auto;
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-tag);
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  position: relative;
+}
+.chip--suggest::before {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  height: calc(var(--control-h-xs) + var(--space-1));
+  transform: translateY(-50%);
+  border: var(--hairline) dashed var(--field-border);
+  border-radius: var(--radius-pill);
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+.chip--suggest:hover { color: var(--text-default); }
+.chip--suggest:hover::before { border-color: var(--field-border-hover); border-style: solid; }
+.chip--suggest:focus-visible { outline: none; }
+.chip--suggest:focus-visible::before { border: 2px solid var(--field-focus); }

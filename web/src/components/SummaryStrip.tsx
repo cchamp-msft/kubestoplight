@@ -1,19 +1,23 @@
 import { useMemo } from 'react';
 import type { NamespaceGroup } from '../types/api';
 
-interface TileProps {
+interface StatProps {
   label: string;
-  value: string | number;
-  accent: string;
-  subtext?: string | null;
+  value: React.ReactNode;
+  tone?: string;
+  note?: string | null;
 }
 
-function SummaryTile({ label, value, accent, subtext }: TileProps) {
+// Jewel stat: uppercase label, big uncolored value. Status shows only as a dot.
+function Stat({ label, value, tone, note }: StatProps) {
   return (
-    <div className="ksl-tile" style={{ borderTopColor: accent }}>
-      <div className="ksl-tile__value">{value}</div>
-      <div className="ksl-tile__label">{label}</div>
-      {subtext && <div className="ksl-tile__subtext">{subtext}</div>}
+    <div className="stat">
+      <dt className="stat__label ksl-stat__label">
+        {tone && <span className="ksl-dot" style={{ '--tone': tone } as React.CSSProperties} aria-hidden="true" />}
+        {label}
+      </dt>
+      <dd className="stat__value">{value}</dd>
+      <dd className="stat__note">{note ?? ' '}</dd>
     </div>
   );
 }
@@ -42,26 +46,31 @@ export default function SummaryStrip({ groups }: Props) {
   const pct = t.pods > 0 ? Math.round((t.idle / t.pods) * 100) : 0;
 
   return (
-    <div className="ksl-summary">
-      <SummaryTile label="Total pods" value={t.pods} accent="var(--cds-border-interactive)" />
-      <SummaryTile label="Healthy" value={`${pct}%`} accent="var(--cds-support-success)" subtext={`${t.idle} idle`} />
-      <SummaryTile
+    <dl className="stats ksl-stats">
+      <Stat label="Total pods" value={t.pods} note={`${groups.length} namespaces`} />
+      <Stat
+        label="Healthy"
+        tone={t.pods > 0 ? 'var(--status-idle)' : undefined}
+        value={<>{pct}<span className="stat__unit">%</span></>}
+        note={`${t.idle} idle`}
+      />
+      <Stat
         label="Failed"
+        tone={t.failed > 0 ? 'var(--status-failed)' : undefined}
         value={t.failed}
-        accent={t.failed > 0 ? 'var(--cds-support-error)' : 'var(--cds-border-subtle-01)'}
+        note={t.failed > 0 ? 'Needs attention' : 'None'}
       />
-      <SummaryTile
+      <Stat
         label="In progress"
+        tone={t.busy + t.changing > 0 ? 'var(--status-changing)' : undefined}
         value={t.busy + t.changing}
-        accent="var(--cds-support-info)"
-        subtext={t.busy || t.changing ? `${t.busy} busy, ${t.changing} changing` : null}
+        note={t.busy || t.changing ? `${t.busy} busy, ${t.changing} changing` : null}
       />
-      <SummaryTile
-        label="Total jobs"
+      <Stat
+        label="Jobs"
         value={t.jobs}
-        accent="var(--cds-border-interactive)"
-        subtext={t.jobsFailed > 0 ? `${t.jobsFailed} failed` : null}
+        note={t.jobsFailed > 0 ? `${t.jobsFailed} failed` : null}
       />
-    </div>
+    </dl>
   );
 }

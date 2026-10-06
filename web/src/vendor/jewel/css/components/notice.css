@@ -1,0 +1,73 @@
+/* Notice — a short message in the flow of the page: info ("You're
+   offline"), good news or updates ("Updated · Reload"), and errors, each
+   with optional actions. A hairline box whose left edge carries the tone.
+
+   <div class="notice" role="status">
+     <p class="notice__text">You're offline. Showing what's saved on this phone.</p>
+   </div>
+
+   <div class="notice notice--error" role="alert">
+     <div class="notice__body">
+       <p class="notice__title">Couldn't load your photos</p>
+       <p class="notice__text">Check your connection and try again.</p>
+     </div>
+     <div class="notice__actions"><button class="btn btn--ghost" type="button">Retry</button></div>
+   </div>
+
+   Tones: default (info), .notice--accent (updates, success), .notice--error.
+   Group several in .notices; it collapses when empty.
+
+   Roles: role="alert" for an error that appears after something the
+   person did; role="status" for background news (offline, updated). A
+   notice that is there when the page loads needs no role. To dismiss one,
+   set [hidden] or remove it, then move focus somewhere sensible.
+
+   Form messages (.form__error, .form__status in field.css) get the same
+   look automatically: error and accent tones. No extra classes needed. */
+
+.notice,
+.form__error,
+.form__status {
+  --notice-tone: var(--field-border);
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-default);
+  background: var(--field-fill);
+  border: var(--hairline) solid var(--panel-border);
+  box-shadow: inset 2px 0 0 var(--notice-tone);    /* the tone: a 2px left edge */
+}
+.notice--accent,
+.form__status   { --notice-tone: var(--text-accent); }
+.notice--error,
+.form__error    { --notice-tone: var(--field-error); }
+
+.notice__body { flex: 1 1 16rem; display: grid; gap: var(--space-1); min-width: 0; }
+.notice__title {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-default);
+}
+.notice--accent .notice__title { color: var(--text-accent); }
+.notice--error  .notice__title { color: var(--field-error); }
+.notice__text { margin: 0; max-width: var(--measure); }
+
+.notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* A stack of notices; takes no space when empty. */
+.notices { display: grid; gap: var(--space-3); }
+.notices:empty { display: none; }

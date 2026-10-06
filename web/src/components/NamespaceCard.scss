@@ -1,165 +1,150 @@
-/* NamespaceCard — Carbon G100 redesign */
+/* NamespaceCard — a hairline card inside the namespaces panel. The status
+   rides on a 2px left edge, the same tone-edge idiom as Jewel's .notice. */
 
 .ksl-card {
-  border-left: 3px solid var(--cds-border-subtle-01);
-  cursor: pointer;
-  transition: background-color 150ms cubic-bezier(0.2, 0, 0.38, 0.9);
+  min-width: 0;
+  background: var(--field-fill);
+  border: var(--hairline) solid var(--panel-border);
+  box-shadow: inset var(--rule-strong) 0 0 var(--tone);
 }
+
+/* The summary area is one big toggle button. */
+.ksl-card__toggle {
+  display: block;
+  width: 100%;
+  padding: var(--space-4) var(--space-4) var(--space-3) calc(var(--space-4) + var(--rule-strong));
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.ksl-card__toggle:hover { background: var(--state-hover-fill); }
+.ksl-card__toggle:active { background: var(--state-pressed-fill); }
+.ksl-card__toggle:focus-visible { outline-offset: calc(-1 * var(--rule-strong)); }
 
 /* ── Header ── */
 .ksl-card__header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px 16px 0;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .ksl-card__namespace {
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.29;
-  letter-spacing: 0.16px;
-  color: var(--cds-text-primary);
+  flex: 1;
+  min-width: 0;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-subheading);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
 }
 
-.ksl-card__header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-/* ── Chevron ── */
 .ksl-chevron {
-  flex-shrink: 0;
-  transition: transform 150ms cubic-bezier(0.2, 0, 0.38, 0.9);
+  flex: none;
+  color: var(--text-muted);
+  transition: transform var(--duration-base) var(--ease-standard);
 }
+.ksl-chevron--open { transform: rotate(180deg); }
 
-.ksl-chevron--open {
-  transform: rotate(180deg);
-}
-
-/* ── Donut charts ── */
+/* ── Donuts ── */
 .ksl-card__donuts {
   display: flex;
   justify-content: space-evenly;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  padding: var(--space-4) 0 var(--space-3);
 }
 
 .ksl-donut {
-  flex: 1;
-  max-width: 140px;
-  min-width: 0;
+  position: relative;
+  margin: 0;
+  width: 88px;
+  height: 88px;
 }
 
-.ksl-donut--empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 92px;
-  color: var(--cds-text-helper);
-  font-size: 0.75rem;
+.ksl-donut__track {
+  fill: none;
+  stroke: var(--panel-border);
 }
 
-.ksl-card__ready {
-  font-size: 0.75rem;
-  color: var(--cds-text-helper);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  margin-left: 8px;
+.ksl-donut__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.ksl-donut__value {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-heading);
+}
+
+.ksl-donut__label {
+  margin-top: var(--space-1);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 /* ── Status row ── */
 .ksl-card__status-row {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px 16px;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
-.ksl-card__total {
-  font-size: 0.75rem;
-  color: var(--cds-text-helper);
+.ksl-card__ready {
+  padding-top: 0.2rem;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .ksl-card__tags {
   display: flex;
-  gap: 4px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  gap: var(--space-1);
 }
 
-/* ── Expanded detail ── */
+/* ── Expanded pod table ── */
 .ksl-card__detail {
-  border-top: 1px solid var(--cds-border-subtle-01);
-  padding: 8px 16px 16px;
+  padding: 0 var(--space-4) var(--space-2) calc(var(--space-4) + var(--rule-strong));
+  border-top: var(--hairline) solid var(--panel-border);
 }
 
-.ksl-card__detail-header {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto auto;
-  gap: 12px;
-  padding: 4px 0 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--cds-text-helper);
-  letter-spacing: 0.32px;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--cds-border-subtle-01);
+.ksl-pods {
+  table-layout: fixed;
 }
+.ksl-pods th:nth-child(2) { width: 6.5rem; }
+.ksl-pods th:nth-child(3) { width: 3.5rem; }
+.ksl-pods th:nth-child(4) { width: 3.75rem; }
+.ksl-pods th:nth-child(5) { width: 4.5rem; }
 
-/* ── Pod row ── */
-.ksl-pod-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto auto;
-  gap: 12px;
-  align-items: center;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--cds-border-subtle-01);
-}
-
-.ksl-pod-row__actions {
-  display: flex;
-  gap: 2px;
-  opacity: 0.5;
-  transition: opacity 110ms cubic-bezier(0.2, 0, 0.38, 0.9);
-}
-
-.ksl-pod-row:hover .ksl-pod-row__actions {
-  opacity: 1;
+.ksl-pods :is(th, td) {
+  padding-inline: var(--space-1);
 }
 
 .ksl-pod-row__name {
-  font-family: var(--cds-font-mono, 'IBM Plex Mono', monospace);
-  font-size: 0.75rem;
-  color: var(--cds-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: var(--weight-regular);
 }
 
-.ksl-pod-row__ready {
-  font-family: var(--cds-font-mono, 'IBM Plex Mono', monospace);
-  font-size: 0.75rem;
-  color: var(--cds-text-secondary);
-  font-variant-numeric: tabular-nums;
+.ksl-pod-row .table__actions {
+  opacity: 0.6;
+  transition: opacity var(--duration-fast) var(--ease-standard);
 }
-
-.ksl-pod-row__age {
-  font-size: 0.75rem;
-  color: var(--cds-text-helper);
-  white-space: nowrap;
-}
-
-/* ── Expand animation ── */
-.ksl-card-expand {
-  animation: kslFadeIn 150ms cubic-bezier(0.2, 0, 0.38, 0.9);
+.ksl-pod-row:hover .table__actions,
+.ksl-pod-row:focus-within .table__actions {
+  opacity: 1;
 }

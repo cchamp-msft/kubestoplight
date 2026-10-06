@@ -1,0 +1,18 @@
+/* Meta list — label/value pairs separated by hairlines.
+   <dl class="meta">
+     <dt class="label">Role</dt><dd>Art direction</dd>
+   </dl> */
+
+.meta {
+  display: grid;
+  grid-template-columns: minmax(7rem, max-content) 1fr;
+  border-top: var(--hairline) solid var(--panel-border);
+}
+.meta dt,
+.meta dd {
+  margin: 0;
+  padding-block: var(--space-3);
+  border-bottom: var(--hairline) solid var(--panel-border);
+}
+.meta dt { padding-right: var(--space-5); }
+.meta dd { font-size: var(--text-sm); }

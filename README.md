@@ -69,10 +69,11 @@ go build -o kubestoplight .
 
 Open `http://127.0.0.1:8080` in your browser. The dashboard features:
 
-- **Summary strip** — four stat tiles (total pods, healthy %, failed count, in-progress) with color-coded accent borders
-- **Sidebar** — cluster list with per-cluster status dots; click to filter the main view
-- **Filter bar** — live search (`/` to focus), status checkboxes with counts, hide-idle and hide-empty toggles
-- **Namespace cards** — pod grid (8×8 colored squares), stacked status bar, expand/collapse with pod detail rows
+- **Summary** — total pods, healthy %, failed, in progress and jobs, for all clusters or the selected one
+- **Sidebar** — cluster list with per-cluster status dots; click to filter, **+** to add, hover for edit/remove
+- **Filter bar** — live search (`/` to focus), status filter tags with counts, hide-idle and hide-empty switches
+- **Namespace cards** — pod and job donuts, status counts, expand for a pod table
+- **Pod drill-down** — Describe / Logs (streaming, follow) / YAML in a side drawer
 - **Auto-expand** — namespaces with failed pods expand automatically on first load
 
 Pod status cards update live every polling interval (default 3 s).
@@ -141,13 +142,13 @@ direct config file editing.
 
 ## Status colours
 
-| Status   | Colour | Meaning |
-|----------|--------|---------|
-| Idle     | Green  | Running, stable, no restarts |
-| Busy     | Blue   | Running but restarting |
-| Changing | Amber  | Pending or terminating |
-| Failed   | Red    | CrashLoopBackOff, image errors, or terminated with error |
-| Empty    | Gray   | No container status data |
+| Status   | TUI    | Web    | Meaning |
+|----------|--------|--------|---------|
+| Idle     | Green  | Teal   | Running, stable, no restarts |
+| Busy     | Blue   | Purple | Running but restarting |
+| Changing | Amber  | Orange | Pending or terminating |
+| Failed   | Red    | Red    | CrashLoopBackOff, image errors, or terminated with error |
+| Empty    | Gray   | Gray   | No container status data |
 
 ## Web UI key bindings
 
@@ -182,7 +183,7 @@ go run . --web
 
 - **Backend:** Go stdlib `net/http` + `nhooyr.io/websocket`; no framework
 - **Frontend:** React 19 + TypeScript 6, built with Vite, embedded via `go:embed`
-- **UI kit:** [IBM Carbon Design System](https://carbondesignsystem.com/) v11 — `@carbon/react` with Gray 100 (G100) dark theme
+- **UI kit:** [Jewel](https://github.com/willchambers/jewel-design-system), a CSS-only dark design system, vendored in `web/src/vendor/jewel`
 - **Live updates:** WebSocket at `/ws/pods` pushes `NamespaceGroup` snapshots every polling interval
 - **Single binary:** `go build` produces one self-contained executable
 - **Dual mode:** Same binary, same config file — TUI for terminals, web for browsers
