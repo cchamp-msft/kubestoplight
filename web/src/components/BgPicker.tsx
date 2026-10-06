@@ -85,7 +85,7 @@ export default function BgPicker() {
             muted
             loop
             playsInline
-            preload="auto"
+            preload={reducedMotion() ? 'none' : 'auto'}
           />
         </div>
       )}
