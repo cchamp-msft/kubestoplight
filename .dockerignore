@@ -1,0 +1,12 @@
+.git
+.github
+.claude
+**/node_modules
+web/dist
+docs
+design_handoff_carbon_redesign
+kubestoplight
+*.exe
+# Real configs hold credentials; never send them to the build context.
+/*.yaml
+deploy/preview/.local

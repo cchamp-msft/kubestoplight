@@ -1,0 +1,30 @@
+# Read-only public preview: kubestoplight + a Cloudflare tunnel, nothing else.
+# Driven by deploy/preview/preview.sh (setup | up | down | status), which writes
+# .local/compose.override.yml with the config and kubeconfig mounts.
+name: ksl-preview
+
+services:
+  app:
+    build:
+      context: ../..
+      args:
+        VITE_PUBLIC_URL: ${PUBLIC_URL:-}
+        VITE_BG_PICKER: "1"
+        VITE_DEFAULT_BG: ${DEFAULT_BG:-hot}
+    image: kubestoplight:preview
+    container_name: ksl-preview
+    # --read-only: no cluster add/edit/remove, cluster config redacted from the API.
+    command: ["--web", "--addr", "0.0.0.0:8080", "--read-only", "--config", "/config/config.yaml"]
+    ports:
+      - "127.0.0.1:8088:8080" # local peek only; the public path is the tunnel
+    restart: on-failure
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: ksl-preview-tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN:?run preview.sh setup first}
+    depends_on:
+      - app
+    restart: on-failure

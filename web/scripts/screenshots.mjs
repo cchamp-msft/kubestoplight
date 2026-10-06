@@ -28,7 +28,12 @@ const { chromium } = await import('playwright-core');
 
 const VIEWPORT = { width: 1440, height: 900 };
 
-/** @type {Record<string, { scenario: string, run: (page: import('playwright-core').Page) => Promise<void> }>} */
+/**
+ * query: extra URL params (e.g. bg=glacier); viewport: override size;
+ * out: path relative to web/ instead of docs/screenshots/<name>.png.
+ * @type {Record<string, { scenario: string, query?: string, viewport?: {width: number, height: number}, out?: string,
+ *   run: (page: import('playwright-core').Page) => Promise<void> }>}
+ */
 const SHOTS = {
   overview: { scenario: 'mixed', run: async () => {} },
   failing: { scenario: 'failing', run: async () => {} },
@@ -49,6 +54,17 @@ const SHOTS = {
       await page.getByText(/lines$/).first().waitFor();
     },
   },
+  // Link-preview card (og:image) for shared URLs. Mock data, never a real cluster.
+  social: { scenario: 'mixed', query: 'bg=aurora', viewport: { width: 1200, height: 630 }, out: 'public/og-image.png', run: async () => {} },
+  // Background options for the Jewel "cool" review (see components/BgPicker.tsx).
+  'bg-glacier': { scenario: 'mixed', query: 'bg=glacier', run: async () => {} },
+  'bg-aurora': { scenario: 'mixed', query: 'bg=aurora', run: async () => {} },
+  'bg-deepsea': { scenario: 'mixed', query: 'bg=deepsea', run: async () => {} },
+  'bg-polar': { scenario: 'mixed', query: 'bg=polar', run: async () => {} },
+  'bg-aurora-still': { scenario: 'mixed', query: 'bg=aurora-still', run: async () => {} },
+  'bg-glacier-still': { scenario: 'mixed', query: 'bg=glacier-still', run: async () => {} },
+  'bg-deepsea-still': { scenario: 'mixed', query: 'bg=deepsea-still', run: async () => {} },
+  'bg-aurora-loop': { scenario: 'mixed', query: 'bg=aurora-loop', run: async () => {} },
   'add-cluster': {
     scenario: 'empty',
     run: async (page) => {
@@ -85,7 +101,7 @@ try {
     await fetch(new URL(`__mock/scenario?name=${shot.scenario}`, base), { method: 'POST' });
 
     const context = await browser.newContext({
-      viewport: VIEWPORT,
+      viewport: shot.viewport ?? VIEWPORT,
       colorScheme: 'dark',
       reducedMotion: 'reduce', // stills any animated background and transitions
       timezoneId: 'UTC',
@@ -93,7 +109,8 @@ try {
     });
     const page = await context.newPage();
     try {
-      await page.goto(base);
+      // picker=0 hides the background picker; no bg means Jewel's default.
+      await page.goto(`${base}?picker=0${shot.query ? `&${shot.query}` : ''}`);
       // The first WebSocket snapshot fills the dashboard; fonts load alongside.
       await page.waitForLoadState('networkidle');
       await page.evaluate(() => document.fonts.ready);
@@ -107,7 +124,7 @@ try {
         if (next.equals(prev)) break;
         prev = next;
       }
-      await writeFile(resolve(outDir, `${name}.png`), prev);
+      await writeFile(shot.out ? resolve(webRoot, shot.out) : resolve(outDir, `${name}.png`), prev);
       console.log(`  ✓ ${name} (${shot.scenario})`);
     } catch (e) {
       failed++;

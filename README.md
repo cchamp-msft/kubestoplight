@@ -65,7 +65,12 @@ go build -o kubestoplight .
 ./kubestoplight --web                           # http://127.0.0.1:8080
 ./kubestoplight --web --addr 0.0.0.0:9090       # listen on all interfaces
 ./kubestoplight --web --config /path/to/cfg.yaml
+./kubestoplight --web --read-only             # no cluster add/edit/remove; config redacted from the API
 ```
+
+Use `--read-only` whenever the UI is reachable by anyone but you. For a
+short-lived public preview behind a Cloudflare tunnel, see
+[`deploy/preview/preview.sh`](deploy/preview/preview.sh) (`setup` / `up` / `down` / `destroy`).
 
 Open `http://127.0.0.1:8080` in your browser. The dashboard features:
 
