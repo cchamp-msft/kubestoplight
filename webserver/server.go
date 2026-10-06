@@ -92,6 +92,7 @@ type Server struct {
 	p          *poller.Poller
 	configPath string
 	staticFS   fs.FS
+	readOnly   bool
 
 	mu          sync.RWMutex
 	subscribers map[*subscriber]struct{}
@@ -109,12 +110,18 @@ func New(cm *clusters.ClusterManager, p *poller.Poller, configPath string, stati
 	}
 }
 
+// SetReadOnly turns off cluster add/edit/remove and redacts cluster config
+// (paths, tokens) from GET /api/clusters. Use it whenever the UI is exposed
+// beyond your own machine.
+func (s *Server) SetReadOnly(v bool) { s.readOnly = v }
+
 // Start registers all routes, launches the broadcast loop, and blocks until ctx
 // is cancelled (triggering graceful shutdown).
 func (s *Server) Start(ctx context.Context, addr string) error {
 	mux := http.NewServeMux()
 
 	// REST API
+	mux.HandleFunc("/api/info", s.handleInfo)
 	mux.HandleFunc("/api/clusters", s.handleClusters)
 	mux.HandleFunc("/api/clusters/", s.handleClusterByName)
 	mux.HandleFunc("/api/pods/", s.handlePodAPI)
@@ -199,7 +206,24 @@ func (s *Server) unsubscribe(sub *subscriber) {
 // HTTP Handlers
 // -------------------------------------------------------------------------
 
+// handleInfo tells the UI what this server allows.
+func (s *Server) handleInfo(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{"readOnly": s.readOnly})
+}
+
+// denyWrite answers 403 for mutating requests in read-only mode.
+func (s *Server) denyWrite(w http.ResponseWriter, r *http.Request) bool {
+	if s.readOnly && r.Method != http.MethodGet && r.Method != http.MethodHead {
+		writeError(w, http.StatusForbidden, "server is in read-only mode")
+		return true
+	}
+	return false
+}
+
 func (s *Server) handleClusters(w http.ResponseWriter, r *http.Request) {
+	if s.denyWrite(w, r) {
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		s.listClusters(w, r)
@@ -212,6 +236,9 @@ func (s *Server) handleClusters(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleClusterByName(w http.ResponseWriter, r *http.Request) {
 	// Strip "/api/clusters/" prefix to get the name.
+	if s.denyWrite(w, r) {
+		return
+	}
 	name := strings.TrimPrefix(r.URL.Path, "/api/clusters/")
 	if name == "" {
 		writeError(w, http.StatusBadRequest, "missing cluster name")
@@ -229,6 +256,15 @@ func (s *Server) handleClusterByName(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) listClusters(w http.ResponseWriter, _ *http.Request) {
 	cls := s.cm.ListClusters()
+	if s.readOnly {
+		// Names and state only: no server URLs, kubeconfig paths or tokens.
+		redacted := make([]config.Cluster, 0, len(cls))
+		for _, c := range cls {
+			redacted = append(redacted, config.Cluster{Name: c.Name, AuthType: c.AuthType, Enabled: c.Enabled})
+		}
+		writeJSON(w, http.StatusOK, redacted)
+		return
+	}
 	writeJSON(w, http.StatusOK, cls)
 }
 

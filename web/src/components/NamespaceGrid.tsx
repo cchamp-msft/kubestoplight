@@ -12,7 +12,8 @@ interface Props {
   onToggleCard: (key: string) => void;
   searchQuery: string;
   onClearFilters: () => void;
-  onAddCluster: () => void;
+  /** Omitted when the server is read-only. */
+  onAddCluster?: () => void;
   onPodDescribe: (pod: PodItem) => void;
   onPodLogs: (pod: PodItem) => void;
 }
@@ -26,8 +27,10 @@ export default function NamespaceGrid({
       return (
         <EmptyState
           title="No clusters yet"
-          message="Add a cluster with a kubeconfig path or a bearer token, and its pods show up here."
-          actions={
+          message={onAddCluster
+            ? 'Add a cluster with a kubeconfig path or a bearer token, and its pods show up here.'
+            : 'This server is read-only and has no clusters configured.'}
+          actions={onAddCluster &&
             <button className="btn" type="button" onClick={onAddCluster}>
               <Icon name="plus" />
               Add cluster

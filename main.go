@@ -34,10 +34,12 @@ func main() {
 		configPath string
 		webMode    bool
 		addr       string
+		readOnly   bool
 	)
 	flag.StringVar(&configPath, "config", defaultConfigPath, "path to config file")
 	flag.BoolVar(&webMode, "web", false, "start web server instead of TUI")
 	flag.StringVar(&addr, "addr", "127.0.0.1:8080", "web server listen address (only used with --web)")
+	flag.BoolVar(&readOnly, "read-only", false, "web: disable cluster add/edit/remove and redact cluster config (use when exposing the UI)")
 	flag.Parse()
 
 	cfg, err := config.Load(configPath)
@@ -64,7 +66,7 @@ func main() {
 	}
 
 	if webMode {
-		runWeb(cfg, man, configPath, addr)
+		runWeb(cfg, man, configPath, addr, readOnly)
 		return
 	}
 
@@ -77,7 +79,7 @@ func main() {
 	}
 }
 
-func runWeb(cfg *config.Config, man *clusters.ClusterManager, configPath, addr string) {
+func runWeb(cfg *config.Config, man *clusters.ClusterManager, configPath, addr string, readOnly bool) {
 	interval := polling.DurationFromString(cfg.PollingInterval)
 
 	p := poller.NewPoller(man, interval)
@@ -90,6 +92,10 @@ func runWeb(cfg *config.Config, man *clusters.ClusterManager, configPath, addr s
 	}
 
 	srv := webserver.New(man, p, configPath, distFS)
+	srv.SetReadOnly(readOnly)
+	if readOnly {
+		log.Printf("webserver: read-only mode")
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
