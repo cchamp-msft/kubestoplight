@@ -11,6 +11,7 @@
 # Settings live in deploy/preview/.local/preview.env (gitignored):
 #   PUBLIC_HOST=ksl.example.com
 #   DEFAULT_BG=hot                                   # optional, see web/src/components/BgPicker.tsx
+#   DEFAULT_MOTION=lava                              # optional: drift (Jewel) | lava
 #   CF_API_TOKEN_FILE=~/.secrets/cloudflare-token    # Account: Cloudflare Tunnel Edit; Zone: DNS Edit
 #   CF_ACCOUNT_ID_FILE=~/.secrets/cloudflare-account-id
 #   CLUSTERS="name1=/path/to/kubeconfig1 name2=/path/to/kubeconfig2"
@@ -32,7 +33,7 @@ expand() { echo "${1/#\~/$HOME}"; }
 # Docker Desktop on Windows wants C:/… paths; elsewhere this is a no-op.
 hostpath() { if command -v cygpath >/dev/null; then cygpath -m "$1"; else echo "$1"; fi; }
 compose() {
-  TUNNEL_TOKEN=$(cat "$LOCAL/tunnel-token" 2>/dev/null || true) PUBLIC_URL="https://$HOST" DEFAULT_BG=${DEFAULT_BG:-hot} \
+  TUNNEL_TOKEN=$(cat "$LOCAL/tunnel-token" 2>/dev/null || true) PUBLIC_URL="https://$HOST" DEFAULT_BG=${DEFAULT_BG:-hot} DEFAULT_MOTION=${DEFAULT_MOTION:-drift} \
     docker compose -f "$HERE/docker-compose.yml" -f "$LOCAL/compose.override.yml" "$@"
 }
 

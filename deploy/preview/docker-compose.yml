@@ -11,6 +11,7 @@ services:
         VITE_PUBLIC_URL: ${PUBLIC_URL:-}
         VITE_BG_PICKER: "1"
         VITE_DEFAULT_BG: ${DEFAULT_BG:-hot}
+        VITE_DEFAULT_MOTION: ${DEFAULT_MOTION:-drift}
     image: kubestoplight:preview
     container_name: ksl-preview
     # --read-only: no cluster add/edit/remove, cluster config redacted from the API.
