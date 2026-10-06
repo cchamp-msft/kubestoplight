@@ -1,0 +1,45 @@
+/* Figure — magazine-style media with a hairline caption.
+   <figure class="figure figure--wide">
+     <div class="figure__media"><img src="…" alt="…"></div>
+     <figcaption class="figure__caption">
+       <span><strong>Title</strong> — description.</span>
+       <span class="label">Fig. 1</span>
+     </figcaption>
+   </figure>
+   Ratio: --wide 21/9, --tall 4/5, --square 1, default 3/2,
+   or any value via style="--ratio: 16 / 10". */
+
+.figure { display: grid; gap: var(--space-3); }
+
+.figure__media {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: var(--ratio, 3 / 2);
+  background: var(--media-bg);
+  border-radius: var(--radius-1);
+}
+.figure__media > img,
+.figure__media > video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.figure--wide   { --ratio: 21 / 9; }
+.figure--tall   { --ratio: 4 / 5; }
+.figure--square { --ratio: 1; }
+
+.figure__caption {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: var(--hairline) solid var(--panel-border);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.figure__caption strong { color: var(--text-default); font-weight: var(--weight-medium); }
+
+/* Inside .bleed, keep the caption aligned with the panel's content edge. */
+.bleed .figure__caption { margin-inline: var(--panel-padding); }

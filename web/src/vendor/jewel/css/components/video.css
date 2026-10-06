@@ -1,0 +1,28 @@
+/* Video — a figure whose media is a muted, looping clip with a
+   play/pause control. Behavior: js/components/video.js.
+   <figure class="figure video" data-component="video">
+     <div class="figure__media">
+       <video loop muted playsinline preload="metadata"><source src="…"></video>
+       <button class="btn btn--icon video__control" type="button" data-video-toggle>
+         <svg class="icon-play">…</svg><svg class="icon-pause">…</svg>
+       </button>
+     </div>
+     <figcaption class="figure__caption">…</figcaption>
+   </figure> */
+
+.video__control {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  --btn-bg: var(--panel-bg);
+  --btn-fg: var(--text-default);
+  --btn-border: var(--panel-border);
+  --btn-bg-hover: var(--panel-bg);
+  --btn-fg-hover: var(--text-accent);
+  --btn-border-hover: var(--panel-border);
+  -webkit-backdrop-filter: var(--panel-backdrop);
+  backdrop-filter: var(--panel-backdrop);
+}
+
+.video[data-state="playing"] .icon-play,
+.video[data-state="paused"]  .icon-pause { display: none; }

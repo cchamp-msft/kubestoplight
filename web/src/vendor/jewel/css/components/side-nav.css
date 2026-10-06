@@ -1,0 +1,144 @@
+/* Side nav — a vertical list of links, grouped under labels, with
+   collapsible groups. One markup, two places:
+   - wide screens: a sticky column beside the content (.with-side-nav);
+   - phones: inside a .sheet--start drawer, opened by the header's menu
+     button (header.css). js/components/side-nav.js closes the drawer when a
+     link is followed and when the screen grows past --bp-md.
+
+   <nav class="side-nav" aria-label="Sections" data-component="side-nav">
+     <p class="side-nav__heading">Foundations</p>
+     <ul class="side-nav__list">
+       <li><a class="side-nav__link" href="/color/" aria-current="page">Color</a></li>
+       <li>
+         <details class="side-nav__group" open>
+           <summary class="side-nav__link">Components</summary>
+           <ul class="side-nav__list">
+             <li><a class="side-nav__link" href="/tabs/">Tabs</a></li>
+           </ul>
+         </details>
+       </li>
+     </ul>
+   </nav>
+
+   Page layout with a persistent side nav (hidden below --bp-lg, where the
+   drawer takes over):
+   <div class="with-side-nav">
+     <aside class="with-side-nav__aside panel"><nav class="side-nav">…</nav></aside>
+     <main>…</main>
+   </div>
+
+   Drawer (phones):
+   <dialog class="sheet sheet--start" id="site-nav" data-component="sheet" aria-label="Menu">
+     <div class="sheet__panel panel">
+       <header class="sheet__head">
+         <p class="sheet__title label">Menu</p>
+         <button class="btn btn--ghost btn--icon" type="button" data-sheet-close aria-label="Close">×</button>
+       </header>
+       <div class="sheet__body"><nav class="side-nav" data-component="side-nav">…</nav></div>
+     </div>
+   </dialog> */
+
+.side-nav {
+  --side-nav-indent: var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.side-nav__heading {
+  margin: var(--space-5) 0 var(--space-1);
+  padding-inline: var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.side-nav__heading:first-child { margin-top: 0; }
+
+.side-nav__list { display: grid; margin: 0; padding: 0; list-style: none; }
+.side-nav__list .side-nav__list {
+  margin-left: var(--space-3);
+  padding-left: calc(var(--side-nav-indent) - var(--space-3));
+  border-left: var(--hairline) solid var(--panel-border);
+}
+
+.side-nav__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: var(--radius-1);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+@media (pointer: coarse) { .side-nav__link { min-height: var(--control-h-touch); } }
+.side-nav__link:hover { color: var(--text-default); background: var(--state-hover-fill); }
+.side-nav__link:active { background: var(--state-pressed-fill); }
+
+/* Current page: default color, a 2px accent edge on the left. */
+.side-nav__link[aria-current="page"] {
+  color: var(--text-default);
+  background: var(--state-selected-fill);
+}
+.side-nav__link[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset: var(--space-2) auto var(--space-2) 0;
+  width: var(--rule-strong);
+  background: var(--text-accent);
+}
+.side-nav__link[aria-disabled="true"] {
+  opacity: var(--state-disabled-opacity);
+  pointer-events: none;
+}
+
+/* Collapsible group: the summary is a link-styled row with a chevron. */
+.side-nav__group > summary { list-style: none; }
+.side-nav__group > summary::-webkit-details-marker { display: none; }
+.side-nav__group > summary::after {
+  content: "";
+  flex: none;
+  width: var(--space-2);
+  height: var(--space-2);
+  border-right: var(--hairline) solid currentColor;
+  border-bottom: var(--hairline) solid currentColor;
+  transform: translateY(-25%) rotate(45deg);
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+.side-nav__group[open] > summary::after { transform: translateY(25%) rotate(-135deg); }
+/* A group holding the current page reads as current too. */
+.side-nav__group:has([aria-current="page"]) > summary { color: var(--text-default); }
+
+/* ---- Layout: persistent column on wide screens ----------------------- */
+.with-side-nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.with-side-nav__aside { display: none; }
+@media (min-width: 64rem) {   /* --bp-lg */
+  .with-side-nav { grid-template-columns: var(--side-nav-w) minmax(0, 1fr); }
+  .with-side-nav__aside {
+    display: block;
+    position: sticky;
+    /* below the sticky header, with the panel-stack gap */
+    --side-nav-top: calc(var(--sticky-offset) + var(--header-h) + var(--space-4));
+    top: var(--side-nav-top);
+    max-height: calc(100dvh - var(--side-nav-top) - var(--space-4));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-4) var(--space-3);
+    scrollbar-width: thin;
+    scrollbar-color: var(--field-border) transparent;
+  }
+}

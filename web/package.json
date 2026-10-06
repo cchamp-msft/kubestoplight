@@ -14,17 +14,12 @@
     "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
-    "@carbon/charts-react": "^1.27.16",
-    "@carbon/icons-react": "^11.83.0",
-    "@carbon/react": "^1.111.1",
-    "@carbon/styles": "^1.110.1",
-    "d3": "^7.9.0",
+    "@fontsource-variable/inter": "^5.3.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "sass": "^1.101.0"
   },
   "devDependencies": {
-    "@types/d3": "^7.4.3",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

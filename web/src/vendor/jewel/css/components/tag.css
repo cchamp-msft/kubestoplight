@@ -1,0 +1,102 @@
+/* Tag — small outlined pill for categories; --solid for emphasis;
+   --button for a tag you can press (the filter's buttons).
+   <span class="tag">Editorial</span>
+   <span class="tag tag--solid">Featured</span>
+   <button class="tag tag--button" type="button" aria-pressed="false">Travel</button>
+   <a class="tag" href="/tags/travel/">Travel</a>          link; aria-current="page" fills it
+   <button class="tag tag--button tag--touch" …>Travel</button>  touch size, anywhere
+
+   Size: labels are 24px. Tags you can press or follow (a.tag, button.tag)
+   grow to 32px on touch screens, with an invisible tap area of 44px;
+   .tag--touch forces that size on any screen. Wrapped rows of touch tags
+   need a 12px row gap (44 − 32) so the tap areas meet without overlapping. */
+
+.tag {
+  --tag-height: var(--control-h-xs);
+  --tag-pad: var(--space-2);
+  --tag-hit: var(--hit-min);          /* 44px minimum tap target */
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--tag-height);
+  padding: 0 var(--tag-pad);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-tag);
+  color: var(--text-muted);
+  border: var(--hairline) solid var(--panel-border);
+  border-radius: var(--radius-pill);
+}
+.tag--solid {
+  color: var(--text-inverse);
+  background: var(--text-default);
+  border-color: transparent;
+}
+
+/* Touch size: 32px pill, 44px tap area (the ::before reaches above and
+   below the pill; min-width covers short labels like "All"). */
+.tag--touch {
+  --tag-height: var(--control-h-sm);
+  --tag-pad: var(--space-3);
+  min-width: var(--tag-hit);
+}
+.tag--touch::before {
+  content: "";
+  position: absolute;
+  inset: calc((var(--tag-height) - var(--tag-hit)) / 2) 0;
+}
+@media (pointer: coarse) {
+  a.tag,
+  button.tag {
+    --tag-height: var(--control-h-sm);
+    --tag-pad: var(--space-3);
+    min-width: var(--tag-hit);
+  }
+  a.tag::before,
+  button.tag::before {
+    content: "";
+    position: absolute;
+    inset: calc((var(--tag-height) - var(--tag-hit)) / 2) 0;
+  }
+}
+
+/* Linked tag. No underline: the pill is the affordance. It needs its own
+   hover, because this layer's color outranks the base a:hover. */
+a.tag { text-decoration: none; }
+a.tag:hover { color: var(--text-default); border-color: currentColor; }
+a.tag[aria-current="page"] {
+  color: var(--text-inverse);
+  background: var(--text-default);
+  border-color: transparent;
+}
+
+/* Pressable tag. aria-pressed="true" fills it, like --solid. */
+button.tag { background: transparent; cursor: pointer; }
+a.tag,
+.tag--button {
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+.tag--button:hover { color: var(--text-default); border-color: currentColor; }
+.tag--button[aria-pressed="true"] {
+  color: var(--text-inverse);
+  background: var(--text-default);
+  border-color: transparent;
+}
+
+/* Pressed and disabled. */
+a.tag:active,
+.tag--button:active:not(:disabled, [aria-disabled="true"]) { background: var(--state-pressed-fill); color: var(--text-default); }
+.tag--button[aria-pressed="true"]:active:not(:disabled) { background: var(--state-pressed-solid); }
+.tag--button:disabled,
+.tag--button[aria-disabled="true"] {
+  opacity: var(--state-disabled-opacity);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+.tag--button:disabled:hover,
+.tag--button[aria-disabled="true"]:hover { color: var(--text-muted); border-color: var(--panel-border); }

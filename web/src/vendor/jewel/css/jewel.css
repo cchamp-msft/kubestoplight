@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Jewel Design System — entry point. Link this one file.
+
+   Cascade layers make the order explicit: a later layer always wins,
+   whatever the selector specificity. Anything you write outside a layer
+   (page-specific CSS) beats all of them, so overrides never need !important.
+
+   Adding a component: create css/components/<name>.css (start from
+   _template.css) and add one @import line in the components block below.
+   ========================================================================== */
+
+@layer tokens, base, background, components, utilities;
+
+@import url("tokens.css") layer(tokens);
+@import url("base.css") layer(base);
+@import url("background.css") layer(background);
+
+/* ---- Components (alphabetical; order doesn't matter within the layer) --- */
+@import url("components/accordion.css") layer(components);
+@import url("components/badge.css") layer(components);
+@import url("components/breadcrumbs.css") layer(components);
+@import url("components/button.css") layer(components);
+@import url("components/chart.css") layer(components);
+@import url("components/chat.css") layer(components);
+@import url("components/choice.css") layer(components);
+@import url("components/code.css") layer(components);
+@import url("components/datepicker.css") layer(components);
+@import url("components/dropdown.css") layer(components);
+@import url("components/dropzone.css") layer(components);
+@import url("components/empty-state.css") layer(components);
+@import url("components/fab.css") layer(components);
+@import url("components/field.css") layer(components);
+@import url("components/figure.css") layer(components);
+@import url("components/filter.css") layer(components);
+@import url("components/footer.css") layer(components);
+@import url("components/header.css") layer(components);
+@import url("components/index-list.css") layer(components);
+@import url("components/input.css") layer(components);
+@import url("components/knockout.css") layer(components);
+@import url("components/lightbox.css") layer(components);
+@import url("components/meta-list.css") layer(components);
+@import url("components/notice.css") layer(components);
+@import url("components/panel.css") layer(components);
+@import url("components/progress.css") layer(components);
+@import url("components/quote.css") layer(components);
+@import url("components/search.css") layer(components);
+@import url("components/section-head.css") layer(components);
+@import url("components/sheet.css") layer(components);
+@import url("components/side-nav.css") layer(components);
+@import url("components/stat.css") layer(components);
+@import url("components/table.css") layer(components);
+@import url("components/tabs.css") layer(components);
+@import url("components/tag.css") layer(components);
+@import url("components/tag-input.css") layer(components);
+@import url("components/video.css") layer(components);
+
+@import url("utilities.css") layer(utilities);

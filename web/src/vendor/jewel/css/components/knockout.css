@@ -1,0 +1,35 @@
+/* Knockout — two parallel 45° hairlines cut through the top-right corner of
+   a panel, so the Jewel background shows through them.
+
+   On by default for content panels (.panel--content, or any .panel directly
+   inside a .panel-stack). Add it anywhere else with .knockout; turn it off
+   on a content panel with .no-knockout.
+   <section class="panel panel--pad knockout">…</section>
+
+   Built with a CSS mask: a 225deg gradient starts exactly at the top-right
+   corner, so every stop is a distance measured in from that corner. The
+   transparent stops are the lines; everything else stays opaque.
+   The mask also cuts the border and backdrop blur, so the lines are true holes. */
+
+.knockout,
+.panel--content:not(.no-knockout),
+.panel-stack > .panel:not(.no-knockout) {
+  --k1: var(--knockout-offset);
+  --k2: calc(var(--k1) + var(--knockout-width));
+  --k3: calc(var(--k2) + var(--knockout-gap));
+  --k4: calc(var(--k3) + var(--knockout-width));
+  --aa: 0.5px;              /* soft edge so the diagonals don't stair-step */
+
+  -webkit-mask-image: linear-gradient(225deg,
+    #000 0 calc(var(--k1) - var(--aa)),
+    transparent var(--k1) var(--k2),
+    #000 calc(var(--k2) + var(--aa)) calc(var(--k3) - var(--aa)),
+    transparent var(--k3) var(--k4),
+    #000 calc(var(--k4) + var(--aa)));
+  mask-image: linear-gradient(225deg,
+    #000 0 calc(var(--k1) - var(--aa)),
+    transparent var(--k1) var(--k2),
+    #000 calc(var(--k2) + var(--aa)) calc(var(--k3) - var(--aa)),
+    transparent var(--k3) var(--k4),
+    #000 calc(var(--k4) + var(--aa)));
+}

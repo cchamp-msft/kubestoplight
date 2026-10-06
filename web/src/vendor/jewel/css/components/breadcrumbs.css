@@ -1,0 +1,70 @@
+/* Breadcrumbs — where this page sits. The last crumb is the current page
+   (not a link). On phones only the parent shows, as a "‹ Parent" back link,
+   so the trail never wraps or scrolls.
+
+   <nav class="breadcrumbs" aria-label="Breadcrumb">
+     <ol class="breadcrumbs__list">
+       <li><a href="/">Home</a></li>
+       <li><a href="/components/">Components</a></li>
+       <li><span aria-current="page">Tabs</span></li>
+     </ol>
+   </nav>
+   .breadcrumbs--full keeps the whole trail on phones too (it wraps). */
+
+.breadcrumbs { font-size: var(--text-sm); color: var(--text-muted); }
+
+.breadcrumbs__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.breadcrumbs__list li { display: inline-flex; align-items: center; min-width: 0; }
+
+/* Separator: a hairline slash, drawn so it never gets read out. */
+.breadcrumbs__list li + li::before {
+  content: "";
+  flex: none;
+  width: var(--hairline);
+  height: var(--space-3);
+  margin-inline: var(--space-3);
+  background: var(--field-border);
+  transform: rotate(20deg);
+}
+
+.breadcrumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h-sm);
+  color: var(--text-muted);
+  text-decoration-color: transparent;
+}
+.breadcrumbs a:hover { color: var(--text-default); text-decoration-color: currentColor; }
+.breadcrumbs a:active { color: var(--text-accent); }
+.breadcrumbs [aria-current="page"] {
+  color: var(--text-default);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Phones: only the parent, as a back link. */
+@media (max-width: 40rem) {   /* below --bp-sm */
+  .breadcrumbs:not(.breadcrumbs--full) li { display: none; }
+  .breadcrumbs:not(.breadcrumbs--full) li:nth-last-child(2) { display: inline-flex; }
+  .breadcrumbs:not(.breadcrumbs--full) li:nth-last-child(2)::before { display: none; }
+  .breadcrumbs:not(.breadcrumbs--full) li:nth-last-child(2) a {
+    min-height: var(--hit-min);
+    gap: var(--space-2);
+  }
+  .breadcrumbs:not(.breadcrumbs--full) li:nth-last-child(2) a::before {
+    content: "";
+    width: var(--space-2);
+    height: var(--space-2);
+    border-left: var(--hairline) solid currentColor;
+    border-bottom: var(--hairline) solid currentColor;
+    transform: rotate(45deg);
+  }
+}

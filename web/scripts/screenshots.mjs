@@ -11,7 +11,7 @@
 // Selectors use roles and visible text only, so the script keeps working when
 // the design system underneath changes.
 
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -71,9 +71,11 @@ const server = await createServer({
 await server.listen();
 const base = server.resolvedUrls?.local[0] ?? 'http://localhost:5199/';
 
-const browser = await chromium.launch(
-  process.env.SCREENSHOT_CHROME ? { executablePath: process.env.SCREENSHOT_CHROME } : { channel: 'chrome' },
-);
+// Software rendering and a fixed color profile keep pixels stable run to run.
+const browser = await chromium.launch({
+  ...(process.env.SCREENSHOT_CHROME ? { executablePath: process.env.SCREENSHOT_CHROME } : { channel: 'chrome' }),
+  args: ['--disable-gpu', '--force-color-profile=srgb', '--font-render-hinting=none'],
+});
 await mkdir(outDir, { recursive: true });
 
 let failed = 0;
@@ -97,9 +99,15 @@ try {
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(600);
       await shot.run(page);
-      await page.waitForTimeout(400);
-      const path = resolve(outDir, `${name}.png`);
-      await page.screenshot({ path });
+      // Capture until two frames in a row match, so a late paint can't sneak in.
+      let prev = await page.screenshot();
+      for (let i = 0; i < 6; i++) {
+        await page.waitForTimeout(300);
+        const next = await page.screenshot();
+        if (next.equals(prev)) break;
+        prev = next;
+      }
+      await writeFile(resolve(outDir, `${name}.png`), prev);
       console.log(`  ✓ ${name} (${shot.scenario})`);
     } catch (e) {
       failed++;

@@ -1,21 +1,22 @@
 import type { PodStatusKind, NamespaceStatusKind } from '../types/api';
 
+// Status → color token. The tokens are defined in styles/index.scss on top of
+// Jewel's chart palette; the meanings (Idle=healthy … Failed=error) are fixed.
 export const STATUS_COLORS: Record<string, string> = {
-  Idle: 'var(--cds-support-success)',
-  Busy: 'var(--cds-support-info)',
-  Changing: 'var(--cds-support-warning)',
-  Failed: 'var(--cds-support-error)',
-  Empty: 'var(--cds-text-disabled)',
-  Unknown: 'var(--cds-text-helper)',
+  Idle: 'var(--status-idle)',
+  Busy: 'var(--status-busy)',
+  Changing: 'var(--status-changing)',
+  Failed: 'var(--status-failed)',
+  Empty: 'var(--status-empty)',
+  Unknown: 'var(--status-empty)',
 };
 
-export const STATUS_TAG_TYPE: Record<string, string> = {
-  Idle: 'green',
-  Busy: 'blue',
-  Changing: 'teal',
-  Failed: 'red',
-  Empty: 'gray',
-  Unknown: 'gray',
+export const JOB_STATUS_COLORS: Record<string, string> = {
+  Active: 'var(--status-busy)',
+  Succeeded: 'var(--status-idle)',
+  Failed: 'var(--status-failed)',
+  Suspended: 'var(--status-changing)',
+  Unknown: 'var(--status-empty)',
 };
 
 export const SEVERITY_ORDER: Record<string, number> = {
@@ -27,30 +28,9 @@ export const SEVERITY_ORDER: Record<string, number> = {
   Unknown: 5,
 };
 
-export const JOB_STATUS_COLORS: Record<string, string> = {
-  Active: 'var(--cds-support-info)',
-  Succeeded: 'var(--cds-support-success)',
-  Failed: 'var(--cds-support-error)',
-  Suspended: 'var(--cds-support-warning)',
-  Unknown: 'var(--cds-text-helper)',
-};
-
-export const JOB_STATUS_COLORS_HEX: Record<string, string> = {
-  Active: '#4589ff',
-  Succeeded: '#42be65',
-  Failed: '#fa4d56',
-  Suspended: '#f1c21b',
-  Unknown: '#6f6f6f',
-};
-
-export const STATUS_COLORS_HEX: Record<string, string> = {
-  Idle: '#42be65',
-  Busy: '#4589ff',
-  Changing: '#f1c21b',
-  Failed: '#fa4d56',
-  Empty: '#525252',
-  Unknown: '#6f6f6f',
-};
+/** Display order for status breakdowns (worst first). */
+export const POD_STATUS_ORDER = ['Failed', 'Changing', 'Busy', 'Idle', 'Empty', 'Unknown'];
+export const JOB_STATUS_ORDER = ['Failed', 'Suspended', 'Active', 'Succeeded', 'Unknown'];
 
 export function worstStatus(statuses: (PodStatusKind | NamespaceStatusKind)[]): NamespaceStatusKind {
   const order: NamespaceStatusKind[] = ['Failed', 'Changing', 'Busy', 'Idle'];

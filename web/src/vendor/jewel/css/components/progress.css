@@ -1,0 +1,65 @@
+/* Progress — how far along a task is: a thin bar, an optional label and
+   value. Native <progress>, so screen readers announce it.
+
+   <div class="progress">
+     <div class="progress__meta">
+       <label class="progress__label" for="up">Uploading 3 photos</label>
+       <span class="progress__value">64%</span>
+     </div>
+     <progress class="progress__bar" id="up" max="100" value="64">64%</progress>
+     <p class="progress__hint">About a minute left</p>
+   </div>
+
+   Indeterminate (unknown length): leave out value → <progress max="100"></progress>.
+   Tones: .progress--accent (default bar is text color), .progress--error.
+   .progress--thick for a 6px bar. Set the value from JS: bar.value = 72. */
+
+.progress {
+  --progress-h: var(--space-1);
+  --progress-fill: var(--text-default);
+  --progress-track: var(--panel-border);
+  display: grid;
+  gap: var(--space-2);
+}
+.progress--thick { --progress-h: calc(var(--space-1) * 1.5); }
+.progress--accent { --progress-fill: var(--text-accent); }
+.progress--error  { --progress-fill: var(--field-error); }
+
+.progress__meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); }
+.progress__label { font-size: var(--text-sm); color: var(--text-default); }
+.progress__value { font-size: var(--text-sm); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.progress__hint  { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+.progress--error .progress__hint { color: var(--field-error); }
+
+.progress__bar {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  height: var(--progress-h);
+  border: 0;
+  border-radius: var(--radius-0);
+  background: var(--progress-track);
+  color: var(--progress-fill);   /* old Edge/IE fill */
+  overflow: hidden;
+}
+.progress__bar::-webkit-progress-bar { background: var(--progress-track); }
+.progress__bar::-webkit-progress-value { background: var(--progress-fill); transition: inline-size var(--duration-slow) var(--ease-standard); }
+.progress__bar::-moz-progress-bar { background: var(--progress-fill); }
+
+/* Indeterminate: a short segment sweeps across. */
+.progress__bar:indeterminate {
+  background:
+    linear-gradient(var(--progress-fill), var(--progress-fill)) 0 0 / 30% 100% no-repeat,
+    var(--progress-track);
+  animation: progress-sweep calc(var(--duration-slow) * 4) var(--ease-standard) infinite;
+}
+.progress__bar:indeterminate::-webkit-progress-bar { background: transparent; }
+.progress__bar:indeterminate::-moz-progress-bar { background: transparent; }
+@keyframes progress-sweep {
+  0%   { background-position: -40% 0, 0 0; }
+  100% { background-position: 140% 0, 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress__bar:indeterminate { animation: none; background-size: 100% 100%, auto; opacity: var(--state-disabled-opacity); }
+}
