@@ -85,7 +85,7 @@ a pod's Describe / Logs / YAML tabs.
 ```bash
 cd web
 npm run screenshots              # all → docs/screenshots/*.png
-npm run screenshots -- overview  # or just some: overview failing large empty describe logs add-cluster
+npm run screenshots -- overview  # or just some: overview failing large empty describe logs add-cluster social bg-*
 ```
 
 `web/scripts/screenshots.mjs` boots its own mock server with frozen data and a
@@ -138,6 +138,21 @@ this it was IBM Carbon; `git log` has the swap if you need to compare.
 interaction spec (it predates Jewel). It's still a checklist of what each
 screen must do: summary, filters, cards, auto-expand of failed namespaces,
 drill-down tabs, and the cluster add/edit/remove flow.
+
+## Backgrounds, link previews, public preview
+
+- `web/src/components/BgPicker.tsx` + `styles/backgrounds.scss`: background
+  options for Jewel's sky. "hot" is Jewel's default; there are cool gradient
+  palettes (`glacier`, `aurora`, `deepsea`, `polar`) and Grok Imagine renders
+  in `web/public/bg/` (stills and a looping video). Choose with `?bg=<id>`.
+  The picker shows in dev and in builds with `VITE_BG_PICKER=1`, and
+  `?picker=0` hides it.
+- `web/index.html` carries the favicon and Open Graph/Twitter tags.
+  `og:image` is `web/public/og-image.png`, rendered from mock data by
+  `npm run screenshots -- social`; `VITE_PUBLIC_URL` makes its URL absolute.
+- `Dockerfile` builds the single binary; `deploy/preview/` runs it
+  `--read-only` behind a Cloudflare tunnel. Personal settings live in the
+  gitignored `deploy/preview/.local/`.
 
 ## Conventions
 

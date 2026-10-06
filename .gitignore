@@ -12,3 +12,6 @@ web/dist/
 
 # Carbon source (local copy)
 carbon/
+
+# Preview deploy settings, tunnel token, generated mounts
+deploy/preview/.local/
