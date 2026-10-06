@@ -85,7 +85,7 @@ a pod's Describe / Logs / YAML tabs.
 ```bash
 cd web
 npm run screenshots              # all → docs/screenshots/*.png
-npm run screenshots -- overview  # or just some: overview failing large empty describe logs add-cluster social bg-*
+npm run screenshots -- overview  # or just some: overview failing large empty describe logs add-cluster social bg-* (incl. bg-wax-*)
 ```
 
 `web/scripts/screenshots.mjs` boots its own mock server with frozen data and a
@@ -147,6 +147,10 @@ drill-down tabs, and the cluster add/edit/remove flow.
   in `web/public/bg/` (stills and a looping video). Choose with `?bg=<id>`.
   The picker shows in dev and in builds with `VITE_BG_PICKER=1`, and
   `?picker=0` hides it.
+- Motion: `?motion=jewel` is Jewel's own *lava lamp animation* (its name for
+  the drifting gradient in `background.css`); `?motion=wax` adds rising wax
+  blobs on top of it (`.ksl-wax`, tune with `--wax-speed`). Use Jewel's name
+  for Jewel's animation.
 - `web/index.html` carries the favicon and Open Graph/Twitter tags.
   `og:image` is `web/public/og-image.png`, rendered from mock data by
   `npm run screenshots -- social`; `VITE_PUBLIC_URL` makes its URL absolute.

@@ -2,7 +2,7 @@
 
 The CSS of the [Jewel design system](https://github.com/willchambers/jewel-design-system)
 by Will Chambers, copied unmodified from commit
-[`8b6c6c6`](https://github.com/willchambers/jewel-design-system/tree/8b6c6c699f32f2cabd27e14b1412cd9481422b20/css)
+[`383649b`](https://github.com/willchambers/jewel-design-system/tree/383649be83c15a8fc5cee0ec2478ff33c2007f8e/css)
 (`css/`, minus `parked/` and `components/_template.css`).
 
 **License:** the upstream repo has no license file yet. It is included here at
