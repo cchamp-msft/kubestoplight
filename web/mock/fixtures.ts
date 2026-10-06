@@ -18,6 +18,10 @@ export const SCENARIOS: Scenario[] = ['mixed', 'healthy', 'failing', 'empty', 'l
 
 // Small deterministic PRNG so every run of a scenario looks the same — handy
 // for before/after screenshots when swapping design systems.
+// Wall clock for timestamps. The mock plugin pins it when MOCK_NOW is set so
+// screenshots render identically on every run.
+export const clock = { now: () => Date.now() };
+
 export function rng(seed: number): () => number {
   let s = seed >>> 0;
   return () => {
@@ -216,7 +220,7 @@ export function describePod(state: MockState, cluster: string, namespace: string
   if (!p) return null;
   const app = p.name.split('-')[0];
   const failed = p.status === 'Failed';
-  const now = Date.now();
+  const now = clock.now();
   const iso = (agoMin: number) => new Date(now - agoMin * 60_000).toISOString();
   const containers = Array.from({ length: p.total }, (_, i) => ({
     name: i === 0 ? app : ['istio-proxy', 'log-shipper'][i - 1] ?? `sidecar-${i}`,
@@ -271,7 +275,7 @@ const LOG_TEMPLATES = [
   'ERROR failed to publish event: context deadline exceeded',
 ];
 
-export function logLine(r: () => number, failing: boolean, at = new Date()): string {
+export function logLine(r: () => number, failing: boolean, at = new Date(clock.now())): string {
   const line = failing && r() < 0.35 ? 'ERROR panic: runtime error: invalid memory address or nil pointer dereference' : pick(r, LOG_TEMPLATES);
   return `${at.toISOString()} ${line}`;
 }

@@ -80,6 +80,26 @@ typecheck passing does not mean the design swap worked. If you have a browser
 automation tool, screenshot `mixed`, `failing`, `empty`, and `large`, and open
 a pod's Describe / Logs / YAML tabs.
 
+### Screenshots
+
+```bash
+cd web
+npm run screenshots              # all → docs/screenshots/*.png
+npm run screenshots -- overview  # or just some: overview failing large empty describe logs add-cluster
+```
+
+`web/scripts/screenshots.mjs` boots its own mock server with frozen data and a
+pinned clock (`MOCK_CHURN=0`, `MOCK_NOW`), drives the installed Google Chrome
+via `playwright-core`, and writes PNGs the README links to. Same code → same
+pixels, so a PNG diff means the UI changed. Selectors use roles and visible
+text only (`button "Describe"`, `button "Add cluster"`, label "Cluster name"),
+so keep those names when swapping components.
+
+CI (`.github/workflows/screenshots.yml`) regenerates them on every PR that
+touches `web/` and commits them back to the branch — pull before pushing
+again. Local renders can differ slightly from CI's Linux fonts; CI's copy is
+the one that lands.
+
 Go side (only if you touched Go): `go build ./... && go vet ./...`. Note
 `go build` of the root package requires `web/dist/` to exist.
 

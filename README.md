@@ -2,6 +2,13 @@
 
 A dual-mode Kubernetes pod monitor — run as a terminal TUI or a self-hosted web application.
 
+![The kubestoplight web dashboard showing clusters, summary stats and namespace cards (mock data)](docs/screenshots/overview.png)
+
+<sub>Rendered from [mock mode](#try-it-without-a-cluster) and regenerated on every PR that touches `web/`.
+More: [failing](docs/screenshots/failing.png) · [large](docs/screenshots/large.png) ·
+[empty](docs/screenshots/empty.png) · [describe](docs/screenshots/describe.png) ·
+[logs](docs/screenshots/logs.png) · [add cluster](docs/screenshots/add-cluster.png)</sub>
+
 ## Modes
 
 | Mode | Command | Description |
