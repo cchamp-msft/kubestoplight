@@ -64,6 +64,8 @@ const SHOTS = {
   'bg-aurora-still': { scenario: 'mixed', query: 'bg=aurora-still', run: async () => {} },
   'bg-glacier-still': { scenario: 'mixed', query: 'bg=glacier-still', run: async () => {} },
   'bg-deepsea-still': { scenario: 'mixed', query: 'bg=deepsea-still', run: async () => {} },
+  'bg-lava-hot': { scenario: 'mixed', query: 'motion=lava', run: async () => {} },
+  'bg-lava-glacier': { scenario: 'mixed', query: 'bg=glacier&motion=lava', run: async () => {} },
   'bg-aurora-loop': { scenario: 'mixed', query: 'bg=aurora-loop', run: async () => {} },
   'add-cluster': {
     scenario: 'empty',

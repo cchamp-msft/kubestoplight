@@ -147,3 +147,71 @@
   font-size: var(--text-xs);
   color: var(--text-muted);
 }
+
+/* ---- Lava lamp motion (any palette) ----------------------------------------
+   Jewel's own motion is a slow hue cycle with ~12% drift. This adds soft wax
+   blobs that rise, sink and squash on long, out-of-phase loops, in the active
+   palette's colors. Each blob is a radial gradient moved with translate/scale
+   only, so the compositor animates it without repainting or filters.
+   Positions use viewport units so the copy inside .jewel-cap lines up.     */
+:root {
+  --blob-1: var(--jewel-purple);
+  --blob-2: var(--jewel-magenta);
+  --blob-3: var(--jewel-red);
+  --blob-4: var(--jewel-orange);
+  --blob-5: var(--jewel-teal);
+  --lava-speed: 1; /* >1 slower, <1 faster */
+}
+:root[data-ksl-bg] {
+  --blob-1: var(--pal-1);
+  --blob-2: var(--pal-2);
+  --blob-3: var(--pal-3);
+  --blob-4: var(--pal-4);
+  --blob-5: var(--pal-5);
+}
+
+.ksl-lava {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-below);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ksl-lava__blob {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  border-radius: 50%;
+  /* Solid body, short soft rim: reads as wax, not as a glow. */
+  background: radial-gradient(closest-side,
+    var(--c) 0%,
+    color-mix(in oklab, var(--c) 92%, transparent) 50%,
+    color-mix(in oklab, var(--c) 55%, transparent) 64%,
+    transparent 76%);
+  will-change: translate, scale;
+  animation:
+    ksl-lava-rise calc(var(--t) * var(--lava-speed)) cubic-bezier(.45, 0, .55, 1) var(--d) infinite alternate,
+    ksl-lava-wobble calc(var(--t) * var(--lava-speed) * .41) ease-in-out var(--d) infinite alternate;
+}
+
+@keyframes ksl-lava-rise {
+  from { translate: 0 var(--rise-from, 35vh); }
+  to   { translate: var(--dx) var(--rise-to, -40vh); }
+}
+
+/* Wax squashes as it rises and stretches as it falls. */
+@keyframes ksl-lava-wobble {
+  0%   { scale: 1 1; }
+  35%  { scale: 1.18 .84; }
+  70%  { scale: .86 1.2; }
+  100% { scale: 1.06 .95; }
+}
+
+[data-bg="paused"] .ksl-lava__blob { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .ksl-lava__blob { animation: none; }
+}

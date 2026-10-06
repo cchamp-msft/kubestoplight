@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import '../styles/backgrounds.scss';
 
 // Background options for reviewing Jewel's sky. "hot" is Jewel's default.
@@ -41,13 +42,71 @@ function initialBg(): string {
   return DEFAULT_BG;
 }
 
+// Motion for the gradient palettes: Jewel's own slow drift, or the lava lamp.
+type Motion = 'drift' | 'lava';
+const MOTIONS: { id: Motion; label: string }[] = [
+  { id: 'drift', label: 'Drift (Jewel)' },
+  { id: 'lava', label: 'Lava lamp' },
+];
+const MOTION_KEY = 'ksl-motion';
+const DEFAULT_MOTION: Motion = import.meta.env.VITE_DEFAULT_MOTION === 'lava' ? 'lava' : 'drift';
+
+function initialMotion(): Motion {
+  const fromUrl = new URLSearchParams(window.location.search).get('motion');
+  if (fromUrl === 'drift' || fromUrl === 'lava') return fromUrl;
+  try {
+    const saved = localStorage.getItem(MOTION_KEY);
+    if (saved === 'drift' || saved === 'lava') return saved;
+  } catch { /* storage blocked */ }
+  return DEFAULT_MOTION;
+}
+
+// Wax blobs: position (vw/vh), size, travel, period and phase. Out-of-phase
+// periods keep the lamp from ever visibly repeating.
+const BLOBS = [
+  { x: '18vw', y: '62vh', s: '62vmax', dx: '14vw', t: '34s', d: '-6s', c: 'var(--blob-1)' },
+  { x: '78vw', y: '70vh', s: '54vmax', dx: '-18vw', t: '28s', d: '-19s', c: 'var(--blob-2)' },
+  { x: '42vw', y: '88vh', s: '46vmax', dx: '22vw', t: '41s', d: '-31s', c: 'var(--blob-3)' },
+  { x: '88vw', y: '22vh', s: '40vmax', dx: '-24vw', t: '25s', d: '-11s', c: 'var(--blob-4)' },
+  { x: '6vw', y: '18vh', s: '36vmax', dx: '18vw', t: '47s', d: '-38s', c: 'var(--blob-5)' },
+];
+
+function LavaLayer() {
+  return (
+    <div className="ksl-lava" aria-hidden="true">
+      {BLOBS.map((b, i) => (
+        <span
+          key={i}
+          className="ksl-lava__blob"
+          style={{ '--x': b.x, '--y': b.y, '--s': b.s, '--dx': b.dx, '--t': b.t, '--d': b.d, '--c': b.c } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  );
+}
+
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Renders the media layer for the chosen background and, in review builds, the picker. */
 export default function BgPicker() {
   const [bg, setBg] = useState(initialBg);
+  const [motion, setMotion] = useState(initialMotion);
   const [open, setOpen] = useState(false);
   const option = OPTIONS.find((o) => o.id === bg) ?? OPTIONS[0];
+  const lava = option.kind === 'palette' && motion === 'lava';
+
+  // A second lava layer inside .jewel-cap keeps the strip above the sticky
+  // header in step with the page (same viewport-unit positions, same timing).
+  const [cap, setCap] = useState<Element | null>(null);
+  useEffect(() => setCap(document.querySelector('.jewel-cap')), []);
+
+  useEffect(() => {
+    try { localStorage.setItem(MOTION_KEY, motion); } catch { /* storage blocked */ }
+    const url = new URL(window.location.href);
+    if (motion === DEFAULT_MOTION) url.searchParams.delete('motion');
+    else url.searchParams.set('motion', motion);
+    window.history.replaceState(null, '', url);
+  }, [motion]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -70,6 +129,8 @@ export default function BgPicker() {
 
   return (
     <>
+      {lava && <LavaLayer />}
+      {lava && cap && createPortal(<LavaLayer />, cap)}
       {option.kind === 'still' && (
         <div className="ksl-bg-media" aria-hidden="true">
           <div className="ksl-bg-media__still" style={{ backgroundImage: `url(${option.src})` }} />
@@ -113,7 +174,25 @@ export default function BgPicker() {
                   </div>
                 </div>
               ))}
-              <p className="ksl-bgpicker__note">Shareable: the choice is kept in the URL as ?bg={option.id}</p>
+              {option.kind === 'palette' && (
+                <div className="ksl-bgpicker__group">
+                  <p className="label">Motion</p>
+                  <div className="cluster ksl-bgpicker__options" role="group" aria-label="Motion">
+                    {MOTIONS.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className="tag tag--button"
+                        aria-pressed={m.id === motion}
+                        onClick={() => setMotion(m.id)}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <p className="ksl-bgpicker__note">Shareable: kept in the URL (?bg={option.id}{lava ? '&motion=lava' : ''})</p>
             </div>
           )}
           <button
@@ -123,7 +202,7 @@ export default function BgPicker() {
             onClick={() => setOpen((v) => !v)}
           >
             <span className="ksl-bgpicker__swatch" style={{ '--swatch': option.swatch } as React.CSSProperties} aria-hidden="true" />
-            Background · {option.label}
+            Background · {option.label}{lava ? ' · Lava' : ''}
           </button>
         </div>
       )}
