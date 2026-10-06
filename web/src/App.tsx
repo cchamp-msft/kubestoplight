@@ -3,10 +3,12 @@ import type { Cluster, PodItem } from './types/api';
 import { SEVERITY_ORDER } from './constants/status';
 import { useClusters } from './hooks/useClusters';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useServerInfo } from './hooks/useServerInfo';
 import ClusterSidebar from './components/ClusterSidebar';
 import SummaryStrip from './components/SummaryStrip';
 import FilterBar from './components/FilterBar';
 import NamespaceGrid from './components/NamespaceGrid';
+import BgPicker from './components/BgPicker';
 import './App.scss';
 
 const ClusterFormModal = lazy(() => import('./components/ClusterFormModal'));
@@ -18,6 +20,7 @@ const ALL_STATUSES = { Idle: true, Busy: true, Changing: true, Failed: true };
 export default function App() {
   const { clusters, addCluster, updateCluster, removeCluster } = useClusters();
   const { groups, connected } = useWebSocket();
+  const { readOnly } = useServerInfo();
 
   // Cluster modals
   const [addOpen, setAddOpen] = useState(false);
@@ -142,6 +145,7 @@ export default function App() {
       {/* Jewel's animated background and the strip that hides content above the header */}
       <div className="jewel-bg" aria-hidden="true" />
       <div className="jewel-cap" aria-hidden="true" />
+      <BgPicker />
 
       <div className="page ksl-page">
         {/* ── Header ── */}
@@ -152,6 +156,7 @@ export default function App() {
               <span className="badge badge--error">{failedCount} failed</span>
             )}
             <span className="ksl-header__spacer" />
+            {readOnly && <span className="badge" title="Cluster add/edit/remove is disabled on this server">Read-only</span>}
             <span className="ksl-header__stats">
               {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} &middot; {totalPods} pods
             </span>
@@ -170,6 +175,7 @@ export default function App() {
               groups={groups}
               selectedCluster={selectedCluster}
               onSelect={setSelectedCluster}
+              readOnly={readOnly}
               onAdd={() => setAddOpen(true)}
               onEdit={setEditTarget}
               onRemove={setRemoveTarget}
@@ -215,7 +221,7 @@ export default function App() {
                 onToggleCard={toggleCard}
                 searchQuery={searchQuery}
                 onClearFilters={clearFilters}
-                onAddCluster={() => setAddOpen(true)}
+                onAddCluster={readOnly ? undefined : () => setAddOpen(true)}
                 onPodDescribe={onPodDescribe}
                 onPodLogs={onPodLogs}
               />

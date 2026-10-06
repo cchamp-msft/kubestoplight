@@ -9,6 +9,7 @@ interface Props {
   groups: NamespaceGroup[];
   selectedCluster: string | null;
   onSelect: (name: string | null) => void;
+  readOnly?: boolean;
   onAdd: () => void;
   onEdit: (c: Cluster) => void;
   onRemove: (name: string) => void;
@@ -23,7 +24,7 @@ interface Row {
 
 const SEV = ['Failed', 'Changing', 'Busy', 'Idle'];
 
-export default function ClusterSidebar({ clusters, groups, selectedCluster, onSelect, onAdd, onEdit, onRemove }: Props) {
+export default function ClusterSidebar({ clusters, groups, selectedCluster, onSelect, readOnly, onAdd, onEdit, onRemove }: Props) {
   // Configured clusters (incl. disabled and not-yet-polled) plus any that only
   // appear in the live feed.
   const rows = useMemo(() => {
@@ -44,7 +45,7 @@ export default function ClusterSidebar({ clusters, groups, selectedCluster, onSe
     <nav className="side-nav ksl-sidebar" aria-label="Clusters">
       <div className="ksl-sidebar__head">
         <p className="side-nav__heading">Clusters</p>
-        <button
+        {!readOnly && <button
           className="btn btn--ghost btn--icon ksl-btn-sm"
           type="button"
           aria-label="Add cluster"
@@ -52,7 +53,7 @@ export default function ClusterSidebar({ clusters, groups, selectedCluster, onSe
           onClick={onAdd}
         >
           <Icon name="plus" />
-        </button>
+        </button>}
       </div>
 
       <ul className="side-nav__list">
@@ -86,7 +87,7 @@ export default function ClusterSidebar({ clusters, groups, selectedCluster, onSe
                 <span className="ksl-sidebar__name">{r.name}</span>
                 <span className="ksl-sidebar__count">{disabled ? 'off' : r.pods}</span>
               </button>
-              {r.config && (
+              {r.config && !readOnly && (
                 <span className="ksl-sidebar__actions">
                   <button
                     className="btn btn--ghost btn--icon ksl-btn-sm"

@@ -5,6 +5,7 @@
 //   MOCK_SCENARIO=failing npm run dev:mock   # or healthy | empty | large
 //   MOCK_CHURN=0 npm run dev:mock            # freeze data and live log lines (screenshots)
 //   MOCK_NOW=2026-01-01T12:00:00Z ...        # pin the clock (timestamps, log lines)
+//   MOCK_READ_ONLY=1 npm run dev:mock        # behave like kubestoplight --web --read-only
 //
 // It serves the same routes the Go server does:
 //   GET/POST /api/clusters, PUT/DELETE /api/clusters/{name}
@@ -43,6 +44,7 @@ export function mockBackend(): Plugin {
   const envScenario = process.env.MOCK_SCENARIO as Scenario | undefined;
   let state: MockState = createState(envScenario && SCENARIOS.includes(envScenario) ? envScenario : 'mixed');
   const churnEnabled = process.env.MOCK_CHURN !== '0';
+  const readOnly = process.env.MOCK_READ_ONLY === '1';
   const pinnedNow = process.env.MOCK_NOW ? Date.parse(process.env.MOCK_NOW) : NaN;
   if (!Number.isNaN(pinnedNow)) clock.now = () => pinnedNow;
   const r = rng(7);
@@ -71,6 +73,11 @@ export function mockBackend(): Plugin {
         state = createState(name);
         broadcast();
         return send(res, 200, { scenario: name });
+      }
+
+      if (path === '/api/info') return send(res, 200, { readOnly });
+      if (readOnly && path.startsWith('/api/clusters') && req.method !== 'GET') {
+        return send(res, 403, { error: 'server is in read-only mode' });
       }
 
       if (path === '/api/clusters') {
