@@ -42,21 +42,25 @@ function initialBg(): string {
   return DEFAULT_BG;
 }
 
-// Motion for the gradient palettes: Jewel's own slow drift, or the lava lamp.
-type Motion = 'drift' | 'lava';
+// Motion for the gradient palettes. "jewel" is Jewel's own lava lamp
+// animation (the drifting gradient, named upstream in 383649b); "wax" adds
+// rising wax blobs on top of it.
+type Motion = 'jewel' | 'wax';
 const MOTIONS: { id: Motion; label: string }[] = [
-  { id: 'drift', label: 'Drift (Jewel)' },
-  { id: 'lava', label: 'Lava lamp' },
+  { id: 'jewel', label: 'Lava lamp (Jewel)' },
+  { id: 'wax', label: 'Wax blobs' },
 ];
 const MOTION_KEY = 'ksl-motion';
-const DEFAULT_MOTION: Motion = import.meta.env.VITE_DEFAULT_MOTION === 'lava' ? 'lava' : 'drift';
+// Old names from before Jewel named its animation, so shared links keep working.
+const MOTION_ALIASES: Record<string, Motion> = { jewel: 'jewel', drift: 'jewel', wax: 'wax', lava: 'wax' };
+const DEFAULT_MOTION: Motion = MOTION_ALIASES[import.meta.env.VITE_DEFAULT_MOTION ?? ''] ?? 'jewel';
 
 function initialMotion(): Motion {
-  const fromUrl = new URLSearchParams(window.location.search).get('motion');
-  if (fromUrl === 'drift' || fromUrl === 'lava') return fromUrl;
+  const fromUrl = MOTION_ALIASES[new URLSearchParams(window.location.search).get('motion') ?? ''];
+  if (fromUrl) return fromUrl;
   try {
-    const saved = localStorage.getItem(MOTION_KEY);
-    if (saved === 'drift' || saved === 'lava') return saved;
+    const saved = MOTION_ALIASES[localStorage.getItem(MOTION_KEY) ?? ''];
+    if (saved) return saved;
   } catch { /* storage blocked */ }
   return DEFAULT_MOTION;
 }
@@ -71,13 +75,13 @@ const BLOBS = [
   { x: '6vw', y: '18vh', s: '36vmax', dx: '18vw', t: '47s', d: '-38s', c: 'var(--blob-5)' },
 ];
 
-function LavaLayer() {
+function WaxLayer() {
   return (
-    <div className="ksl-lava" aria-hidden="true">
+    <div className="ksl-wax" aria-hidden="true">
       {BLOBS.map((b, i) => (
         <span
           key={i}
-          className="ksl-lava__blob"
+          className="ksl-wax__blob"
           style={{ '--x': b.x, '--y': b.y, '--s': b.s, '--dx': b.dx, '--t': b.t, '--d': b.d, '--c': b.c } as React.CSSProperties}
         />
       ))}
@@ -93,9 +97,9 @@ export default function BgPicker() {
   const [motion, setMotion] = useState(initialMotion);
   const [open, setOpen] = useState(false);
   const option = OPTIONS.find((o) => o.id === bg) ?? OPTIONS[0];
-  const lava = option.kind === 'palette' && motion === 'lava';
+  const wax = option.kind === 'palette' && motion === 'wax';
 
-  // A second lava layer inside .jewel-cap keeps the strip above the sticky
+  // A second wax layer inside .jewel-cap keeps the strip above the sticky
   // header in step with the page (same viewport-unit positions, same timing).
   const [cap, setCap] = useState<Element | null>(null);
   useEffect(() => setCap(document.querySelector('.jewel-cap')), []);
@@ -129,8 +133,8 @@ export default function BgPicker() {
 
   return (
     <>
-      {lava && <LavaLayer />}
-      {lava && cap && createPortal(<LavaLayer />, cap)}
+      {wax && <WaxLayer />}
+      {wax && cap && createPortal(<WaxLayer />, cap)}
       {option.kind === 'still' && (
         <div className="ksl-bg-media" aria-hidden="true">
           <div className="ksl-bg-media__still" style={{ backgroundImage: `url(${option.src})` }} />
@@ -192,7 +196,7 @@ export default function BgPicker() {
                   </div>
                 </div>
               )}
-              <p className="ksl-bgpicker__note">Shareable: kept in the URL (?bg={option.id}{lava ? '&motion=lava' : ''})</p>
+              <p className="ksl-bgpicker__note">Shareable: kept in the URL (?bg={option.id}{wax ? '&motion=wax' : ''})</p>
             </div>
           )}
           <button
@@ -202,7 +206,7 @@ export default function BgPicker() {
             onClick={() => setOpen((v) => !v)}
           >
             <span className="ksl-bgpicker__swatch" style={{ '--swatch': option.swatch } as React.CSSProperties} aria-hidden="true" />
-            Background · {option.label}{lava ? ' · Lava' : ''}
+            Background · {option.label}{wax ? ' · Wax' : ''}
           </button>
         </div>
       )}

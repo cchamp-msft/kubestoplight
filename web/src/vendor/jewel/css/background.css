@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Animated Jewel background
+   Lava lamp animation (the animated Jewel background)
    One fixed element, layered asymmetric radial gradients. Colors and
    origins are @property-registered (see tokens.css) so they interpolate.
    Tune with --bg-speed and --bg-intensity.

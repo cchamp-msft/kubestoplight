@@ -13,7 +13,7 @@
    Panels are glass by default; [data-panel="solid"] opts a subtree out.
    ========================================================================== */
 
-/* --- Registered properties (interpolatable, used by the animated background) */
+/* --- Registered properties (interpolatable, used by the lava lamp animation) */
 @property --bg-c1 { syntax: "<color>"; inherits: true; initial-value: #6D28D9; }
 @property --bg-c2 { syntax: "<color>"; inherits: true; initial-value: #C026D3; }
 @property --bg-c3 { syntax: "<color>"; inherits: true; initial-value: #0F9488; }
@@ -38,7 +38,7 @@
   --jewel-red:     #DC2626;
   --jewel-orange:  #EA580C;
 
-  /* ---- Background motion (tune these) ---------------------------------- */
+  /* ---- Lava lamp animation (tune these) -------------------------------- */
   --bg-speed: 32s;          /* one full color/position cycle; 20–40s reads as "slow" */
   --bg-intensity: 1;        /* 0–1: opacity of the gradient layers over the base */
   --bg-blur: 0px;           /* optional extra softening; 0 keeps it cheapest */
@@ -135,7 +135,7 @@
   --icon-stroke: 1.25;  /* hairline icon stroke (SVG units) */
 
   /* ---- Z-index scale -------------------------------------------------- */
-  --z-below: -1;     /* the animated background */
+  --z-below: -1;     /* the lava lamp animation */
   --z-base: 0;
   --z-raised: 1;     /* badges over photos, a sticky table header */
   --z-overlay: 3;    /* hover cards inside a component (chart tooltips) */
