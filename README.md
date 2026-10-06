@@ -179,3 +179,7 @@ go run . --web
 - **Live updates:** WebSocket at `/ws/pods` pushes `NamespaceGroup` snapshots every polling interval
 - **Single binary:** `go build` produces one self-contained executable
 - **Dual mode:** Same binary, same config file — TUI for terminals, web for browsers
+
+## License
+
+[MIT](LICENSE)
