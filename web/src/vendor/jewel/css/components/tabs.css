@@ -1,0 +1,71 @@
+/* Tabs — switch between views of the same thing, in place.
+   Behavior: js/components/tabs.js (click, arrow keys, Home/End, optional
+   #hash). Tabs sit side by side in one hairline box; the selected tab is
+   filled and carries a 2px accent rule along its bottom edge.
+
+   <div class="tabs" data-component="tabs">
+     <div class="tabs__list" role="tablist" aria-label="Photo details">
+       <button class="tabs__tab" role="tab" type="button" aria-selected="true">Info</button>
+       <button class="tabs__tab" role="tab" type="button">Map</button>
+       <button class="tabs__tab" role="tab" type="button" disabled>History</button>
+     </div>
+     <div class="tabs__panel" role="tabpanel">…</div>
+     <div class="tabs__panel" role="tabpanel" hidden>…</div>
+     <div class="tabs__panel" role="tabpanel" hidden>…</div>
+   </div>
+   tabs.js wires ids, aria-controls and aria-labelledby. Tabs and panels
+   pair up in order. data-tabs-hash on .tabs keeps the choice in the URL.
+
+   Too many tabs for the width: the row scrolls sideways (no wrapping). */
+
+.tabs { --tabs-gap: var(--space-5); display: grid; gap: var(--tabs-gap); min-width: 0; }
+
+.tabs__list {
+  display: flex;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border: var(--hairline) solid var(--panel-border);
+}
+.tabs__list::-webkit-scrollbar { display: none; }
+
+.tabs__tab {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 var(--space-4);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+@media (pointer: coarse) { .tabs__tab { min-height: var(--control-h-touch); } }
+.tabs__tab + .tabs__tab { border-left: var(--hairline) solid var(--panel-border); }
+.tabs__tab::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: var(--rule-strong);
+  background: transparent;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.tabs__tab:hover { color: var(--text-default); background: var(--state-hover-fill); }
+.tabs__tab:active { background: var(--state-pressed-fill); }
+.tabs__tab[aria-selected="true"] { color: var(--text-default); background: var(--state-selected-fill); }
+.tabs__tab[aria-selected="true"]::after { background: var(--text-accent); }
+.tabs__tab:focus-visible { outline-offset: calc(-1 * var(--space-1)); }
+.tabs__tab:disabled { opacity: var(--state-disabled-opacity); cursor: not-allowed; background: none; }
+.tabs__tab svg { width: var(--icon-sm); height: var(--icon-sm); }
+
+/* Count after a label: <span class="tabs__count">12</span> */
+.tabs__count { font-size: var(--text-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+.tabs__panel:focus-visible { outline-offset: var(--space-2); }

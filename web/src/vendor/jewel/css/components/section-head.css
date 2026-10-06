@@ -1,0 +1,14 @@
+/* Section head — the numbered label at the top of a content panel, with a
+   hairline under it that runs the full width of the panel, edge to edge.
+   Place it as the first child of a padded panel:
+   <section class="panel panel--pad grid">
+     <header class="section-head"><p class="label">01 — Typography</p></header>
+     <div class="span-9 start-4">…</div>
+   </section> */
+
+.section-head {
+  /* Pull the rule out through the panel's padding to both edges. */
+  margin-inline: calc(-1 * var(--panel-padding));
+  padding: 0 var(--panel-padding) var(--space-4);
+  border-bottom: var(--hairline) solid var(--panel-border);
+}

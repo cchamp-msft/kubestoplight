@@ -1,150 +1,114 @@
-/* App shell — Carbon G100 redesign */
+/* App shell — Jewel: sticky glass header, side-nav column, panel stack. */
 
-.ksl-shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  font-family: var(--cds-font-sans, 'IBM Plex Sans', sans-serif);
-}
-
-/* ── Header (48px) ── */
+/* ── Header ── */
 .ksl-header {
-  display: flex;
-  align-items: center;
-  height: 48px;
-  background-color: #161616;
-  padding: 0 16px;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--cds-border-subtle-01);
-  z-index: 8000;
+  justify-content: flex-start;
+  gap: var(--space-3);
 }
 
-.ksl-header__title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #fff;
-}
-
-.ksl-header__failed-tag {
-  margin-left: 12px;
+.ksl-header__spacer {
+  flex: 1;
 }
 
 .ksl-header__stats {
-  font-size: 0.75rem;
-  color: var(--cds-text-secondary);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-/* ── Body (sidebar + main) ── */
-.ksl-body {
+@media (max-width: 40rem) { /* --bp-sm */
+  .ksl-header__stats { display: none; }
+}
+
+/* ── Body ── */
+.ksl-layout {
+  margin-top: var(--space-4);
+  padding-bottom: var(--space-8);
+}
+
+.ksl-main {
+  margin-block: 0;
+}
+
+/* Below --bp-lg Jewel hides the column and expects a drawer; this app has
+   no menu button, so the cluster list stacks above the content instead. */
+@media (max-width: 63.99rem) {
+  .with-side-nav__aside {
+    display: block;
+    padding: var(--space-3);
+  }
+}
+
+/* ── Content panels ── */
+.ksl-section__head {
   display: flex;
-  flex: 1;
-  overflow: hidden;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
-.ksl-body__sidebar {
-  width: 240px;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-right: 1px solid var(--cds-border-subtle-01);
-}
-
-.ksl-body__main {
-  flex: 1;
-  overflow: auto;
-  background-color: var(--cds-background);
-}
-
-.ksl-content {
-  padding: 0 24px 24px;
-  max-width: 1440px;
-}
-
-.ksl-content__summary {
-  padding-top: 24px;
-}
-
-/* ── Summary strip ── */
-.ksl-summary {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  background-color: var(--cds-background);
-}
-
-.ksl-tile {
-  background-color: var(--cds-layer-01);
-  padding: 16px 20px;
-  border-top: 3px solid var(--cds-border-subtle-01);
-  min-width: 0;
-}
-
-.ksl-tile__value {
-  font-size: 1.75rem;
-  font-weight: 400;
-  line-height: 1.29;
-  color: var(--cds-text-primary);
+.ksl-section__scope {
   font-variant-numeric: tabular-nums;
 }
 
-.ksl-tile__label {
-  font-size: 0.75rem;
-  color: var(--cds-text-helper);
-  margin-top: 4px;
-  letter-spacing: 0.32px;
+/* ── Summary stats ── */
+.ksl-stats {
+  --stats-min: 9rem;
 }
 
-.ksl-tile__subtext {
-  font-size: 0.75rem;
-  color: var(--cds-text-helper);
-  margin-top: 2px;
+.ksl-stat__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 /* ── Filter bar ── */
 .ksl-filter {
   display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  padding: 16px 0 12px;
   flex-wrap: wrap;
-  border-bottom: 1px solid var(--cds-border-subtle-01);
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
+  border-bottom: var(--hairline) solid var(--panel-border);
 }
 
 .ksl-filter__search {
-  flex: 1 1 220px;
-  min-width: 180px;
+  flex: 1 1 16rem;
+  max-width: 28rem;
 }
 
 .ksl-filter__statuses {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  --cluster-gap: var(--space-2);
 }
 
-.ksl-filter__label {
-  font-size: 0.75rem;
-  color: var(--cds-text-helper);
-  letter-spacing: 0.32px;
-  text-transform: uppercase;
-  font-weight: 600;
+.ksl-filter__count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
 }
 
 .ksl-filter__toggles {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
-  border-left: 1px solid var(--cds-border-subtle-01);
-  padding-left: 16px;
+  column-gap: var(--space-5);
+  margin-left: auto;
 }
 
-/* ── Carbon checkbox/toggle inline fixes ── */
-.ksl-filter .cds--checkbox-wrapper,
-.ksl-filter .cds--form-item.cds--checkbox-wrapper {
-  margin-bottom: 0 !important;
+.ksl-filter__toggles .choice {
+  min-height: var(--control-h);
 }
 
-.ksl-filter .cds--toggle,
-.ksl-filter .cds--form-item.cds--toggle {
-  margin-bottom: 0 !important;
+/* Status-filter tag buttons carry a dot; pressed fills the pill. */
+.tag--button.ksl-status-filter {
+  gap: var(--space-2);
+}
+
+/* ── Status tags (StatusTag.tsx) ── */
+.ksl-status-tag {
+  gap: var(--space-2);
+  color: var(--text-default);
+  white-space: nowrap;
 }

@@ -1,6 +1,6 @@
 # kubestoplight web UI
 
-React + TypeScript + Vite SPA, built on IBM Carbon. The Go binary embeds the
+React + TypeScript + Vite SPA, styled with the [Jewel](https://github.com/willchambers/jewel-design-system) design system. The Go binary embeds the
 built `dist/` and serves it with `kubestoplight --web`.
 
 | Command | What it does |
@@ -11,6 +11,7 @@ built `dist/` and serves it with `kubestoplight --web`.
 | `npm run lint` | Oxlint |
 | `npm run build` | Typecheck + production build into `dist/` |
 | `npm run preview:mock` | Serve the production build with the fake backend |
+| `npm run screenshots` | Regenerate `../docs/screenshots/*.png` from mock mode (needs Google Chrome) |
 
 Mock scenarios (`MOCK_SCENARIO=mixed|healthy|failing|empty|large`) and the
 rest of the details are in [`../AGENTS.md`](../AGENTS.md).

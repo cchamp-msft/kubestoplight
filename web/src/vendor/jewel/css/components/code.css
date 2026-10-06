@@ -1,0 +1,91 @@
+/* Code snippet — a block of code with its language and a copy button.
+   Behavior: js/components/code.js (copy, with a "Copied" confirmation
+   that screen readers hear too). Inline code and <kbd> are styled in base.css.
+
+   <figure class="code" data-component="code">
+     <figcaption class="code__head">
+       <span class="code__lang">HTML</span>
+       <button class="code__copy" type="button">Copy</button>
+     </figcaption>
+     <pre class="code__body" tabindex="0"><code>&lt;link rel="stylesheet" href="css/jewel.css"&gt;</code></pre>
+   </figure>
+
+   - Escape < > & in the markup (or set textContent from JS).
+   - tabindex="0" on the <pre> lets keyboard users scroll a long line.
+   - .code--wrap wraps long lines instead of scrolling.
+   - .code--tall caps the height (scrolls past ~20 lines).
+   - Syntax colors: none by default (restraint). If you add a
+     highlighter, map its classes to --text-default / --text-muted /
+     --text-accent only, so contrast holds on glass. */
+
+.code {
+  --code-max-h: none;
+  min-width: 0;
+  background: var(--field-fill);
+  border: var(--hairline) solid var(--panel-border);
+  border-radius: var(--radius-1);
+}
+.code--tall { --code-max-h: var(--region-h); }
+
+.code__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--control-h);
+  padding: 0 var(--space-1) 0 var(--space-4);
+  border-bottom: var(--hairline) solid var(--panel-border);
+}
+.code__lang {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.code__copy {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h-sm);
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-1);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+.code__copy::after { content: ""; position: absolute; inset: calc((var(--control-h-sm) - var(--hit-min)) / 2) 0; } /* 44px hit area */
+.code__copy:hover { color: var(--text-default); background: var(--state-hover-fill); }
+.code__copy:active { background: var(--state-pressed-fill); }
+.code__copy[data-state="copied"] { color: var(--text-accent); }
+.code__copy[data-state="failed"] { color: var(--field-error); }
+.code__copy svg { width: var(--icon-xs); height: var(--icon-xs); fill: none; stroke: currentColor; stroke-width: calc(var(--icon-stroke) * 1.4); }
+
+.code__body {
+  margin: 0;
+  max-height: var(--code-max-h);
+  overflow: auto;
+  padding: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--text-default);
+  tab-size: 2;
+  scrollbar-width: thin;
+  scrollbar-color: var(--field-border) transparent;
+}
+.code__body:focus-visible { outline-offset: calc(-1 * var(--space-1)); }
+.code__body code { font-size: inherit; padding: 0; border: 0; background: none; }
+.code--wrap .code__body { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Comments and quiet parts, if marked up by hand: <span class="code__muted">…</span> */
+.code__muted { color: var(--text-muted); }
+.code__mark { color: var(--text-accent); }

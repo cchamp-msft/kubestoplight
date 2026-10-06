@@ -2,6 +2,13 @@
 
 A dual-mode Kubernetes pod monitor — run as a terminal TUI or a self-hosted web application.
 
+![The kubestoplight web dashboard showing clusters, summary stats and namespace cards (mock data)](docs/screenshots/overview.png)
+
+<sub>Rendered from [mock mode](#try-it-without-a-cluster) and regenerated on every PR that touches `web/`.
+More: [failing](docs/screenshots/failing.png) · [large](docs/screenshots/large.png) ·
+[empty](docs/screenshots/empty.png) · [describe](docs/screenshots/describe.png) ·
+[logs](docs/screenshots/logs.png) · [add cluster](docs/screenshots/add-cluster.png)</sub>
+
 ## Modes
 
 | Mode | Command | Description |
@@ -58,14 +65,20 @@ go build -o kubestoplight .
 ./kubestoplight --web                           # http://127.0.0.1:8080
 ./kubestoplight --web --addr 0.0.0.0:9090       # listen on all interfaces
 ./kubestoplight --web --config /path/to/cfg.yaml
+./kubestoplight --web --read-only             # no cluster add/edit/remove; config redacted from the API
 ```
+
+Use `--read-only` whenever the UI is reachable by anyone but you. For a
+short-lived public preview behind a Cloudflare tunnel, see
+[`deploy/preview/preview.sh`](deploy/preview/preview.sh) (`setup` / `up` / `down` / `destroy`).
 
 Open `http://127.0.0.1:8080` in your browser. The dashboard features:
 
-- **Summary strip** — four stat tiles (total pods, healthy %, failed count, in-progress) with color-coded accent borders
-- **Sidebar** — cluster list with per-cluster status dots; click to filter the main view
-- **Filter bar** — live search (`/` to focus), status checkboxes with counts, hide-idle and hide-empty toggles
-- **Namespace cards** — pod grid (8×8 colored squares), stacked status bar, expand/collapse with pod detail rows
+- **Summary** — total pods, healthy %, failed, in progress and jobs, for all clusters or the selected one
+- **Sidebar** — cluster list with per-cluster status dots; click to filter, **+** to add, hover for edit/remove
+- **Filter bar** — live search (`/` to focus), status filter tags with counts, hide-idle and hide-empty switches
+- **Namespace cards** — pod and job donuts, status counts, expand for a pod table
+- **Pod drill-down** — Describe / Logs (streaming, follow) / YAML in a side drawer
 - **Auto-expand** — namespaces with failed pods expand automatically on first load
 
 Pod status cards update live every polling interval (default 3 s).
@@ -134,13 +147,13 @@ direct config file editing.
 
 ## Status colours
 
-| Status   | Colour | Meaning |
-|----------|--------|---------|
-| Idle     | Green  | Running, stable, no restarts |
-| Busy     | Blue   | Running but restarting |
-| Changing | Amber  | Pending or terminating |
-| Failed   | Red    | CrashLoopBackOff, image errors, or terminated with error |
-| Empty    | Gray   | No container status data |
+| Status   | TUI    | Web    | Meaning |
+|----------|--------|--------|---------|
+| Idle     | Green  | Teal   | Running, stable, no restarts |
+| Busy     | Blue   | Purple | Running but restarting |
+| Changing | Amber  | Orange | Pending or terminating |
+| Failed   | Red    | Red    | CrashLoopBackOff, image errors, or terminated with error |
+| Empty    | Gray   | Gray   | No container status data |
 
 ## Web UI key bindings
 
@@ -175,7 +188,7 @@ go run . --web
 
 - **Backend:** Go stdlib `net/http` + `nhooyr.io/websocket`; no framework
 - **Frontend:** React 19 + TypeScript 6, built with Vite, embedded via `go:embed`
-- **UI kit:** [IBM Carbon Design System](https://carbondesignsystem.com/) v11 — `@carbon/react` with Gray 100 (G100) dark theme
+- **UI kit:** [Jewel](https://github.com/willchambers/jewel-design-system), a CSS-only dark design system, vendored in `web/src/vendor/jewel`
 - **Live updates:** WebSocket at `/ws/pods` pushes `NamespaceGroup` snapshots every polling interval
 - **Single binary:** `go build` produces one self-contained executable
 - **Dual mode:** Same binary, same config file — TUI for terminals, web for browsers

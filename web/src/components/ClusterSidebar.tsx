@@ -1,76 +1,120 @@
 import { useMemo } from 'react';
-import type { NamespaceGroup } from '../types/api';
+import type { Cluster, NamespaceGroup } from '../types/api';
 import { STATUS_COLORS } from '../constants/status';
+import Icon from './ui/Icon';
 import './ClusterSidebar.scss';
 
 interface Props {
+  clusters: Cluster[];
   groups: NamespaceGroup[];
   selectedCluster: string | null;
   onSelect: (name: string | null) => void;
-  connected: boolean;
+  readOnly?: boolean;
+  onAdd: () => void;
+  onEdit: (c: Cluster) => void;
+  onRemove: (name: string) => void;
 }
 
-export default function ClusterSidebar({ groups, selectedCluster, onSelect, connected }: Props) {
-  const clusters = useMemo(() => {
-    const map = new Map<string, { pods: number; worst: string }>();
+interface Row {
+  name: string;
+  pods: number;
+  worst: string | null; // null = no data yet
+  config?: Cluster;
+}
+
+const SEV = ['Failed', 'Changing', 'Busy', 'Idle'];
+
+export default function ClusterSidebar({ clusters, groups, selectedCluster, onSelect, readOnly, onAdd, onEdit, onRemove }: Props) {
+  // Configured clusters (incl. disabled and not-yet-polled) plus any that only
+  // appear in the live feed.
+  const rows = useMemo(() => {
+    const map = new Map<string, Row>();
+    for (const c of clusters) map.set(c.name, { name: c.name, pods: 0, worst: null, config: c });
     for (const g of groups) {
-      if (!map.has(g.cluster)) map.set(g.cluster, { pods: 0, worst: 'Idle' });
-      const c = map.get(g.cluster)!;
-      c.pods += g.totalPods;
-      const sev = ['Failed', 'Changing', 'Busy', 'Idle'];
-      if (sev.indexOf(g.status) < sev.indexOf(c.worst)) c.worst = g.status;
+      const r = map.get(g.cluster) ?? { name: g.cluster, pods: 0, worst: null };
+      r.pods += g.totalPods;
+      if (r.worst === null || SEV.indexOf(g.status) < SEV.indexOf(r.worst)) r.worst = g.status;
+      map.set(g.cluster, r);
     }
-    return map;
-  }, [groups]);
+    return [...map.values()];
+  }, [clusters, groups]);
 
   const totalPods = groups.reduce((n, g) => n + g.totalPods, 0);
 
   return (
-    <nav className="ksl-sidebar">
-      {/* Section label */}
-      <div className="ksl-sidebar__header">
-        <span className="ksl-sidebar__title">Clusters</span>
-        <div className="ksl-sidebar__status">
-          <span
-            className="ksl-sidebar__dot"
-            style={{
-              backgroundColor: connected ? 'var(--cds-support-success)' : 'var(--cds-support-error)',
-            }}
-          />
-          <span className="ksl-sidebar__status-label">{connected ? 'Live' : 'Offline'}</span>
-        </div>
-      </div>
-
-      {/* All clusters */}
-      <div
-        className={`ksl-sidebar__item${!selectedCluster ? ' ksl-sidebar__item--active' : ''}`}
-        onClick={() => onSelect(null)}
-      >
-        <span style={{ flex: 1 }}>All clusters</span>
-        <span className="ksl-sidebar__count">{totalPods}</span>
-      </div>
-
-      {/* Individual clusters */}
-      {[...clusters.entries()].map(([name, info]) => (
-        <div
-          key={name}
-          className={`ksl-sidebar__item${selectedCluster === name ? ' ksl-sidebar__item--active' : ''}`}
-          onClick={() => onSelect(name)}
+    <nav className="side-nav ksl-sidebar" aria-label="Clusters">
+      <div className="ksl-sidebar__head">
+        <p className="side-nav__heading">Clusters</p>
+        {!readOnly && <button
+          className="btn btn--ghost btn--icon ksl-btn-sm"
+          type="button"
+          aria-label="Add cluster"
+          title="Add cluster"
+          onClick={onAdd}
         >
-          <span
-            className="ksl-sidebar__cluster-dot"
-            style={{ backgroundColor: STATUS_COLORS[info.worst] }}
-          />
-          <span className="ksl-sidebar__cluster-name">{name}</span>
-          <span className="ksl-sidebar__count">{info.pods}</span>
-        </div>
-      ))}
-
-      {/* Footer */}
-      <div className="ksl-sidebar__spacer" />
-      <div className="ksl-sidebar__footer">
-        kubestoplight <span style={{ opacity: 0.6 }}>v0.2.0</span>
+          <Icon name="plus" />
+        </button>}
       </div>
+
+      <ul className="side-nav__list">
+        <li>
+          <button
+            type="button"
+            className="side-nav__link ksl-sidebar__link"
+            aria-current={!selectedCluster ? 'page' : undefined}
+            onClick={() => onSelect(null)}
+          >
+            <span className="ksl-sidebar__name">All clusters</span>
+            <span className="ksl-sidebar__count">{totalPods}</span>
+          </button>
+        </li>
+
+        {rows.map((r) => {
+          const disabled = r.config?.enabled === false;
+          return (
+            <li key={r.name} className="ksl-sidebar__row">
+              <button
+                type="button"
+                className="side-nav__link ksl-sidebar__link"
+                aria-current={selectedCluster === r.name ? 'page' : undefined}
+                onClick={() => onSelect(r.name)}
+              >
+                <span
+                  className="ksl-dot"
+                  style={{ '--tone': r.worst ? STATUS_COLORS[r.worst] : undefined } as React.CSSProperties}
+                  aria-hidden="true"
+                />
+                <span className="ksl-sidebar__name">{r.name}</span>
+                <span className="ksl-sidebar__count">{disabled ? 'off' : r.pods}</span>
+              </button>
+              {r.config && !readOnly && (
+                <span className="ksl-sidebar__actions">
+                  <button
+                    className="btn btn--ghost btn--icon ksl-btn-sm"
+                    type="button"
+                    aria-label={`Edit ${r.name}`}
+                    title="Edit"
+                    onClick={() => onEdit(r.config!)}
+                  >
+                    <Icon name="edit" />
+                  </button>
+                  <button
+                    className="btn btn--ghost btn--icon ksl-btn-sm"
+                    type="button"
+                    aria-label={`Remove ${r.name}`}
+                    title="Remove"
+                    onClick={() => onRemove(r.name)}
+                  >
+                    <Icon name="trash" />
+                  </button>
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="caption ksl-sidebar__footer">kubestoplight v0.2.0</p>
     </nav>
   );
 }

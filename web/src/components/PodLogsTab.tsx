@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Select, SelectItem, Toggle, IconButton, InlineLoading, InlineNotification } from '@carbon/react';
-import { ArrowUp, ArrowDown, Copy, TrashCan, StopFilled, PlayFilledAlt } from '@carbon/icons-react';
+import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { usePodDescribe } from '../hooks/usePodDescribe';
 import { usePodLogs } from '../hooks/usePodLogs';
+import Icon, { type IconName } from './ui/Icon';
+import Loading from './ui/Loading';
 import './PodLogsTab.scss';
 
 interface Props {
@@ -36,14 +36,23 @@ function LogLine({ line }: { line: string }) {
   return <div className={className}>{line}</div>;
 }
 
+function ToolButton({ icon, label, onClick }: { icon: IconName; label: string; onClick: () => void }) {
+  return (
+    <button className="btn btn--ghost btn--icon ksl-btn-sm" type="button" aria-label={label} title={label} onClick={onClick}>
+      <Icon name={icon} />
+    </button>
+  );
+}
+
 export default function PodLogsTab({ cluster, namespace, pod }: Props) {
   const { data: describe } = usePodDescribe(cluster, namespace, pod);
   const containers = describe?.containers ?? [];
+  const selectId = useId();
 
   const [container, setContainer] = useState('');
   const [follow, setFollow] = useState(true);
   const [active, setActive] = useState(true);
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
     if (containers.length > 0 && !container) {
@@ -100,79 +109,66 @@ export default function PodLogsTab({ cluster, namespace, pod }: Props) {
 
   return (
     <div className="ksl-logs">
-      <div className="ksl-logs__toolbar">
-        {containers.length > 1 && (
-          <Select
-            id="container-select"
-            labelText=""
-            size="sm"
-            value={container}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setContainer(e.target.value)}
-            className="ksl-logs__container-select"
-          >
-            {containers.map((c) => (
-              <SelectItem key={c.name} value={c.name} text={c.name} />
-            ))}
-          </Select>
-        )}
-        {containers.length <= 1 && container && (
-          <span className="ksl-logs__container-label">{container}</span>
-        )}
-        <div style={{ flex: 1 }} />
-        <Toggle
-          id="follow-toggle"
-          size="sm"
-          labelText=""
-          labelA="Follow"
-          labelB="Follow"
-          toggled={follow}
-          onToggle={() => setFollow(!follow)}
-        />
-        <IconButton kind="ghost" size="sm" label="Scroll to top" onClick={scrollToTop}>
-          <ArrowUp />
-        </IconButton>
-        <IconButton kind="ghost" size="sm" label="Scroll to bottom" onClick={scrollToBottom}>
-          <ArrowDown />
-        </IconButton>
-        <IconButton kind="ghost" size="sm" label="Copy logs" onClick={handleCopy}>
-          <Copy />
-        </IconButton>
-        <IconButton kind="ghost" size="sm" label="Clear" onClick={clear}>
-          <TrashCan />
-        </IconButton>
-        <IconButton kind="ghost" size="sm" label={active ? 'Stop' : 'Resume'} onClick={toggleActive}>
-          {active ? <StopFilled /> : <PlayFilledAlt />}
-        </IconButton>
-      </div>
-
       {error && (
-        <div className="ksl-logs__error">
-          <InlineNotification kind="error" title="Log error" subtitle={error} hideCloseButton />
+        <div className="notice notice--error" role="alert">
+          <div className="notice__body">
+            <p className="notice__title">Log stream error</p>
+            <p className="notice__text">{error}</p>
+          </div>
         </div>
       )}
 
-      {loading && (
-        <div className="ksl-logs__loading">
-          <InlineLoading description="Connecting to log stream..." />
-        </div>
-      )}
+      {/* Solid, not glass: a moving gradient behind dense text hurts reading. */}
+      <figure className="code ksl-logs__view" data-panel="solid">
+        <figcaption className="code__head ksl-logs__toolbar">
+          {containers.length > 1 ? (
+            <div className="select ksl-logs__select">
+              <label className="visually-hidden" htmlFor={selectId}>Container</label>
+              <select
+                className="input"
+                id={selectId}
+                value={container}
+                onChange={(e) => setContainer(e.target.value)}
+              >
+                {containers.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+              </select>
+            </div>
+          ) : (
+            <span className="code__lang">{container || 'Logs'}</span>
+          )}
+          <span className="ksl-logs__spacer" />
+          <label className="choice ksl-logs__follow">
+            <input type="checkbox" role="switch" checked={follow} onChange={() => setFollow(!follow)} />
+            Follow
+          </label>
+          <ToolButton icon="arrowUp" label="Scroll to top" onClick={scrollToTop} />
+          <ToolButton icon="arrowDown" label="Scroll to bottom" onClick={scrollToBottom} />
+          <ToolButton icon="copy" label="Copy logs" onClick={handleCopy} />
+          <ToolButton icon="trash" label="Clear" onClick={clear} />
+          <ToolButton icon={active ? 'stop' : 'play'} label={active ? 'Stop' : 'Resume'} onClick={toggleActive} />
+        </figcaption>
 
-      <div className="ksl-logs__viewport" ref={viewportRef} onScroll={handleScroll}>
-        <pre className="ksl-logs__output">
+        {loading && <div className="ksl-logs__loading"><Loading label="Connecting to log stream…" /></div>}
+
+        <pre className="code__body ksl-logs__output" ref={viewportRef} onScroll={handleScroll} tabIndex={0}>
           {lines.map((line, i) => (
             <LogLine key={i} line={line} />
           ))}
           {lines.length === 0 && !loading && !error && (
-            <span className="ksl-logs__empty">No log output</span>
+            <span className="code__muted">No log output</span>
           )}
         </pre>
-      </div>
 
-      <div className="ksl-logs__status-bar">
-        <span>{lines.length.toLocaleString()} lines</span>
-        <span className={`ksl-logs__status-dot ${connected ? 'ksl-logs__status-dot--on' : ''}`} />
-        <span>{connected ? 'Connected' : 'Disconnected'}</span>
-      </div>
+        <div className="ksl-logs__status">
+          <span>{lines.length.toLocaleString()} lines</span>
+          <span
+            className="ksl-dot"
+            style={{ '--tone': connected ? 'var(--status-idle)' : undefined } as React.CSSProperties}
+            aria-hidden="true"
+          />
+          <span>{connected ? 'Connected' : 'Disconnected'}</span>
+        </div>
+      </figure>
     </div>
   );
 }

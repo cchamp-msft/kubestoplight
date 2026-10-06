@@ -1,39 +1,34 @@
-import { useState, useMemo } from 'react';
-import { Tag } from '@carbon/react';
-import type { NamespaceGroup } from '../types/api';
-import { STATUS_COLORS, SEVERITY_ORDER, STATUS_COLORS_HEX, JOB_STATUS_COLORS_HEX } from '../constants/status';
+import { useId, useMemo } from 'react';
+import type { NamespaceGroup, NamespaceStatusKind, PodItem } from '../types/api';
+import {
+  STATUS_COLORS, SEVERITY_ORDER, JOB_STATUS_COLORS, POD_STATUS_ORDER, JOB_STATUS_ORDER,
+} from '../constants/status';
 import ResourceDonut from './ResourceDonut';
 import PodRow from './PodRow';
+import StatusTag from './StatusTag';
+import Icon from './ui/Icon';
 import './NamespaceCard.scss';
 
 interface Props {
   group: NamespaceGroup;
   expanded: boolean;
   onToggle: () => void;
-  onPodDescribe: (pod: import('../types/api').PodItem) => void;
-  onPodLogs: (pod: import('../types/api').PodItem) => void;
+  onPodDescribe: (pod: PodItem) => void;
+  onPodLogs: (pod: PodItem) => void;
 }
 
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="currentColor"
-      className={`ksl-chevron${open ? ' ksl-chevron--open' : ''}`}
-    >
-      <path d="M8 11L3 6l.7-.7L8 9.6l4.3-4.3.7.7z" />
-    </svg>
-  );
-}
+const COUNT_TAGS: [status: NamespaceStatusKind, label: string][] = [
+  ['Failed', 'failed'],
+  ['Changing', 'changing'],
+  ['Busy', 'busy'],
+  ['Idle', 'idle'],
+];
 
 export default function NamespaceCard({ group, expanded, onToggle, onPodDescribe, onPodLogs }: Props) {
   const { namespace, cluster, totalPods, activePods, readyPods, status, statusCounts, pods } = group;
   const totalJobs = group.totalJobs ?? 0;
   const jobStatusCounts = group.jobStatusCounts ?? {};
-  const statusColor = STATUS_COLORS[status] ?? STATUS_COLORS.Unknown;
-  const [hovered, setHovered] = useState(false);
+  const detailId = useId();
 
   const sortedPods = useMemo(
     () => [...pods].sort((a, b) => (SEVERITY_ORDER[a.status] ?? 5) - (SEVERITY_ORDER[b.status] ?? 5)),
@@ -41,75 +36,78 @@ export default function NamespaceCard({ group, expanded, onToggle, onPodDescribe
   );
 
   return (
-    <div
+    <article
       className="ksl-card"
-      onClick={onToggle}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        backgroundColor: hovered ? 'var(--cds-layer-hover-01)' : 'var(--cds-layer-01)',
-        borderLeftColor: statusColor,
-      }}
+      style={{ '--tone': STATUS_COLORS[status] ?? STATUS_COLORS.Unknown } as React.CSSProperties}
     >
-      {/* Header */}
-      <div className="ksl-card__header">
-        <span className="ksl-card__namespace">{namespace}</span>
-        <div className="ksl-card__header-right">
-          <Tag type="cool-gray" size="sm">{cluster}</Tag>
-          <Chevron open={expanded} />
-        </div>
-      </div>
+      <button
+        type="button"
+        className="ksl-card__toggle"
+        aria-expanded={expanded}
+        aria-controls={detailId}
+        onClick={onToggle}
+      >
+        <span className="ksl-card__header">
+          <span className="ksl-card__namespace">{namespace}</span>
+          <span className="tag">{cluster}</span>
+          <Icon name="chevron" className={`ksl-chevron${expanded ? ' ksl-chevron--open' : ''}`} />
+        </span>
 
-      {/* Donut charts */}
-      <div className="ksl-card__donuts">
-        <ResourceDonut
-          title="Pods"
-          total={totalPods}
-          statusCounts={statusCounts}
-          colorMap={STATUS_COLORS_HEX}
-        />
-        <ResourceDonut
-          title="Jobs"
-          total={totalJobs}
-          statusCounts={jobStatusCounts}
-          colorMap={JOB_STATUS_COLORS_HEX}
-        />
-      </div>
+        <span className="ksl-card__donuts">
+          <ResourceDonut
+            title="Pods"
+            total={totalPods}
+            statusCounts={statusCounts}
+            colorMap={STATUS_COLORS}
+            order={POD_STATUS_ORDER}
+          />
+          <ResourceDonut
+            title="Jobs"
+            total={totalJobs}
+            statusCounts={jobStatusCounts}
+            colorMap={JOB_STATUS_COLORS}
+            order={JOB_STATUS_ORDER}
+          />
+        </span>
 
-      {/* Pod count + status tags */}
-      <div className="ksl-card__status-row">
-        <span className="ksl-card__total">
-          {totalPods} pod{totalPods !== 1 ? 's' : ''}
-          {' · '}
-          {totalJobs} job{totalJobs !== 1 ? 's' : ''}
+        <span className="ksl-card__status-row">
           <span className="ksl-card__ready">
             {readyPods}/{activePods} ready
           </span>
+          <span className="ksl-card__tags">
+            {COUNT_TAGS.map(([s, label]) =>
+              (statusCounts[s] ?? 0) > 0 ? (
+                <StatusTag key={s} status={s}>{statusCounts[s]} {label}</StatusTag>
+              ) : null,
+            )}
+            {(jobStatusCounts.Failed ?? 0) > 0 && (
+              <StatusTag tone={JOB_STATUS_COLORS.Failed}>{jobStatusCounts.Failed} job failed</StatusTag>
+            )}
+          </span>
         </span>
-        <div className="ksl-card__tags">
-          {(statusCounts.Failed ?? 0) > 0 && <Tag type="red" size="sm">{statusCounts.Failed} failed</Tag>}
-          {(statusCounts.Changing ?? 0) > 0 && <Tag type="teal" size="sm">{statusCounts.Changing} changing</Tag>}
-          {(statusCounts.Busy ?? 0) > 0 && <Tag type="blue" size="sm">{statusCounts.Busy} busy</Tag>}
-          {(statusCounts.Idle ?? 0) > 0 && <Tag type="green" size="sm">{statusCounts.Idle} idle</Tag>}
-          {(jobStatusCounts.Failed ?? 0) > 0 && <Tag type="red" size="sm">{jobStatusCounts.Failed} job fail</Tag>}
-        </div>
-      </div>
+      </button>
 
-      {/* Expanded pod detail */}
       {expanded && (
-        <div className="ksl-card__detail ksl-card-expand">
-          <div className="ksl-card__detail-header">
-            <span>Name</span>
-            <span>Status</span>
-            <span>Ready</span>
-            <span>Age</span>
-            <span></span>
-          </div>
-          {sortedPods.map((pod) => (
-            <PodRow key={pod.name} pod={pod} onDescribe={onPodDescribe} onLogs={onPodLogs} />
-          ))}
+        <div className="ksl-card__detail table-wrap" id={detailId}>
+          <table className="table table--compact ksl-pods">
+            <caption className="visually-hidden">Pods in {namespace} on {cluster}</caption>
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Status</th>
+                <th scope="col" className="is-num">Ready</th>
+                <th scope="col" className="is-num">Age</th>
+                <th scope="col"><span className="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedPods.map((pod) => (
+                <PodRow key={pod.name} pod={pod} onDescribe={onPodDescribe} onLogs={onPodLogs} />
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
-    </div>
+    </article>
   );
 }

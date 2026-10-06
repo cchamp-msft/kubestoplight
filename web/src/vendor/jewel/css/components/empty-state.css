@@ -1,0 +1,63 @@
+/* Empty state — what to show when there's nothing here yet (no photos, no
+   results, a fresh account), with one way forward. Plain and quiet: a
+   hairline icon, a short title, one line of help, at most two actions.
+
+   <div class="empty-state">
+     <svg class="empty-state__icon" viewBox="0 0 24 24" aria-hidden="true">…</svg>
+     <h3 class="empty-state__title">No photos yet</h3>
+     <p class="empty-state__text">Post your first photo and it shows up here.</p>
+     <div class="empty-state__actions">
+       <button class="btn" type="button" data-sheet-open="post-sheet">New post</button>
+     </div>
+   </div>
+
+   .empty-state--boxed: a hairline box with the knockout corner, for an
+   empty region inside a page (add .knockout too).
+   .empty-state--compact: smaller, left-aligned, for a table or a list.
+   No results from a search or filter? Say what was searched and offer to
+   clear it, rather than a generic "Nothing here". */
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-5);
+  text-align: center;
+}
+.empty-state__icon {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  margin-bottom: var(--space-2);
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+}
+.empty-state__title {
+  font-size: var(--text-xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-heading);
+}
+.empty-state__text { max-width: 40ch; color: var(--text-muted); }
+.empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.empty-state--boxed {
+  background: var(--field-fill);
+  border: var(--hairline) solid var(--panel-border);
+}
+
+.empty-state--compact {
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-5) 0;
+  text-align: left;
+}
+.empty-state--compact .empty-state__icon { width: var(--icon-md); height: var(--icon-md); margin: 0; }
+.empty-state--compact .empty-state__title { font-size: var(--text-base); letter-spacing: var(--tracking-body); }
+.empty-state--compact .empty-state__actions { justify-content: start; margin-top: var(--space-1); }

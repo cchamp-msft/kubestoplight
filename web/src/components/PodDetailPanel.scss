@@ -1,80 +1,59 @@
-/* PodDetailPanel — slide-out panel */
+/* PodDetailPanel — right-hand Jewel sheet with tabs. The body is a column so
+   the logs and JSON viewers can fill the remaining height. */
 
-.ksl-panel-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 8100;
-  background: rgba(0, 0, 0, 0.5);
-  animation: kslFadeIn 200ms cubic-bezier(0.2, 0, 0.38, 0.9);
+.ksl-detail .sheet__head {
+  flex-wrap: wrap;
+  padding-left: var(--space-5);
 }
 
-.ksl-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 55vw;
-  min-width: 480px;
-  max-width: 900px;
-  height: 100vh;
-  background-color: var(--cds-layer-01);
-  border-left: 1px solid var(--cds-border-subtle-01);
-  display: flex;
-  flex-direction: column;
-  animation: kslSlideIn 200ms cubic-bezier(0.2, 0, 0.38, 0.9);
-  overflow: hidden;
+.ksl-detail .sheet__title {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
 }
 
-@keyframes kslSlideIn {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-/* ── Header ── */
-.ksl-panel__header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid var(--cds-border-subtle-01);
-  flex-shrink: 0;
-}
-
-.ksl-panel__pod-name {
-  font-family: var(--cds-font-mono, 'IBM Plex Mono', monospace);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--cds-text-primary);
+.ksl-detail__name {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 40%;
 }
 
-/* ── Tabs ── */
-.ksl-panel .cds--tabs {
-  flex: 1;
+.ksl-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.ksl-detail .sheet__body {
   display: flex;
   flex-direction: column;
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  overflow: hidden;
+}
+
+.ksl-detail__tabs {
+  --tabs-gap: var(--space-4);
+  flex: 1;
   min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
-.ksl-panel .cds--tab-content {
-  flex: 1;
+.ksl-detail__panel:not([hidden]) {
+  min-height: 0;
   overflow-y: auto;
-  padding: 0;
 }
 
-.ksl-panel__tab-content {
-  padding: 16px;
-  height: 100%;
-}
-
-.ksl-panel__tab-content--logs {
-  padding: 0;
+/* Logs and JSON manage their own scrolling. */
+.ksl-detail__panel--logs:not([hidden]),
+.ksl-detail__panel--yaml:not([hidden]) {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+/* Shared: a busy line while a tab loads. */
+.ksl-loading {
+  padding: var(--space-6) 0;
 }

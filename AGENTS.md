@@ -80,37 +80,83 @@ typecheck passing does not mean the design swap worked. If you have a browser
 automation tool, screenshot `mixed`, `failing`, `empty`, and `large`, and open
 a pod's Describe / Logs / YAML tabs.
 
+### Screenshots
+
+```bash
+cd web
+npm run screenshots              # all → docs/screenshots/*.png
+npm run screenshots -- overview  # or just some: overview failing large empty describe logs add-cluster social bg-* (incl. bg-wax-*)
+```
+
+`web/scripts/screenshots.mjs` boots its own mock server with frozen data and a
+pinned clock (`MOCK_CHURN=0`, `MOCK_NOW`), drives the installed Google Chrome
+via `playwright-core`, and writes PNGs the README links to. Same code → same
+pixels, so a PNG diff means the UI changed. Selectors use roles and visible
+text only (`button "Describe"`, `button "Add cluster"`, label "Cluster name"),
+so keep those names when swapping components.
+
+CI (`.github/workflows/screenshots.yml`) regenerates them on every PR that
+touches `web/` and commits them back to the branch — pull before pushing
+again. Local renders can differ slightly from CI's Linux fonts; CI's copy is
+the one that lands.
+
 Go side (only if you touched Go): `go build ./... && go vet ./...`. Note
 `go build` of the root package requires `web/dist/` to exist.
 
-## Swapping the design system (Carbon → something else)
+## Design system: Jewel
 
-The UI is built on IBM Carbon (`@carbon/react`, `@carbon/styles`, g100 dark
-theme). Carbon touches these places:
+The UI is built on [Jewel](https://github.com/willchambers/jewel-design-system),
+a CSS-only dark design system (glass panels over an animated gradient). Before
+this it was IBM Carbon; `git log` has the swap if you need to compare.
 
-- **Global styles / theme:** `web/src/styles/index.scss` (`@use '@carbon/styles/...'`),
-  `web/src/main.tsx`, `<Theme theme="g100">` in `web/src/App.tsx`.
-- **Design tokens in SCSS:** every `*.scss` under `web/src/` uses `var(--cds-*)`
-  custom properties (spacing, colors, type). Heaviest: `PodDescribeTab.scss`,
-  `App.scss`, `PodLogsTab.scss`, `NamespaceCard.scss`, `ClusterSidebar.scss`.
+- **Where it lives:** `web/src/vendor/jewel/css/` is upstream's CSS, vendored
+  as-is (see its README for the pinned commit and how to update). It's
+  imported once in `web/src/main.tsx`. Don't edit it.
+- **App layer:** `web/src/styles/index.scss` overrides Jewel tokens (page
+  width, panel padding, Inter from `@fontsource-variable/inter`) and adds what
+  Jewel lacks: `--status-*` colors, `.btn--danger`, `.sheet--end` (right
+  drawer), `.ksl-dot`. App CSS is unlayered, so it always beats Jewel's layers.
 - **Status colors:** `web/src/constants/status.ts` maps pod/job status →
-  `--cds-support-*` vars, Carbon Tag types, and hard-coded hex for charts.
-  This is the semantic core — Idle=success, Busy=info, Changing=warning,
-  Failed=error, Empty/Unknown=neutral. Preserve those meanings.
-- **Components:** `@carbon/react` imports in `App.tsx` and `web/src/components/*.tsx`
-  (Modal/ComposedModal, TextInput, PasswordInput, Select, Toggle, Tag, Tabs,
-  Checkbox, Search, OverflowMenu, InlineNotification, ...).
-- **Charts:** `ResourceDonut.tsx` uses `@carbon/charts-react`.
-- **Icons:** `@carbon/icons-react`.
+  `--status-*` tokens, which sit on Jewel's chart palette: Idle=teal,
+  Busy=purple, Changing=orange, Failed=red, Empty/Unknown=gray. The meanings
+  (healthy / restarting / pending / error / no data) are the semantic core;
+  keep them. Following Jewel, status color goes on dots, ring segments and
+  2px tone edges, not on text (except log lines, via `--status-*-text`).
+- **Components:** use Jewel's classes on plain elements (`.btn`, `.tag`,
+  `.badge`, `.stats`, `.search`, `.choice`, `.field`/`.input`, `.table`,
+  `.accordion`, `.tabs`, `.code`, `.notice`, `.empty-state`, `.side-nav`,
+  `.sheet`). Jewel's `js/` isn't used, because it mutates the DOM. The React
+  equivalents are `components/ui/Sheet.tsx` (native `<dialog>`), the tabs in
+  `PodDetailPanel.tsx`, `components/ui/Icon.tsx` (hairline icons, since Jewel
+  ships none), `components/ui/Loading.tsx`, and `ResourceDonut.tsx` (SVG drawn
+  to Jewel's chart spec).
+- **Tokens only:** use Jewel's resolved tokens (`--text-*`, `--panel-*`,
+  `--field-*`, `--state-*`, `--space-*`, `--text-*` sizes, …) and the
+  `--status-*` set. No hex values in component styles.
 
-`design_handoff_carbon_redesign/README.md` is the original design spec the
-current UI was built from (layout, states, interactions). It's a useful
-checklist of what each screen must still do after a swap. The `.html`/`.jsx`
-prototypes there reference a design-system bundle that isn't in the repo, so
-they won't render standalone — read them, don't run them.
+`design_handoff_carbon_redesign/README.md` is the original layout and
+interaction spec (it predates Jewel). It's still a checklist of what each
+screen must do: summary, filters, cards, auto-expand of failed namespaces,
+drill-down tabs, and the cluster add/edit/remove flow.
 
-Suggested approach: swap tokens/theme first (so everything still renders), then
-`status.ts`, then components one at a time, checking each in `dev:mock`.
+## Backgrounds, link previews, public preview
+
+- `web/src/components/BgPicker.tsx` + `styles/backgrounds.scss`: background
+  options for Jewel's sky. "hot" is Jewel's default; there are cool gradient
+  palettes (`glacier`, `aurora`, `deepsea`, `polar`) and Grok Imagine renders
+  in `web/public/bg/` (stills and a looping video). Choose with `?bg=<id>`.
+  The picker shows in dev and in builds with `VITE_BG_PICKER=1`, and
+  `?picker=0` hides it.
+- Motion: `?motion=jewel` is Jewel's own *lava lamp animation* (its name for
+  the drifting gradient in `background.css`); `?motion=wax` adds rising wax
+  blobs on top of it (`.ksl-wax`, tune with `--wax-speed`). Use Jewel's name
+  for Jewel's animation.
+- `web/index.html` carries the favicon and Open Graph/Twitter tags.
+  `og:image` is `web/public/og-image.png`, rendered from mock data by
+  `npm run screenshots -- social`; `VITE_PUBLIC_URL` makes its URL absolute.
+- `Dockerfile` builds the single binary; `deploy/preview/` runs it
+  `--read-only` behind a Cloudflare tunnel. Personal settings live in the
+  gitignored `deploy/preview/.local/`.
 
 ## Conventions
 

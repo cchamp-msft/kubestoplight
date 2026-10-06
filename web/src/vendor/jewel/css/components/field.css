@@ -1,0 +1,121 @@
+/* Field — label, control, hint, error and counter, plus form layout.
+   Behavior (validation, counters, auto-grow): js/components/form.js.
+
+   <form class="form" data-component="form" novalidate>
+     <div class="field">
+       <label class="field__label" for="title">Title <span class="field__req" aria-hidden="true">*</span></label>
+       <input class="input" id="title" name="title" required maxlength="80"
+              aria-describedby="title-hint title-count" data-counter>
+       <div class="field__meta">
+         <p class="field__hint" id="title-hint">Up to 80 characters.</p>
+         <p class="field__counter" id="title-count"></p>
+       </div>
+       <p class="field__error" id="title-error" hidden></p>
+     </div>
+     <div class="form__actions">…buttons…</div>
+   </form>
+
+   Error state: the control gets aria-invalid="true" and the error message is
+   shown and added to aria-describedby (form.js does this). */
+
+/* ---- Form layout ------------------------------------------------------- */
+.form {
+  --form-gap: var(--space-5);
+  display: grid;
+  gap: var(--form-gap);
+}
+
+/* A labeled group, separated from the one above by a hairline. */
+.form__group {
+  display: grid;
+  gap: var(--form-gap);
+  margin: 0;
+  padding: var(--form-gap) 0 0;
+  border: 0;
+  border-top: var(--hairline) solid var(--panel-border);
+  min-width: 0;
+}
+.form__group:first-child { padding-top: 0; border-top: 0; }
+.form__legend {
+  float: left;              /* lets the legend sit inside the grid flow */
+  width: 100%;
+  padding: 0;
+  color: var(--text-default);   /* a step above the field labels it heads */
+}
+
+/* Two columns on wide screens. */
+.form__row { display: grid; gap: var(--form-gap); }
+@media (min-width: 48rem) {   /* --bp-md */
+  .form__row--2 { grid-template-columns: 1fr 1fr; }
+}
+
+.form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--form-gap);
+  border-top: var(--hairline) solid var(--panel-border);
+}
+
+/* ---- Field -------------------------------------------------------------- */
+.field {
+  --field-gap: var(--space-2);
+  display: grid;
+  gap: var(--field-gap);
+  min-width: 0;
+}
+
+.field__label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+.field:focus-within .field__label { color: var(--text-default); }
+.field__req { color: var(--text-accent); margin-left: 0.2em; }
+.field__optional { text-transform: none; letter-spacing: 0; font-weight: var(--weight-regular); }
+
+.field__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.field__hint,
+.field__counter,
+.field__error {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+.field__counter { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.field__counter.is-over { color: var(--field-error); }
+.field__error { color: var(--field-error); }
+
+/* Suggested value (for example an AI-drafted alt text). Set by
+   Jewel.field.suggest(); cleared as soon as the person edits it.
+   <span class="field__badge" hidden>Suggested</span> goes in the label. */
+.field__badge {
+  margin-left: var(--space-2);
+  padding: 0.1em 0.5em;
+  font-size: var(--text-2xs);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-accent);
+  border: var(--hairline) solid currentColor;
+  border-radius: var(--radius-pill);
+}
+.input[data-suggested] { color: var(--text-muted); font-style: italic; }
+.input[data-suggested]:focus { color: var(--text-default); font-style: normal; }
+
+/* Form-level messages: one error region and one status region per form.
+   They look like notices (notice.css styles them: error and accent tones). */
+.form__error:empty,
+.form__status:empty { display: none; }
+
+/* Checkbox / radio / switch groups inside a field. */
+.field__options { display: grid; gap: 0; }
+.field__options--inline { display: flex; flex-wrap: wrap; column-gap: var(--space-5); }

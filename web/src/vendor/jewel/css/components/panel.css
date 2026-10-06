@@ -1,0 +1,39 @@
+/* Panel — the surface everything sits on. Glass by default, square corners.
+   <section class="panel panel--pad">…</section>
+   <section class="panel panel--pad" data-theme="dark">…</section>   scoped theme
+   <section class="panel panel--pad" data-panel="solid">…</section>  opaque
+
+   Content panels (.panel--content, or any .panel directly inside a
+   .panel-stack) get the signature shape: square top-left, softened
+   top-right with the knockout lines (knockout.css), rounded bottom. */
+
+.panel {
+  background: var(--panel-bg);
+  border: var(--hairline) solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  color: var(--text-default);
+  -webkit-backdrop-filter: var(--panel-backdrop);
+  backdrop-filter: var(--panel-backdrop);
+}
+.panel--pad { padding: var(--panel-padding); }
+
+/* A column of panels with the gradient showing between them.
+   <main class="panel-stack"><section class="panel panel--pad">…</section>…</main> */
+.panel-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);   /* wide content (code, tables) scrolls inside its panel, never widens the page */
+  gap: var(--panel-stack-gap, var(--space-4));
+  margin-block: var(--space-4) var(--space-8);
+}
+/* Content panel shape. Order: TL TR BR BL. */
+.panel--content,
+.panel-stack > .panel {
+  border-radius:
+    var(--panel-radius) var(--panel-radius-top-right)
+    var(--panel-radius-bottom) var(--panel-radius-bottom);
+}
+/* Anchor links land below the sticky header, not under it. */
+.panel-stack > [id] { scroll-margin-top: calc(var(--sticky-offset) + 6rem); }
+
+/* Full-bleed inside a padded panel: pulls content past the padding. */
+.bleed { margin-inline: calc(-1 * var(--panel-padding)); }

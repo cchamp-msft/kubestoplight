@@ -1,24 +1,28 @@
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
-import { Tag, Theme } from '@carbon/react';
 import type { Cluster, PodItem } from './types/api';
 import { SEVERITY_ORDER } from './constants/status';
 import { useClusters } from './hooks/useClusters';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useServerInfo } from './hooks/useServerInfo';
 import ClusterSidebar from './components/ClusterSidebar';
 import SummaryStrip from './components/SummaryStrip';
 import FilterBar from './components/FilterBar';
 import NamespaceGrid from './components/NamespaceGrid';
+import BgPicker from './components/BgPicker';
 import './App.scss';
 
 const ClusterFormModal = lazy(() => import('./components/ClusterFormModal'));
 const RemoveClusterModal = lazy(() => import('./components/RemoveClusterModal'));
 const PodDetailPanel = lazy(() => import('./components/PodDetailPanel'));
 
-export default function App() {
-  const { addCluster, updateCluster, removeCluster } = useClusters();
-  const { groups, connected } = useWebSocket();
+const ALL_STATUSES = { Idle: true, Busy: true, Changing: true, Failed: true };
 
-  // Existing modal state
+export default function App() {
+  const { clusters, addCluster, updateCluster, removeCluster } = useClusters();
+  const { groups, connected } = useWebSocket();
+  const { readOnly } = useServerInfo();
+
+  // Cluster modals
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Cluster | null>(null);
   const [removeTarget, setRemoveTarget] = useState<string | null>(null);
@@ -42,12 +46,7 @@ export default function App() {
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilters, setStatusFilters] = useState<Record<string, boolean>>({
-    Idle: true,
-    Busy: true,
-    Changing: true,
-    Failed: true,
-  });
+  const [statusFilters, setStatusFilters] = useState<Record<string, boolean>>(ALL_STATUSES);
   const [hideIdle, setHideIdle] = useState(false);
   const [hideEmpty, setHideEmpty] = useState(true);
 
@@ -69,9 +68,9 @@ export default function App() {
   // Keyboard: "/" focuses search
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes((document.activeElement as HTMLElement)?.tagName)) {
+      if (e.key === '/' && !['INPUT', 'TEXTAREA', 'SELECT'].includes((document.activeElement as HTMLElement)?.tagName)) {
         e.preventDefault();
-        (document.querySelector('#ns-search input') as HTMLElement)?.focus();
+        document.getElementById('ns-search')?.focus();
       }
     };
     window.addEventListener('keydown', handler);
@@ -126,6 +125,12 @@ export default function App() {
     setStatusFilters((prev) => ({ ...prev, [status]: checked }));
   }, []);
 
+  const clearFilters = useCallback(() => {
+    setSearchQuery('');
+    setStatusFilters(ALL_STATUSES);
+    setHideIdle(false);
+  }, []);
+
   // Header stats
   const clusterCount = new Set(groups.map((g) => g.cluster)).size;
   const totalPods = groups.reduce((n, g) => n + g.totalPods, 0);
@@ -133,42 +138,66 @@ export default function App() {
 
   // Groups for summary strip (respects cluster filter)
   const summaryGroups = selectedCluster ? groups.filter((g) => g.cluster === selectedCluster) : groups;
+  const scopeGroups = summaryGroups.filter((g) => !hideEmpty || g.activePods > 0);
 
   return (
-    <Theme theme="g100">
-      <div className="ksl-shell">
+    <>
+      {/* Jewel's animated background and the strip that hides content above the header */}
+      <div className="jewel-bg" aria-hidden="true" />
+      <div className="jewel-cap" aria-hidden="true" />
+      <BgPicker />
+
+      <div className="page ksl-page">
         {/* ── Header ── */}
-        <header className="ksl-header">
-          <span className="ksl-header__title">kubestoplight</span>
-          {failedCount > 0 && (
-            <Tag type="red" size="sm" className="ksl-header__failed-tag">
-              {failedCount} failed
-            </Tag>
-          )}
-          <div style={{ flex: 1 }} />
-          <span className="ksl-header__stats">
-            {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} &middot; {totalPods} pods
-          </span>
+        <header className="site-header">
+          <div className="panel site-header__inner ksl-header">
+            <span className="wordmark">kubestoplight</span>
+            {failedCount > 0 && (
+              <span className="badge badge--error">{failedCount} failed</span>
+            )}
+            <span className="ksl-header__spacer" />
+            {readOnly && <span className="badge" title="Cluster add/edit/remove is disabled on this server">Read-only</span>}
+            <span className="ksl-header__stats">
+              {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} &middot; {totalPods} pods
+            </span>
+            <span role="status" className={`badge ${connected ? 'badge--accent badge--busy' : 'badge--error'}`}>
+              <span className="badge__dot" />
+              {connected ? 'Live' : 'Offline'}
+            </span>
+          </div>
         </header>
 
-        {/* ── Body ── */}
-        <div className="ksl-body">
-          {/* Sidebar */}
-          <aside className="ksl-body__sidebar">
+        {/* ── Body (sidebar + main) ── */}
+        <div className="with-side-nav ksl-layout">
+          <aside className="with-side-nav__aside panel">
             <ClusterSidebar
+              clusters={clusters}
               groups={groups}
               selectedCluster={selectedCluster}
               onSelect={setSelectedCluster}
-              connected={connected}
+              readOnly={readOnly}
+              onAdd={() => setAddOpen(true)}
+              onEdit={setEditTarget}
+              onRemove={setRemoveTarget}
             />
           </aside>
 
-          {/* Main content */}
-          <main className="ksl-body__main">
-            <div className="ksl-content">
-              <div className="ksl-content__summary">
-                <SummaryStrip groups={summaryGroups} />
-              </div>
+          <main className="panel-stack ksl-main">
+            <section className="panel panel--pad ksl-section" aria-labelledby="overview-title">
+              <header className="section-head ksl-section__head">
+                <h2 className="label" id="overview-title">01 — Overview</h2>
+                <span className="label ksl-section__scope">{selectedCluster ?? 'All clusters'}</span>
+              </header>
+              <SummaryStrip groups={summaryGroups} />
+            </section>
+
+            <section className="panel panel--pad ksl-section" aria-labelledby="ns-title">
+              <header className="section-head ksl-section__head">
+                <h2 className="label" id="ns-title">02 — Namespaces</h2>
+                <span className="label ksl-section__scope">
+                  {filtered.length} of {scopeGroups.length}
+                </span>
+              </header>
 
               <FilterBar
                 searchQuery={searchQuery}
@@ -186,27 +215,33 @@ export default function App() {
 
               <NamespaceGrid
                 groups={filtered}
+                totalGroups={groups.length}
+                hasClusters={clusters.length > 0 || groups.length > 0}
                 expandedCards={expandedCards}
                 onToggleCard={toggleCard}
-                hasSearch={!!searchQuery}
+                searchQuery={searchQuery}
+                onClearFilters={clearFilters}
+                onAddCluster={readOnly ? undefined : () => setAddOpen(true)}
                 onPodDescribe={onPodDescribe}
                 onPodLogs={onPodLogs}
               />
-            </div>
+            </section>
           </main>
         </div>
       </div>
 
       {/* ── Modals ── */}
       <Suspense fallback={null}>
-        <ClusterFormModal
-          open={addOpen}
-          onClose={() => setAddOpen(false)}
-          onSubmit={async (c) => {
-            await addCluster(c);
-            setAddOpen(false);
-          }}
-        />
+        {addOpen && (
+          <ClusterFormModal
+            open={addOpen}
+            onClose={() => setAddOpen(false)}
+            onSubmit={async (c) => {
+              await addCluster(c);
+              setAddOpen(false);
+            }}
+          />
+        )}
         {editTarget && (
           <ClusterFormModal
             open={!!editTarget}
@@ -225,6 +260,7 @@ export default function App() {
             onClose={() => setRemoveTarget(null)}
             onConfirm={async () => {
               await removeCluster(removeTarget);
+              if (selectedCluster === removeTarget) setSelectedCluster(null);
               setRemoveTarget(null);
             }}
           />
@@ -241,6 +277,6 @@ export default function App() {
           />
         </Suspense>
       )}
-    </Theme>
+    </>
   );
 }

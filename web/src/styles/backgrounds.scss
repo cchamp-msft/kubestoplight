@@ -1,0 +1,217 @@
+/* Background options for review — "cool" takes on Jewel's animated sky.
+   Set on <html data-ksl-bg="…"> by components/BgPicker.tsx (?bg=… in the URL).
+
+   Jewel's own keyframes (jewel-hue-1…4) hard-code the five hot hex values,
+   so a palette can't be swapped with tokens alone. These keyframes read
+   --pal-1…5 instead, so one set of keyframes serves every palette. (Worth
+   upstreaming: then a palette is just five tokens.) */
+
+@keyframes ksl-hue-1 { 0%, 100% { --bg-c1: var(--pal-1); } 20% { --bg-c1: var(--pal-2); } 40% { --bg-c1: var(--pal-3); } 60% { --bg-c1: var(--pal-4); } 80% { --bg-c1: var(--pal-5); } }
+@keyframes ksl-hue-2 { 0%, 100% { --bg-c2: var(--pal-2); } 20% { --bg-c2: var(--pal-3); } 40% { --bg-c2: var(--pal-4); } 60% { --bg-c2: var(--pal-5); } 80% { --bg-c2: var(--pal-1); } }
+@keyframes ksl-hue-3 { 0%, 100% { --bg-c3: var(--pal-3); } 20% { --bg-c3: var(--pal-4); } 40% { --bg-c3: var(--pal-5); } 60% { --bg-c3: var(--pal-1); } 80% { --bg-c3: var(--pal-2); } }
+@keyframes ksl-hue-4 { 0%, 100% { --bg-c4: var(--pal-4); } 20% { --bg-c4: var(--pal-5); } 40% { --bg-c4: var(--pal-1); } 60% { --bg-c4: var(--pal-2); } 80% { --bg-c4: var(--pal-3); } }
+
+/* ---- Cool palettes: same gradient, same motion, cool hues ---------------- */
+:root[data-ksl-bg] .jewel-bg,
+:root[data-ksl-bg] .jewel-cap {
+  /* Static start (and the reduced-motion still): the first stop of each slot. */
+  --bg-c1: var(--pal-1);
+  --bg-c2: var(--pal-2);
+  --bg-c3: var(--pal-3);
+  --bg-c4: var(--pal-4);
+  --jewel-orange: var(--pal-5); /* the low wash along the bottom edge */
+  animation:
+    ksl-hue-1 var(--bg-speed) linear infinite,
+    ksl-hue-2 var(--bg-speed) linear infinite,
+    ksl-hue-3 var(--bg-speed) linear infinite,
+    ksl-hue-4 var(--bg-speed) linear infinite,
+    jewel-drift-a calc(var(--bg-speed) * 0.75) var(--ease-standard) infinite alternate,
+    jewel-drift-b calc(var(--bg-speed) * 1.15) var(--ease-standard) infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-ksl-bg] :is(.jewel-bg, .jewel-cap) { animation: none; }
+}
+
+/* Glacier — meltwater cyan, sky, deep indigo. Crisp and bright. */
+:root[data-ksl-bg="glacier"] {
+  --pal-1: #0ea5e9; --pal-2: #22d3ee; --pal-3: #4f46e5; --pal-4: #0f766e; --pal-5: #38bdf8;
+  --bg-base: #1e3a5f;
+}
+
+/* Aurora — emerald and violet curtains over a teal night. */
+:root[data-ksl-bg="aurora"] {
+  --pal-1: #10b981; --pal-2: #8b5cf6; --pal-3: #06b6d4; --pal-4: #6366f1; --pal-5: #14b8a6;
+  --bg-base: #123a4a;
+}
+
+/* Deep Sea — low light, slow blues. The calmest; best for long shifts. */
+:root[data-ksl-bg="deepsea"] {
+  --pal-1: #0369a1; --pal-2: #0e7490; --pal-3: #1d4ed8; --pal-4: #0f766e; --pal-5: #155e75;
+  --bg-base: #0b2a4a;
+  --bg-speed: 48s;
+}
+
+/* Polar Night — indigo, violet and steel, with a cold blue glint. */
+:root[data-ksl-bg="polar"] {
+  --pal-1: #4338ca; --pal-2: #6d28d9; --pal-3: #0284c7; --pal-4: #334155; --pal-5: #64748b;
+  --bg-base: #1e1b4b;
+}
+
+/* ---- Generated media (Grok Imagine): a layer over the gradient ---------- */
+.ksl-bg-media {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-below);
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--bg-base);
+}
+
+.ksl-bg-media > * {
+  position: absolute;
+  inset: -4%;
+  width: 108%;
+  height: 108%;
+  max-width: none; /* Jewel's base caps video at 100%, which left a 4% strip on the right */
+  object-fit: cover;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Fine static grain over the media. Smooth dark gradients band in 8-bit
+   video and webp; a few percent of noise dithers that away (film-grain
+   trick) and costs nothing per frame. */
+.ksl-bg-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* Stills drift slowly so the glass still has something to refract. */
+.ksl-bg-media__still {
+  animation: ksl-bg-drift 70s var(--ease-standard) infinite alternate;
+}
+
+@keyframes ksl-bg-drift {
+  from { transform: scale(1) translate3d(0, 0, 0); }
+  to   { transform: scale(1.06) translate3d(-2%, -1.5%, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ksl-bg-media__still { animation: none; }
+}
+
+/* The cap strip above the sticky header must match whatever is behind it. */
+:root:has(.ksl-bg-media) .jewel-cap { display: none; }
+
+/* ---- Picker ---------------------------------------------------------------- */
+.ksl-bgpicker {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: var(--z-fab);
+  display: grid;
+  justify-items: end;
+  gap: var(--space-2);
+}
+
+.ksl-bgpicker__panel {
+  display: grid;
+  gap: var(--space-3);
+  width: min(20rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-4);
+  box-shadow: var(--shadow-float);
+}
+
+.ksl-bgpicker__group {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ksl-bgpicker__options {
+  --cluster-gap: var(--space-2);
+}
+
+.ksl-bgpicker__swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-round);
+  background: var(--swatch);
+}
+
+.ksl-bgpicker__note {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* ---- Wax blobs (any palette) -----------------------------------------------
+   Jewel's own motion is the lava lamp animation (background.css): a slow hue
+   cycle with ~12% drift. This adds wax blobs on top of it that rise, sink and
+   squash on long, out-of-phase loops, in the active palette's colors. Each blob is a radial gradient moved with translate/scale
+   only, so the compositor animates it without repainting or filters.
+   Positions use viewport units so the copy inside .jewel-cap lines up.     */
+:root {
+  --blob-1: var(--jewel-purple);
+  --blob-2: var(--jewel-magenta);
+  --blob-3: var(--jewel-red);
+  --blob-4: var(--jewel-orange);
+  --blob-5: var(--jewel-teal);
+  --wax-speed: 1; /* >1 slower, <1 faster */
+}
+:root[data-ksl-bg] {
+  --blob-1: var(--pal-1);
+  --blob-2: var(--pal-2);
+  --blob-3: var(--pal-3);
+  --blob-4: var(--pal-4);
+  --blob-5: var(--pal-5);
+}
+
+.ksl-wax {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-below);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ksl-wax__blob {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  border-radius: 50%;
+  /* Solid body, short soft rim: reads as wax, not as a glow. */
+  background: radial-gradient(closest-side,
+    var(--c) 0%,
+    color-mix(in oklab, var(--c) 92%, transparent) 50%,
+    color-mix(in oklab, var(--c) 55%, transparent) 64%,
+    transparent 76%);
+  will-change: translate, scale;
+  animation:
+    ksl-wax-rise calc(var(--t) * var(--wax-speed)) cubic-bezier(.45, 0, .55, 1) var(--d) infinite alternate,
+    ksl-wax-wobble calc(var(--t) * var(--wax-speed) * .41) ease-in-out var(--d) infinite alternate;
+}
+
+@keyframes ksl-wax-rise {
+  from { translate: 0 var(--rise-from, 35vh); }
+  to   { translate: var(--dx) var(--rise-to, -40vh); }
+}
+
+/* Wax squashes as it rises and stretches as it falls. */
+@keyframes ksl-wax-wobble {
+  0%   { scale: 1 1; }
+  35%  { scale: 1.18 .84; }
+  70%  { scale: .86 1.2; }
+  100% { scale: 1.06 .95; }
+}
+
+[data-bg="paused"] .ksl-wax__blob { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .ksl-wax__blob { animation: none; }
+}
