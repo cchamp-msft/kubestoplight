@@ -73,6 +73,7 @@
   inset: -4%;
   width: 108%;
   height: 108%;
+  max-width: none; /* Jewel's base caps video at 100%, which left a 4% strip on the right */
   object-fit: cover;
   background-size: cover;
   background-position: center;
