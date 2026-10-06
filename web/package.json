@@ -10,7 +10,8 @@
     "preview:mock": "vite preview --mode mock",
     "test": "vitest run",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
     "@carbon/charts-react": "^1.27.16",
@@ -30,6 +31,7 @@
     "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^6.0.3",
     "oxlint": "^1.71.0",
+    "playwright-core": "^1.63.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
     "vitest": "^4.1.11",

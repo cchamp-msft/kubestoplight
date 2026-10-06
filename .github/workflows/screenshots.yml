@@ -1,0 +1,60 @@
+# Regenerates docs/screenshots/*.png from mock mode on every PR that touches
+# the web UI, and commits them back to the PR branch when they change. The
+# README shows docs/screenshots/overview.png, so it tracks the design as it
+# iterates. PRs from forks can't be pushed to; they get the PNGs as a
+# downloadable artifact instead.
+name: Screenshots
+
+on:
+  pull_request:
+    paths:
+      - 'web/**'
+      - '.github/workflows/screenshots.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.head_ref || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+        working-directory: web
+
+      # Uses the runner's preinstalled Google Chrome (playwright-core, channel "chrome").
+      - run: npm run screenshots
+        working-directory: web
+
+      - name: Commit changed screenshots
+        if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git add docs/screenshots
+          if git diff --cached --quiet; then
+            echo "Screenshots unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update UI screenshots"
+          git push
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: docs/screenshots

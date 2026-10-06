@@ -3,7 +3,8 @@
 //
 //   npm run dev:mock                         # default "mixed" scenario
 //   MOCK_SCENARIO=failing npm run dev:mock   # or healthy | empty | large
-//   MOCK_CHURN=0 npm run dev:mock            # freeze data for screenshots
+//   MOCK_CHURN=0 npm run dev:mock            # freeze data and live log lines (screenshots)
+//   MOCK_NOW=2026-01-01T12:00:00Z ...        # pin the clock (timestamps, log lines)
 //
 // It serves the same routes the Go server does:
 //   GET/POST /api/clusters, PUT/DELETE /api/clusters/{name}
@@ -20,7 +21,7 @@ import type { Plugin, PreviewServer, ViteDevServer } from 'vite';
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { Cluster } from '../src/types/api.ts';
 import {
-  SCENARIOS, churn, createState, describePod, logLine, rng, toGroups, type MockState, type Scenario,
+  SCENARIOS, churn, clock, createState, describePod, logLine, rng, toGroups, type MockState, type Scenario,
 } from './fixtures.ts';
 
 const TICK_MS = 3000; // matches the Go default polling_interval
@@ -42,6 +43,8 @@ export function mockBackend(): Plugin {
   const envScenario = process.env.MOCK_SCENARIO as Scenario | undefined;
   let state: MockState = createState(envScenario && SCENARIOS.includes(envScenario) ? envScenario : 'mixed');
   const churnEnabled = process.env.MOCK_CHURN !== '0';
+  const pinnedNow = process.env.MOCK_NOW ? Date.parse(process.env.MOCK_NOW) : NaN;
+  if (!Number.isNaN(pinnedNow)) clock.now = () => pinnedNow;
   const r = rng(7);
   const sockets = new Set<WebSocket>();
   const wss = new WebSocketServer({ noServer: true });
@@ -119,10 +122,13 @@ export function mockBackend(): Plugin {
         const failing = detail.status === 'Failed';
         const tail = Math.min(Number(url.searchParams.get('tail')) || 500, 500);
         res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' });
-        const start = Date.now() - tail * 2000;
-        for (let i = 0; i < tail; i++) res.write(logLine(r, failing, new Date(start + i * 2000)) + '\n');
+        // Seed per pod so the backlog is the same on every request.
+        const lr = rng([...pod].reduce((h, ch) => Math.imul(h, 31) + ch.charCodeAt(0), 7));
+        const start = clock.now() - tail * 2000;
+        for (let i = 0; i < tail; i++) res.write(logLine(lr, failing, new Date(start + i * 2000)) + '\n');
         if (url.searchParams.get('follow') !== 'true') return res.end();
-        const t = setInterval(() => res.write(logLine(r, failing) + '\n'), 1000);
+        // Frozen (MOCK_CHURN=0): keep the stream open but quiet, like an idle pod.
+        const t = setInterval(() => churnEnabled && res.write(logLine(lr, failing, new Date()) + '\n'), 1000);
         req.on('close', () => clearInterval(t));
         return;
       }
