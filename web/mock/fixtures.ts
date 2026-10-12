@@ -9,6 +9,7 @@ import type {
   NamespaceGroup,
   NamespaceStatusKind,
   PodDescribe,
+  PodCPU,
   PodItem,
   PodStatusKind,
 } from '../src/types/api.ts';
@@ -104,7 +105,7 @@ function makePod(r: () => number, cluster: string, namespace: string, status: Po
   const app = pick(r, APPS);
   const total = status === 'Empty' ? 0 : 1 + Math.floor(r() * 3);
   const ready = status === 'Idle' || status === 'Busy' ? total : Math.floor(r() * total);
-  return {
+  const pod: PodItem = {
     name: podName(r, app),
     namespace,
     cluster,
@@ -116,6 +117,44 @@ function makePod(r: () => number, cluster: string, namespace: string, status: Po
     age: pick(r, ['<1m', '4m', '37m', '2h15m', '6h', '3d4h', '19d', '112d']),
     qos: pick(r, ['Guaranteed', 'Burstable', 'BestEffort']),
   };
+  return pod;
+}
+
+/** Call once the pod's name is final: CPU is seeded by it. */
+function withCPU(p: PodItem): PodItem {
+  const cpu = cpuFor(p);
+  return cpu ? { ...p, cpu } : p;
+}
+
+// Clusters that pretend to have no metrics-server, so the UI's "no CPU"
+// path gets exercised too.
+const NO_METRICS = new Set(['staging']);
+
+// Mirrors the constants and CPU.Hot in model/load.go.
+const HOT_SHARE = 0.8;
+const HOT_FLOOR = 200;
+const HOT_UNBOUNDED = 500;
+export function cpuHot({ used, request, limit }: Omit<PodCPU, 'hot'>): boolean {
+  if (used < HOT_FLOOR) return false;
+  const ref = limit || request;
+  return ref > 0 ? used >= HOT_SHARE * ref : used >= HOT_UNBOUNDED;
+}
+
+/** CPU for a pod, seeded by its name so it doesn't reshuffle the rest of the data. */
+function cpuFor(p: PodItem): PodCPU | undefined {
+  if (NO_METRICS.has(p.cluster) || p.status === 'Empty' || p.phase !== 'Running') return undefined;
+  let h = 0;
+  for (const ch of p.name) h = Math.imul(h ^ ch.charCodeAt(0), 0x9e3779b1);
+  const r = rng(h);
+  const shape = r();
+  const limit = shape < 0.45 ? pick(r, [500, 1000, 2000]) : 0;
+  const request = shape < 0.8 ? pick(r, [50, 100, 250, 500]) : 0;
+  const hot = r() < 0.12;
+  const ref = limit || request || 1000;
+  const used = p.status === 'Failed'
+    ? Math.floor(r() * 20)
+    : hot ? Math.max(HOT_FLOOR, Math.round(ref * (0.8 + r() * 0.4))) : Math.floor(r() * Math.min(ref * 0.6, 180));
+  return { used, request, limit, hot: cpuHot({ used, request, limit }) };
 }
 
 function makeJob(r: () => number, cluster: string, namespace: string): JobItem {
@@ -150,7 +189,7 @@ export function createState(scenario: Scenario, seed = 42): MockState {
     const nss = [...pool].sort(() => r() - 0.5).slice(0, nsPerCluster);
     for (const ns of nss) {
       const n = podsPerNs[0] + Math.floor(r() * (podsPerNs[1] - podsPerNs[0]));
-      for (let i = 0; i < n; i++) pods.push(makePod(r, c.name, ns, weighted(r, weights)));
+      for (let i = 0; i < n; i++) pods.push(withCPU(makePod(r, c.name, ns, weighted(r, weights))));
       if (r() < 0.4) {
         const nj = 1 + Math.floor(r() * 4);
         for (let i = 0; i < nj; i++) jobs.push(makeJob(r, c.name, ns));
@@ -167,7 +206,7 @@ export function churn(state: MockState, r: () => number, count = 3): void {
   for (let i = 0; i < count; i++) {
     const idx = Math.floor(r() * state.pods.length);
     const old = state.pods[idx];
-    state.pods[idx] = { ...makePod(r, old.cluster, old.namespace, weighted(r, weights)), name: old.name };
+    state.pods[idx] = withCPU({ ...makePod(r, old.cluster, old.namespace, weighted(r, weights)), name: old.name });
   }
 }
 
@@ -188,6 +227,7 @@ export function toGroups(state: MockState): NamespaceGroup[] {
         statusCounts: { Idle: 0, Busy: 0, Changing: 0, Failed: 0 } as NamespaceGroup['statusCounts'],
         pods: [], jobs: [], totalJobs: 0,
         jobStatusCounts: { Active: 0, Succeeded: 0, Failed: 0, Suspended: 0 } as NamespaceGroup['jobStatusCounts'],
+        hotPods: 0,
       };
       groups.set(key, g);
     }
@@ -201,6 +241,7 @@ export function toGroups(state: MockState): NamespaceGroup[] {
     if (p.phase !== 'Succeeded') g.activePods++;
     g.statusCounts[nsStatusOf(p.status)]++;
     if (p.phase !== 'Succeeded' && p.total > 0 && p.ready === p.total) g.readyPods++;
+    if (p.cpu?.hot) g.hotPods++;
   }
   for (const j of state.jobs) {
     const g = ensure(j.cluster, j.namespace);
@@ -231,7 +272,12 @@ export function describePod(state: MockState, cluster: string, namespace: string
     stateReason: failed && i === 0 ? 'CrashLoopBackOff' : i < p.ready ? '' : 'ContainerCreating',
     startedAt: i < p.ready ? iso(90) : undefined,
     ports: i === 0 ? [{ containerPort: 8080, protocol: 'TCP' }] : [],
-    resources: { requests: { cpu: '100m', memory: '128Mi' }, limits: { cpu: '500m', memory: '512Mi' } },
+    resources: i === 0 && p.cpu
+      ? {
+          requests: { ...(p.cpu.request ? { cpu: `${p.cpu.request}m` } : {}), memory: '128Mi' },
+          limits: { ...(p.cpu.limit ? { cpu: `${p.cpu.limit}m` } : {}), memory: '512Mi' },
+        }
+      : { requests: { cpu: '100m', memory: '128Mi' }, limits: { cpu: '500m', memory: '512Mi' } },
     volumeMounts: [{ name: 'kube-api-access-x7k2p', mountPath: '/var/run/secrets/kubernetes.io/serviceaccount', readOnly: true }],
   }));
 

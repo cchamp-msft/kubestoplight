@@ -20,6 +20,7 @@ const SYMBOLS = {
   show: 'eye',
   hide: 'eye-off',
   cluster: 'boxes',
+  hot: 'gauge',
 } as const;
 
 export type IconName = keyof typeof SYMBOLS;

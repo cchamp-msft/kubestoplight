@@ -43,9 +43,11 @@ export default function SummaryStrip({ groups }: Props) {
         a.changing += g.statusCounts.Changing ?? 0;
         a.jobs += g.totalJobs ?? 0;
         a.jobsFailed += g.jobStatusCounts?.Failed ?? 0;
+        a.hot += g.hotPods ?? 0;
+        if (!a.metrics) a.metrics = g.pods.some((p) => p.cpu);
         return a;
       },
-      { pods: 0, idle: 0, failed: 0, busy: 0, changing: 0, jobs: 0, jobsFailed: 0 },
+      { pods: 0, idle: 0, failed: 0, busy: 0, changing: 0, jobs: 0, jobsFailed: 0, hot: 0, metrics: false },
     );
   }, [groups]);
 
@@ -86,6 +88,14 @@ export default function SummaryStrip({ groups }: Props) {
           value={<Count value={t.busy} />}
           note={t.busy > 0 ? 'Starting or restarting' : null}
         />
+        {t.metrics && (
+          <Stat
+            label="Hot pods"
+            tone={t.hot > 0 ? 'var(--load-hot)' : undefined}
+            value={<Count value={t.hot} />}
+            note={t.hot > 0 ? 'Busy on CPU' : 'None'}
+          />
+        )}
         <Stat
           label="Jobs"
           value={<Count value={t.jobs} />}

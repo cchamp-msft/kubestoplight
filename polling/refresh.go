@@ -10,11 +10,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	metrics "k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
 // K8sClient wraps a Kubernetes client for pod listing.
 type K8sClient struct {
-	client *kubernetes.Clientset
+	client  *kubernetes.Clientset
+	metrics *metrics.Clientset
 }
 
 // NewClient creates a new K8sClient from a rest.Config.
@@ -23,7 +25,11 @@ func NewClient(cfg *rest.Config) (*K8sClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &K8sClient{client: c}, nil
+	m, err := metrics.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &K8sClient{client: c, metrics: m}, nil
 }
 
 // ListPods fetches all pods across all namespaces.
@@ -79,6 +85,26 @@ func (c *K8sClient) GetEvents(ctx context.Context, ns, fieldSelector string) ([]
 		return nil, err
 	}
 	return result.Items, nil
+}
+
+// ListPodCPU returns each pod's current CPU use in millicores, keyed
+// "namespace/name": the numbers `kubectl top pods -A` shows. It needs
+// metrics-server (the metrics.k8s.io API) and list on pods.metrics.k8s.io;
+// without them it returns an error and callers should show no CPU at all.
+func (c *K8sClient) ListPodCPU(ctx context.Context) (map[string]int64, error) {
+	result, err := c.metrics.MetricsV1beta1().PodMetricses("").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]int64, len(result.Items))
+	for _, pm := range result.Items {
+		var milli int64
+		for _, cm := range pm.Containers {
+			milli += cm.Usage.Cpu().MilliValue()
+		}
+		out[pm.Namespace+"/"+pm.Name] = milli
+	}
+	return out, nil
 }
 
 // ListJobs fetches all jobs across all namespaces.

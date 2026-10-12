@@ -7,7 +7,7 @@ A dual-mode Kubernetes pod monitor — run as a terminal TUI or a self-hosted we
 <sub>Rendered from [mock mode](#try-it-without-a-cluster) and regenerated on every PR that touches `web/`.
 More: [failing](docs/screenshots/failing.png) · [large](docs/screenshots/large.png) ·
 [empty](docs/screenshots/empty.png) · [describe](docs/screenshots/describe.png) ·
-[logs](docs/screenshots/logs.png) · [add cluster](docs/screenshots/add-cluster.png)</sub>
+[logs](docs/screenshots/logs.png) · [CPU load](docs/screenshots/load.png) · [add cluster](docs/screenshots/add-cluster.png)</sub>
 
 ## Modes
 
@@ -74,10 +74,10 @@ short-lived public preview behind a Cloudflare tunnel, see
 
 Open `http://127.0.0.1:8080` in your browser. The dashboard features:
 
-- **Summary** — total pods, healthy %, failed, in progress and jobs, for all clusters or the selected one
+- **Summary** — total pods, healthy %, failed, warnings, in progress, hot pods and jobs, for all clusters or the selected one
 - **Sidebar** — cluster list with per-cluster status dots; click to filter, **+** to add, hover for edit/remove
 - **Filter bar** — live search (`/` to focus), status filter tags with counts, hide-idle and hide-empty switches
-- **Namespace cards** — pod and job donuts, status counts, expand for a pod table
+- **Namespace cards** — pod and job donuts, status and hot-pod counts, expand for a pod table with CPU
 - **Pod drill-down** — Describe / Logs (streaming, follow) / YAML in a side drawer
 - **Auto-expand** — namespaces with failed pods expand automatically on first load
 
@@ -156,6 +156,20 @@ direct config file editing.
 | Empty    | No data     | Gray  | Gray  | No container status data |
 
 The thresholds are `RecentRestartWindow` and `StuckAfter` in `model/pod.go`.
+
+## CPU load
+
+Health and load are separate: a pod can be healthy and working hard. The web
+UI shows each pod's CPU (the numbers `kubectl top pods -A` prints) and marks a
+pod **hot** in violet when it uses at least 80% of its CPU limit, or of its
+request when it has no limit, and at least 200m. A pod with neither is hot
+from 500m. Hot pods are counted in the summary and on their namespace card,
+and never change a status, the stoplight or the tab.
+
+This needs [metrics-server](https://github.com/kubernetes-sigs/metrics-server)
+on the cluster (k3s and RKE2 ship it) and `list` on `pods.metrics.k8s.io` for
+the credentials kubestoplight uses. Without either, that cluster simply shows
+no CPU. Readings refresh every 15 s; the thresholds are in `model/load.go`.
 
 ## Web UI key bindings
 

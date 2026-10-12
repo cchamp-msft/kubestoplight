@@ -21,7 +21,19 @@ type clusterResult struct {
 	cluster string
 	pods    []v1.Pod
 	jobs    []batchv1.Job
+	cpu     map[string]int64 // "namespace/name" → millicores; nil without metrics-server
 	err     error
+}
+
+// cpuRefresh is how often pod CPU is re-read. metrics-server only samples
+// every 15s or so, so polling it at the pod interval would just repeat
+// itself.
+const cpuRefresh = 15 * time.Second
+
+// cpuCache holds one cluster's last CPU reading between polls.
+type cpuCache struct {
+	byPod map[string]int64
+	at    time.Time
 }
 
 // Poller runs a background polling loop per cluster and emits aggregated
@@ -125,6 +137,7 @@ func (p *Poller) startCluster(name string) {
 	go func() {
 		ticker := time.NewTicker(p.interval)
 		defer ticker.Stop()
+		var cpu cpuCache
 
 		for {
 			select {
@@ -133,14 +146,14 @@ func (p *Poller) startCluster(name string) {
 			case <-p.stopCh:
 				return
 			case <-ticker.C:
-				p.pollCluster(ctx, name)
+				p.pollCluster(ctx, name, &cpu)
 			}
 		}
 	}()
 }
 
 // pollCluster performs one poll for the named cluster and sends the result.
-func (p *Poller) pollCluster(ctx context.Context, name string) {
+func (p *Poller) pollCluster(ctx context.Context, name string, cpu *cpuCache) {
 	cfg, err := p.cm.GetConfig(name)
 	if err != nil {
 		select {
@@ -169,8 +182,16 @@ func (p *Poller) pollCluster(ctx context.Context, name string) {
 		return
 	}
 	jobs, _ := client.ListJobs()
+	if time.Since(cpu.at) >= cpuRefresh {
+		// A failure (no metrics-server, no RBAC) clears it: no CPU beats stale CPU.
+		// A slow metrics-server mustn't hold up the pods, hence the timeout.
+		cctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		cpu.byPod, _ = client.ListPodCPU(cctx)
+		cancel()
+		cpu.at = time.Now()
+	}
 	select {
-	case p.resultCh <- clusterResult{cluster: name, pods: pods, jobs: jobs}:
+	case p.resultCh <- clusterResult{cluster: name, pods: pods, jobs: jobs, cpu: cpu.byPod}:
 	case <-ctx.Done():
 	case <-p.stopCh:
 	}
@@ -197,7 +218,11 @@ func (p *Poller) mergeLoop() {
 			} else {
 				pods := make([]model.Pod, 0, len(res.pods))
 				for _, raw := range res.pods {
-					pods = append(pods, model.ExtractPod(raw, res.cluster))
+					pod := model.ExtractPod(raw, res.cluster)
+					if used, ok := res.cpu[raw.Namespace+"/"+raw.Name]; ok {
+						pod.WithCPU(used)
+					}
+					pods = append(pods, pod)
 				}
 				podCache[res.cluster] = pods
 

@@ -44,6 +44,17 @@ export interface PodItem {
   total: number;
   age: string;
   qos: string;
+  /** Absent when the cluster has no metrics-server. */
+  cpu?: PodCPU;
+}
+
+/** Mirrors webserver.cpuJSON / model.CPU: millicores; 0 = not set. */
+export interface PodCPU {
+  used: number;
+  request: number;
+  limit: number;
+  /** Busy enough to point out. Load, not health: never a warning. */
+  hot: boolean;
 }
 
 // -------------------------------------------------------------------------
@@ -78,6 +89,7 @@ export interface NamespaceGroup {
   jobs: JobItem[];
   totalJobs: number;
   jobStatusCounts: Record<JobStatusKind, number>;
+  hotPods: number;
 }
 
 // -------------------------------------------------------------------------

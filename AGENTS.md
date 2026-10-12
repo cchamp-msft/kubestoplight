@@ -85,7 +85,7 @@ a pod's Describe / Logs / YAML tabs.
 ```bash
 cd web
 npm run screenshots              # all → docs/screenshots/*.png
-npm run screenshots -- overview  # or just some: overview failing large empty describe logs add-cluster social bg-* (palettes incl. bg-ember/lagoon/dusk, bg-wax-*)
+npm run screenshots -- overview  # or just some: overview failing large empty describe logs load add-cluster social bg-* (palettes incl. bg-ember/lagoon/dusk, bg-wax-*)
 ```
 
 `web/scripts/screenshots.mjs` boots its own mock server with frozen data and a
@@ -130,7 +130,14 @@ component or token over a new `ksl-` one.
   pending/terminating/not-ready) and Changing is a *warning* (amber; the
   same, stuck past 5 minutes). `model/pod.go#determineStatusAt` decides,
   with tests in `model/pod_test.go`. Amber means something needs a look;
-  normal churn is never amber. Show `STATUS_LABELS`, not raw keys. A state with its word uses Jewel's `.status`
+  normal churn is never amber.
+- **CPU load is not status.** `model/load.go` (`CPU.Hot`) marks pods busy on
+  CPU; the poller attaches readings from metrics-server (`ListPodCPU`,
+  refreshed every 15s, absent when the cluster has none). The UI shows it in
+  `CpuCell`, `HotTag` and a "Hot pods" stat, colored `--load-hot` (Jewel's
+  violet accent, never a `--status-*`), and it never feeds the Beacon, tab,
+  card status or filters. The mock mirrors `CPU.Hot` as `cpuHot` in
+  `fixtures.ts`; its `staging` cluster has no metrics on purpose. Show `STATUS_LABELS`, not raw keys. A state with its word uses Jewel's `.status`
   (`components/ui/Status.tsx`); a lone dot uses `.ksl-dot`. Never use the
   `--chart-*` colors for status.
 - **Components:** use Jewel's classes on plain elements (`.btn`,

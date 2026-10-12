@@ -25,6 +25,12 @@
 
   --status-failed-text: var(--status-error);
   --status-warn-text: var(--status-warning);
+
+  /* ---- CPU load ----------------------------------------------------------
+     Load is not health: a hot pod is working, not broken. So it gets
+     Jewel's violet accent, well clear of the traffic light, and never
+     touches the Beacon, the tab or a card's status.                       */
+  --load-hot: var(--chart-accent);
 }
 
 /* Scrollbars inside panels: thin and quiet, matching Jewel's own regions. */
