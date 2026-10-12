@@ -18,8 +18,8 @@
      Marks (dots, ring segments, tone edges) take the -mark tone; text in a
      status color (log lines) takes the plain one.                        */
   --status-idle: var(--status-success-mark);      /* healthy              */
-  --status-busy: var(--status-info-mark);         /* running, restarting  */
-  --status-changing: var(--status-warning-mark);  /* pending, terminating */
+  --status-busy: var(--status-info-mark);         /* in progress          */
+  --status-changing: var(--status-warning-mark);  /* warning: stuck       */
   --status-failed: var(--status-error-mark);      /* error                */
   --status-empty: var(--status-neutral-mark);     /* no data              */
 

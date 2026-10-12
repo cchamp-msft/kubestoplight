@@ -189,7 +189,7 @@ func renderStats(ns NSCardData) string {
 		parts = append(parts,
 			lipgloss.JoinHorizontal(lipgloss.Top,
 				lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Render(fmt.Sprintf("◆ %d", ns.ChangingPods)),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Render(" chang "),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Render(" warn "),
 			),
 		)
 	}

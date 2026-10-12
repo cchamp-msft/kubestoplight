@@ -1,5 +1,18 @@
 import type { PodStatusKind, NamespaceStatusKind } from '../types/api';
 
+// The status keys come from the Go model and predate their meanings:
+// Busy is "in progress" (a recent restart, or pending/terminating/not ready
+// for under 5 minutes) and Changing is a warning (the same, for longer).
+// Show STATUS_LABELS to people, never the raw key.
+export const STATUS_LABELS: Record<string, string> = {
+  Idle: 'Idle',
+  Busy: 'In progress',
+  Changing: 'Warning',
+  Failed: 'Failed',
+  Empty: 'No data',
+  Unknown: 'Unknown',
+};
+
 // Status → color token for dots and chart marks. The tokens are defined in
 // styles/index.scss on Jewel's traffic light; the meanings (Idle=healthy …
 // Failed=error) are fixed.
@@ -50,12 +63,12 @@ export function worstStatus(statuses: (PodStatusKind | NamespaceStatusKind)[]): 
   return 'Idle';
 }
 
-/** The Beacon's lit lens: red for failures, amber while anything is in progress, green when all idle. */
+/** The Beacon's lit lens: red for failures, amber for warnings, green otherwise (work in progress is normal). */
 export type Lens = 'stop' | 'caution' | 'go' | null;
 
 export function lensFor(worst: NamespaceStatusKind | null): Lens {
   if (!worst) return null;
   if (worst === 'Failed') return 'stop';
-  if (worst === 'Changing' || worst === 'Busy') return 'caution';
+  if (worst === 'Changing') return 'caution';
   return 'go';
 }

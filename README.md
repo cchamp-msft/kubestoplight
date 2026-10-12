@@ -147,13 +147,15 @@ direct config file editing.
 
 ## Status colours
 
-| Status   | TUI    | Web    | Meaning |
-|----------|--------|--------|---------|
-| Idle     | Green  | Green  | Running, stable, no restarts |
-| Busy     | Blue   | Blue   | Running but restarting |
-| Changing | Amber  | Amber  | Pending or terminating |
-| Failed   | Red    | Red    | CrashLoopBackOff, image errors, or terminated with error |
-| Empty    | Gray   | Gray   | No container status data |
+| Status | Web label | TUI | Web | Meaning |
+|--------|-----------|-----|-----|---------|
+| Idle     | Idle        | Green | Green | Running and ready (old restarts don't count), or completed |
+| Busy     | In progress | Blue  | Blue  | Restarted in the last 15 min, or pending / terminating / not ready for under 5 min |
+| Changing | Warning     | Amber | Amber | Pending, terminating or not ready for more than 5 min |
+| Failed   | Failed      | Red   | Red   | CrashLoopBackOff, image errors, OOM, or terminated with error |
+| Empty    | No data     | Gray  | Gray  | No container status data |
+
+The thresholds are `RecentRestartWindow` and `StuckAfter` in `model/pod.go`.
 
 ## Web UI key bindings
 

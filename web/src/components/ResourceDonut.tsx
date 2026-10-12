@@ -1,5 +1,8 @@
 import { memo } from 'react';
 import { useCountUp } from '../hooks/useCountUp';
+import { STATUS_LABELS } from '../constants/status';
+
+const name = (s: string) => STATUS_LABELS[s] ?? s;
 
 interface Props {
   title: string;
@@ -26,7 +29,7 @@ const ResourceDonut = memo(function ResourceDonut({ title, total, statusCounts, 
     .map((s) => ({ status: s, count: statusCounts?.[s] ?? 0 }))
     .filter((s) => s.count > 0);
   const sum = slices.reduce((n, s) => n + s.count, 0);
-  const label = `${title}: ${total}${slices.length ? ` — ${slices.map((s) => `${s.count} ${s.status.toLowerCase()}`).join(', ')}` : ''}`;
+  const label = `${title}: ${total}${slices.length ? ` — ${slices.map((s) => `${s.count} ${name(s.status).toLowerCase()}`).join(', ')}` : ''}`;
 
   const shown = useCountUp(total);
 
@@ -51,7 +54,7 @@ const ResourceDonut = memo(function ResourceDonut({ title, total, statusCounts, 
               strokeDashoffset={-offset}
               transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
             >
-              <title>{`${s.count} ${s.status}`}</title>
+              <title>{`${s.count} ${name(s.status).toLowerCase()}`}</title>
             </circle>
           );
           offset += len;

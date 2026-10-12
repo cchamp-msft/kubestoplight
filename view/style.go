@@ -20,7 +20,7 @@ var (
 
 	statusColors = map[string]string{
 		"Idle":     "2",
-		"Busy":     "208",
+		"Busy":     "12", // in progress, not a warning
 		"Changing": "11",
 		"Failed":   "9",
 	}
