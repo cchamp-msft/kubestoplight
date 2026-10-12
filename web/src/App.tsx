@@ -161,7 +161,7 @@ export default function App() {
             <span className="ksl-brand">
               <Beacon
                 lit={lit}
-                label={!lit ? 'No data yet' : failedCount > 0 ? `${failedCount} pods failing` : lit === 'caution' ? 'Changes in progress' : 'All healthy'}
+                label={!lit ? 'No data yet' : failedCount > 0 ? `${failedCount} pods failing` : lit === 'caution' ? 'Pods need a look' : 'All healthy'}
               />
               <span className="wordmark">kubestoplight</span>
             </span>

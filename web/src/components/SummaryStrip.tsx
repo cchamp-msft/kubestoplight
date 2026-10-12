@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { NamespaceGroup } from '../types/api';
-import { STATUS_COLORS } from '../constants/status';
+import { STATUS_COLORS, STATUS_LABELS } from '../constants/status';
 import { useCountUp } from '../hooks/useCountUp';
 
 interface StatProps {
@@ -56,7 +56,7 @@ export default function SummaryStrip({ groups }: Props) {
     ['Busy', t.busy],
     ['Idle', t.idle],
   ] as const).filter(([, n]) => n > 0);
-  const spectrumLabel = spectrum.map(([s, n]) => `${n} ${s.toLowerCase()}`).join(', ');
+  const spectrumLabel = spectrum.map(([s, n]) => `${n} ${STATUS_LABELS[s].toLowerCase()}`).join(', ');
 
   return (
     <>
@@ -75,10 +75,16 @@ export default function SummaryStrip({ groups }: Props) {
           note={t.failed > 0 ? 'Needs attention' : 'None'}
         />
         <Stat
+          label="Warnings"
+          tone={t.changing > 0 ? 'var(--status-changing)' : undefined}
+          value={<Count value={t.changing} />}
+          note={t.changing > 0 ? 'Stuck or not ready' : 'None'}
+        />
+        <Stat
           label="In progress"
-          tone={t.busy + t.changing > 0 ? 'var(--status-changing)' : undefined}
-          value={<Count value={t.busy + t.changing} />}
-          note={t.busy || t.changing ? `${t.busy} busy, ${t.changing} changing` : null}
+          tone={t.busy > 0 ? 'var(--status-busy)' : undefined}
+          value={<Count value={t.busy} />}
+          note={t.busy > 0 ? 'Starting or restarting' : null}
         />
         <Stat
           label="Jobs"
@@ -102,7 +108,7 @@ export default function SummaryStrip({ groups }: Props) {
             {spectrum.map(([s, n]) => (
               <span key={s} className="ksl-spectrum__key">
                 <span className="ksl-dot" style={{ '--tone': STATUS_COLORS[s] } as React.CSSProperties} />
-                {n} {s.toLowerCase()}
+                {n} {STATUS_LABELS[s].toLowerCase()}
               </span>
             ))}
           </p>

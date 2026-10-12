@@ -1,5 +1,5 @@
 import type { NamespaceStatusKind } from '../types/api';
-import { STATUS_COLORS } from '../constants/status';
+import { STATUS_COLORS, STATUS_LABELS } from '../constants/status';
 
 interface Props {
   searchQuery: string;
@@ -73,7 +73,7 @@ export default function FilterBar({
             onClick={() => onStatusFilter(s, !statusFilters[s])}
           >
             <span className="ksl-dot" aria-hidden="true" />
-            {s}
+            {STATUS_LABELS[s]}
             <span className="ksl-filter__count">{nsCounts[s] ?? 0}</span>
           </button>
         ))}

@@ -20,8 +20,8 @@ interface Props {
 
 const COUNT_TAGS: [status: NamespaceStatusKind, label: string][] = [
   ['Failed', 'failed'],
-  ['Changing', 'changing'],
-  ['Busy', 'busy'],
+  ['Changing', 'warning'],
+  ['Busy', 'in progress'],
   ['Idle', 'idle'],
 ];
 

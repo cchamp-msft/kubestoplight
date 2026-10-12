@@ -210,7 +210,7 @@ export function toGroups(state: MockState): NamespaceGroup[] {
   }
   for (const g of groups.values()) {
     const c = g.statusCounts;
-    g.status = c.Failed ? 'Failed' : c.Busy ? 'Busy' : c.Changing ? 'Changing' : 'Idle';
+    g.status = c.Failed ? 'Failed' : c.Changing ? 'Changing' : c.Busy ? 'Busy' : 'Idle';
   }
   return [...groups.values()];
 }

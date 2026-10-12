@@ -124,9 +124,13 @@ component or token over a new `ksl-` one.
   in `index.scss` map onto Jewel's `--status-success|info|warning|error|neutral-mark`
   (green, blue, amber, red, gray: the TUI's colors too), and
   `constants/status.ts` maps pod/job status to those tokens (`STATUS_COLORS`,
-  for dots and chart marks) and to `.status` tones (`STATUS_TONES`). The
-  meanings (healthy / restarting / pending / error / no data) are the
-  semantic core; keep them. A state with its word uses Jewel's `.status`
+  for dots and chart marks), to `.status` tones (`STATUS_TONES`) and to
+  display words (`STATUS_LABELS`). The keys come from Go and predate their
+  meanings: Busy is *in progress* (blue; a recent restart or brief
+  pending/terminating/not-ready) and Changing is a *warning* (amber; the
+  same, stuck past 5 minutes). `model/pod.go#determineStatusAt` decides,
+  with tests in `model/pod_test.go`. Amber means something needs a look;
+  normal churn is never amber. Show `STATUS_LABELS`, not raw keys. A state with its word uses Jewel's `.status`
   (`components/ui/Status.tsx`); a lone dot uses `.ksl-dot`. Never use the
   `--chart-*` colors for status.
 - **Components:** use Jewel's classes on plain elements (`.btn`,
