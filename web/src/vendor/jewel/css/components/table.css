@@ -56,7 +56,8 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-default);
 }
-.table--compact { --table-row-h: var(--control-h-sm); }
+.table--compact,
+[data-density="compact"] .table { --table-row-h: var(--control-h-sm); }
 
 .table__caption {
   padding-bottom: var(--space-3);
@@ -77,7 +78,8 @@
   vertical-align: middle;
   border-bottom: var(--hairline) solid var(--panel-border);
 }
-.table--compact :is(th, td) { padding-block: var(--space-1); }
+.table--compact :is(th, td),
+[data-density="compact"] .table :is(th, td) { padding-block: var(--space-1); }
 .table :is(th, td):first-child { padding-left: 0; }
 .table :is(th, td):last-child { padding-right: 0; }
 .table tbody th { font-weight: var(--weight-medium); }

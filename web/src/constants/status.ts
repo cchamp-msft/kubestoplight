@@ -1,7 +1,8 @@
 import type { PodStatusKind, NamespaceStatusKind } from '../types/api';
 
-// Status → color token. The tokens are defined in styles/index.scss on top of
-// Jewel's chart palette; the meanings (Idle=healthy … Failed=error) are fixed.
+// Status → color token for dots and chart marks. The tokens are defined in
+// styles/index.scss on Jewel's traffic light; the meanings (Idle=healthy …
+// Failed=error) are fixed.
 export const STATUS_COLORS: Record<string, string> = {
   Idle: 'var(--status-idle)',
   Busy: 'var(--status-busy)',
@@ -9,6 +10,15 @@ export const STATUS_COLORS: Record<string, string> = {
   Failed: 'var(--status-failed)',
   Empty: 'var(--status-empty)',
   Unknown: 'var(--status-empty)',
+};
+
+/** Status → Jewel `.status` tone (traffic light). Undefined = neutral. */
+export type StatusTone = 'success' | 'info' | 'warning' | 'error';
+export const STATUS_TONES: Record<string, StatusTone | undefined> = {
+  Idle: 'success',
+  Busy: 'info',
+  Changing: 'warning',
+  Failed: 'error',
 };
 
 export const JOB_STATUS_COLORS: Record<string, string> = {

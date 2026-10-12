@@ -34,6 +34,7 @@
 @import url("components/filter.css") layer(components);
 @import url("components/footer.css") layer(components);
 @import url("components/header.css") layer(components);
+@import url("components/icon.css") layer(components);
 @import url("components/index-list.css") layer(components);
 @import url("components/input.css") layer(components);
 @import url("components/knockout.css") layer(components);
@@ -41,17 +42,22 @@
 @import url("components/meta-list.css") layer(components);
 @import url("components/notice.css") layer(components);
 @import url("components/panel.css") layer(components);
+@import url("components/password.css") layer(components);
 @import url("components/progress.css") layer(components);
 @import url("components/quote.css") layer(components);
 @import url("components/search.css") layer(components);
 @import url("components/section-head.css") layer(components);
 @import url("components/sheet.css") layer(components);
 @import url("components/side-nav.css") layer(components);
+@import url("components/skeleton.css") layer(components);
+@import url("components/spinner.css") layer(components);
 @import url("components/stat.css") layer(components);
+@import url("components/status.css") layer(components);
 @import url("components/table.css") layer(components);
 @import url("components/tabs.css") layer(components);
 @import url("components/tag.css") layer(components);
 @import url("components/tag-input.css") layer(components);
+@import url("components/tooltip.css") layer(components);
 @import url("components/video.css") layer(components);
 
 @import url("utilities.css") layer(utilities);

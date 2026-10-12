@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { usePodDescribe } from '../hooks/usePodDescribe';
 import type { ContainerDetail } from '../types/api';
-import StatusTag from './StatusTag';
 import Icon from './ui/Icon';
+import Tooltip from './ui/Tooltip';
 import Loading from './ui/Loading';
+import Status from './ui/Status';
+import type { StatusTone } from '../constants/status';
 import './PodDescribeTab.scss';
 
 interface Props {
@@ -34,10 +36,10 @@ function Section({ title, count, open, children }: { title: string; count?: numb
   );
 }
 
-const STATE_TONE: Record<string, string> = {
-  running: 'var(--status-idle)',
-  waiting: 'var(--status-changing)',
-  terminated: 'var(--status-failed)',
+const STATE_TONE: Record<string, StatusTone> = {
+  running: 'success',
+  waiting: 'warning',
+  terminated: 'error',
 };
 
 function ContainerBlock({ c }: { c: ContainerDetail }) {
@@ -50,7 +52,7 @@ function ContainerBlock({ c }: { c: ContainerDetail }) {
       <h4 className="ksl-desc__container-name ksl-mono">{c.name}</h4>
       <dl className="meta">
         <KV label="Image"><code>{c.image}</code></KV>
-        <KV label="State"><StatusTag tone={STATE_TONE[c.state]}>{stateLabel}</StatusTag></KV>
+        <KV label="State"><Status tone={STATE_TONE[c.state]}>{stateLabel}</Status></KV>
         <KV label="Ready">{c.ready ? 'Yes' : 'No'}</KV>
         <KV label="Restarts">{c.restartCount}</KV>
         {c.startedAt && <KV label="Started">{new Date(c.startedAt).toLocaleString()}</KV>}
@@ -103,9 +105,11 @@ export default function PodDescribeTab({ cluster, namespace, pod }: Props) {
     <div className="ksl-desc">
       <div className="ksl-desc__toolbar">
         <h3 className="label">Overview</h3>
-        <button className="btn btn--ghost btn--icon ksl-btn-sm" type="button" aria-label="Refresh" title="Refresh" onClick={refetch}>
-          <Icon name="refresh" />
-        </button>
+        <Tooltip label="Refresh">
+          <button className="btn btn--ghost btn--icon" type="button" aria-label="Refresh" onClick={refetch}>
+            <Icon name="refresh" />
+          </button>
+        </Tooltip>
       </div>
 
       <dl className="meta ksl-desc__overview">
@@ -143,9 +147,7 @@ export default function PodDescribeTab({ cluster, namespace, pod }: Props) {
               {data.events.map((e, i) => (
                 <li key={i} className="ksl-desc__event">
                   <div className="ksl-desc__event-head">
-                    {e.type === 'Warning'
-                      ? <StatusTag status="Failed">Warning</StatusTag>
-                      : <span className="tag">{e.type}</span>}
+                    <span className={`badge${e.type === 'Warning' ? ' badge--warning' : ''}`}>{e.type}</span>
                     <strong className="ksl-desc__event-reason">{e.reason}</strong>
                     {e.count > 1 && <span className="ksl-desc__muted">×{e.count}</span>}
                     <span className="ksl-desc__time">{new Date(e.lastSeen).toLocaleString()}</span>
@@ -173,7 +175,7 @@ export default function PodDescribeTab({ cluster, namespace, pod }: Props) {
                   {data.conditions.map((cond) => (
                     <tr key={cond.type}>
                       <th scope="row">{cond.type}</th>
-                      <td><StatusTag status={cond.status === 'True' ? 'Idle' : 'Failed'}>{cond.status}</StatusTag></td>
+                      <td><Status tone={cond.status === 'True' ? 'success' : 'error'}>{cond.status}</Status></td>
                       <td className="table__muted">{new Date(cond.lastTransition).toLocaleString()}</td>
                       <td>{cond.reason || '—'}</td>
                     </tr>
@@ -194,7 +196,7 @@ export default function PodDescribeTab({ cluster, namespace, pod }: Props) {
 
         {annotations.length > 0 && (
           <Section title="Annotations" count={annotations.length}>
-            <dl className="meta ksl-desc__annotations">
+            <dl className="meta meta--stacked ksl-desc__annotations">
               {annotations.map(([k, v]) => (
                 <KV key={k} label={k}><span className="ksl-mono">{v}</span></KV>
               ))}

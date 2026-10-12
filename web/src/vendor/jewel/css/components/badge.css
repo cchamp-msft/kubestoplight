@@ -6,6 +6,7 @@
    <span class="badge">Private</span>
    <span class="badge badge--accent"><span class="badge__dot"></span>Publishing…</span>
    <span class="badge badge--error">Failed</span>
+   <span class="badge badge--success"><span class="badge__dot"></span>Running</span>   also --warning, --info
    <span class="badge badge--solid">New</span>
 
    Over media: add data-place to a badge, or to a .badges group when one
@@ -51,13 +52,19 @@
 .badge--error  { color: var(--field-error); border-color: currentColor; }
 .badge--solid  { color: var(--text-inverse); background: var(--text-default); border-color: transparent; }
 
+/* Status tones: text in the status color, the dot in its stronger mark tone. */
+.badge--success { color: var(--status-success); --badge-dot: var(--status-success-mark); }
+.badge--warning { color: var(--status-warning); --badge-dot: var(--status-warning-mark); }
+.badge--info    { color: var(--status-info);    --badge-dot: var(--status-info-mark); }
+.badge--error   { --badge-dot: var(--status-error-mark); }
+
 /* Status dot, in the badge's own color. .badge--busy pulses it. */
 .badge__dot {
   flex: none;
   width: 0.375rem;
   height: 0.375rem;
   border-radius: var(--radius-round);
-  background: currentColor;
+  background: var(--badge-dot, currentColor);
 }
 .badge--busy .badge__dot { animation: badge-pulse var(--duration-pulse) var(--ease-standard) infinite; }
 @keyframes badge-pulse { 50% { opacity: 0.25; } }

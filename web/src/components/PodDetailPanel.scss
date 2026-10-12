@@ -6,11 +6,14 @@
   padding-left: var(--space-5);
 }
 
-.ksl-detail .sheet__title {
+.ksl-detail .sheet__titles {
   flex: 1 1 12rem;
-  min-width: 0;
-  font-size: var(--text-base);
-  font-weight: var(--weight-semibold);
+}
+
+/* Pod names are long and unbroken: one line, ellipsis, mono at the
+   subheading size rather than Jewel's xl heading. */
+.ksl-detail .sheet__title {
+  font-size: var(--text-lg);
 }
 
 .ksl-detail__name {
@@ -18,12 +21,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.ksl-detail__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
 }
 
 .ksl-detail .sheet__body {

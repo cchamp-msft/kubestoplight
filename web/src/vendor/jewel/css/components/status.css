@@ -1,0 +1,46 @@
+/* Status — a dot and a word for the state of one thing: a pod, a job, a
+   service. The traffic light: success, warning, error, plus info and
+   neutral (unknown). The word always says the state, so color is never
+   the only signal.
+
+   <span class="status status--success">Running</span>
+   <span class="status status--warning">Pending</span>
+   <span class="status status--error">Failed</span>
+   <span class="status status--info">Updating</span>
+   <span class="status">Unknown</span>
+
+   .status--busy pulses the dot, for a state that's still changing.
+   In a list or table that updates while the page is open, put the
+   status in an element with role="status" or aria-live="polite". */
+
+.status {
+  --status-color: var(--status-neutral);
+  --status-mark: var(--status-neutral-mark);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-label);
+  white-space: nowrap;
+  color: var(--status-color);
+}
+.status::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-round);
+  background: var(--status-mark);
+}
+
+.status--success { --status-color: var(--status-success); --status-mark: var(--status-success-mark); }
+.status--warning { --status-color: var(--status-warning); --status-mark: var(--status-warning-mark); }
+.status--error   { --status-color: var(--status-error);   --status-mark: var(--status-error-mark); }
+.status--info    { --status-color: var(--status-info);    --status-mark: var(--status-info-mark); }
+
+.status--busy::before { animation: status-pulse var(--duration-pulse) var(--ease-standard) infinite; }
+@keyframes status-pulse { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) {
+  .status--busy::before { animation: none; }
+}

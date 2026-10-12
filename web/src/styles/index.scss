@@ -6,27 +6,25 @@
 :root {
   --font-sans: "Inter Variable", "Inter", "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
 
-  /* A dashboard wants more width and tighter panels than an editorial page. */
+  /* A dashboard wants more width than an editorial page. Tighter panels,
+     32px controls and table rows come from data-density="compact" on
+     <html> (index.html). */
   --page-max: 110rem;
-  --panel-padding: var(--space-5);
   --side-nav-w: 16rem;
 
   /* ---- Pod / job status ------------------------------------------------
-     Jewel has no success / info / warning tokens (only --field-error), so
-     kubestoplight maps its status semantics onto Jewel's validated chart
-     palette. Meanings are fixed; don't reuse these for decoration.
-       Idle = healthy, Busy = restarting, Changing = pending/terminating,
-       Failed = error, Empty/Unknown = no data.                            */
-  --status-idle: var(--chart-1);      /* teal   */
-  --status-busy: var(--chart-2);      /* purple */
-  --status-changing: var(--chart-5);  /* orange */
-  --status-failed: var(--chart-3);    /* red    */
-  --status-empty: var(--chart-context);
+     kubestoplight's five states on Jewel's traffic light (the same colors
+     the TUI uses). Meanings are fixed; don't reuse these for decoration.
+     Marks (dots, ring segments, tone edges) take the -mark tone; text in a
+     status color (log lines) takes the plain one.                        */
+  --status-idle: var(--status-success-mark);      /* healthy              */
+  --status-busy: var(--status-info-mark);         /* running, restarting  */
+  --status-changing: var(--status-warning-mark);  /* pending, terminating */
+  --status-failed: var(--status-error-mark);      /* error                */
+  --status-empty: var(--status-neutral-mark);     /* no data              */
 
-  /* Text in a status tone (log lines). Marks above only need 3:1; text
-     needs 4.5:1 on solid and glass, which Jewel only provides for errors. */
-  --status-failed-text: var(--field-error);
-  --status-warn-text: #fdba74;        /* gap: Jewel has no warning text token */
+  --status-failed-text: var(--status-error);
+  --status-warn-text: var(--status-warning);
 }
 
 /* Scrollbars inside panels: thin and quiet, matching Jewel's own regions. */
@@ -51,36 +49,8 @@
   font-size: var(--text-code);
 }
 
-/* Destructive button: Jewel has none, but a variant is three tokens. */
-.btn--danger {
-  --btn-bg: var(--field-error);
-  --btn-fg: var(--text-inverse);
-  --btn-border: var(--field-error);
-  --btn-bg-hover: var(--text-default);
-  --btn-border-hover: var(--text-default);
-}
-
-/* Small icon buttons for dense rows and toolbars (Jewel's are 40px). */
-.btn--icon.ksl-btn-sm {
-  width: var(--control-h-sm);
-  min-height: var(--control-h-sm);
-}
-
-/* Right-hand drawer: Jewel has .sheet--start (left) only; this mirrors it. */
+/* Jewel's right-hand drawer is 28rem, sized for a record's details; the
+   pod drawer holds logs and YAML, so it gets more room. */
 .sheet--end {
   --sheet-max-w: 60rem;
-  width: min(calc(100% - var(--hit-min)), var(--sheet-max-w));
-  height: 100dvh;
-  max-height: none;
-  margin: 0 0 0 auto;
-  inset: 0 0 0 auto;
-}
-.sheet--end .sheet__panel {
-  height: 100%;
-  border-right: 0;
-  border-radius: var(--panel-radius-bottom) var(--radius-0) var(--radius-0) var(--panel-radius-bottom);
-}
-.sheet--end:not([open]) { transform: translateX(100%); }
-@starting-style {
-  .sheet--end[open] { transform: translateX(100%); }
 }

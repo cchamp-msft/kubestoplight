@@ -1,7 +1,7 @@
 import { useState, useEffect, useId } from 'react';
 import type { Cluster, AuthType, KubeCfg } from '../types/api';
 import Sheet from './ui/Sheet';
-import './ClusterFormModal.scss';
+import Icon from './ui/Icon';
 
 interface Props {
   open: boolean;
@@ -152,8 +152,7 @@ export default function ClusterFormModal({ open, initialValues, onClose, onSubmi
               />
             </Field>
             <Field id={`${id}-token`} label="Bearer token">
-              {/* Jewel has no password field; a text button toggles visibility. */}
-              <div className="ksl-password">
+              <div className="password">
                 <input
                   className="input ksl-mono"
                   id={`${id}-token`}
@@ -164,13 +163,15 @@ export default function ClusterFormModal({ open, initialValues, onClose, onSubmi
                   onChange={(e) => set('bearer_token', e.target.value)}
                 />
                 <button
-                  className="btn btn--text ksl-password__toggle"
+                  className="password__toggle"
                   type="button"
                   aria-controls={`${id}-token`}
                   aria-pressed={showToken}
+                  aria-label={showToken ? 'Hide token' : 'Show token'}
                   onClick={() => setShowToken((v) => !v)}
                 >
-                  {showToken ? 'Hide' : 'Show'}
+                  <Icon name="show" className="password__show" />
+                  <Icon name="hide" className="password__hide" />
                 </button>
               </div>
             </Field>
