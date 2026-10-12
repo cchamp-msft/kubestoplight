@@ -13,28 +13,41 @@ interface Props {
 }
 
 const ISO_RE = /^(\d{4}-\d{2}-\d{2}T[\d:.]+Z?)\s/;
+const LEVEL_RE = /^\[?(TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|PANIC)\]?(?=\s|:)/i;
 const ERROR_RE = /\b(error|fatal|panic|exception)\b/i;
 const WARN_RE = /\bwarn(ing)?\b/i;
 
-function LogLine({ line }: { line: string }) {
-  const match = line.match(ISO_RE);
-  const isError = ERROR_RE.test(line);
-  const isWarn = !isError && WARN_RE.test(line);
+type Level = 'error' | 'warn' | 'debug' | 'info';
 
-  let className = 'ksl-log-line';
-  if (isError) className += ' ksl-log-line--error';
-  else if (isWarn) className += ' ksl-log-line--warn';
-
-  if (match) {
-    return (
-      <div className={className}>
-        <span className="ksl-log-line__ts">{match[1]} </span>
-        <span>{line.slice(match[0].length)}</span>
-      </div>
-    );
+function levelOf(token: string | undefined, text: string): Level {
+  const t = token?.toLowerCase();
+  if (t) {
+    if (t === 'error' || t === 'fatal' || t === 'panic') return 'error';
+    if (t.startsWith('warn')) return 'warn';
+    if (t === 'debug' || t === 'trace') return 'debug';
+    return 'info';
   }
+  // No level token: fall back to scanning the text.
+  if (ERROR_RE.test(text)) return 'error';
+  if (WARN_RE.test(text)) return 'warn';
+  return 'info';
+}
 
-  return <div className={className}>{line}</div>;
+/** One log line: dim timestamp, the level token in bold, and a colored
+ *  edge (plus a faint wash for errors) so the bad lines stand out. */
+function LogLine({ line }: { line: string }) {
+  const ts = line.match(ISO_RE);
+  const rest = ts ? line.slice(ts[0].length) : line;
+  const lvl = rest.match(LEVEL_RE);
+  const level = levelOf(lvl?.[1], rest);
+
+  return (
+    <div className={`ksl-log-line ksl-log-line--${level}`}>
+      {ts && <span className="ksl-log-line__ts">{ts[1]} </span>}
+      {lvl && <span className="ksl-log-line__level">{lvl[0]}</span>}
+      {lvl ? rest.slice(lvl[0].length) : rest}
+    </div>
+  );
 }
 
 function ToolButton({ icon, label, onClick }: { icon: IconName; label: string; onClick: () => void }) {

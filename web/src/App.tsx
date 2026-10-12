@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from 'react';
 import type { Cluster, PodItem } from './types/api';
-import { SEVERITY_ORDER } from './constants/status';
+import { SEVERITY_ORDER, worstStatus, lensFor } from './constants/status';
 import { useClusters } from './hooks/useClusters';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useServerInfo } from './hooks/useServerInfo';
+import { useTabStatus } from './hooks/useTabStatus';
+import { useBumpOnRise } from './hooks/useFlashOnChange';
 import ClusterSidebar from './components/ClusterSidebar';
 import SummaryStrip from './components/SummaryStrip';
 import FilterBar from './components/FilterBar';
 import NamespaceGrid from './components/NamespaceGrid';
 import BgPicker from './components/BgPicker';
+import Beacon from './components/ui/Beacon';
 import './App.scss';
 
 const ClusterFormModal = lazy(() => import('./components/ClusterFormModal'));
@@ -19,7 +22,7 @@ const ALL_STATUSES = { Idle: true, Busy: true, Changing: true, Failed: true };
 
 export default function App() {
   const { clusters, addCluster, updateCluster, removeCluster } = useClusters();
-  const { groups, connected } = useWebSocket();
+  const { groups, connected, beat, stale } = useWebSocket();
   const { readOnly } = useServerInfo();
 
   // Cluster modals
@@ -135,6 +138,10 @@ export default function App() {
   const clusterCount = new Set(groups.map((g) => g.cluster)).size;
   const totalPods = groups.reduce((n, g) => n + g.totalPods, 0);
   const failedCount = groups.reduce((n, g) => n + (g.statusCounts.Failed ?? 0), 0);
+  const lit = lensFor(groups.length ? worstStatus(groups.map((g) => g.status)) : null);
+  useTabStatus(lit, failedCount);
+  const failedBumps = useBumpOnRise(failedCount);
+  const liveLabel = !connected ? 'Offline' : stale ? 'Stale' : 'Live';
 
   // Groups for summary strip (respects cluster filter)
   const summaryGroups = selectedCluster ? groups.filter((g) => g.cluster === selectedCluster) : groups;
@@ -151,18 +158,26 @@ export default function App() {
         {/* ── Header ── */}
         <header className="site-header">
           <div className="panel site-header__inner ksl-header">
-            <span className="wordmark">kubestoplight</span>
+            <span className="ksl-brand">
+              <Beacon
+                lit={lit}
+                label={!lit ? 'No data yet' : failedCount > 0 ? `${failedCount} pods failing` : lit === 'caution' ? 'Changes in progress' : 'All healthy'}
+              />
+              <span className="wordmark">kubestoplight</span>
+            </span>
             {failedCount > 0 && (
-              <span className="badge badge--error">{failedCount} failed</span>
+              // Re-keyed when the count rises, so its one-shot pulse replays.
+              <span key={failedBumps} className="badge badge--error ksl-failed-badge">{failedCount} failed</span>
             )}
             <span className="ksl-header__spacer" />
             {readOnly && <span className="badge" title="Cluster add/edit/remove is disabled on this server">Read-only</span>}
             <span className="ksl-header__stats">
               {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} &middot; {totalPods} pods
             </span>
-            <span role="status" className={`badge ${connected ? 'badge--accent badge--busy' : 'badge--error'}`}>
-              <span className="badge__dot" />
-              {connected ? 'Live' : 'Offline'}
+            {/* The dot ticks once per snapshot (re-keyed on each beat). */}
+            <span role="status" className={`badge ksl-live ${!connected ? 'badge--error' : stale ? '' : 'badge--accent'}`}>
+              <span key={beat} className={`badge__dot${connected && !stale && beat > 0 ? ' ksl-live__beat' : ''}`} />
+              {liveLabel}
             </span>
           </div>
         </header>

@@ -7,6 +7,7 @@ import ResourceDonut from './ResourceDonut';
 import PodRow from './PodRow';
 import StatusTag from './StatusTag';
 import Icon from './ui/Icon';
+import { useFlashOnChange } from '../hooks/useFlashOnChange';
 import './NamespaceCard.scss';
 
 interface Props {
@@ -29,6 +30,7 @@ export default function NamespaceCard({ group, expanded, onToggle, onPodDescribe
   const totalJobs = group.totalJobs ?? 0;
   const jobStatusCounts = group.jobStatusCounts ?? {};
   const detailId = useId();
+  const [flashing, flashDone] = useFlashOnChange(status);
 
   const sortedPods = useMemo(
     () => [...pods].sort((a, b) => (SEVERITY_ORDER[a.status] ?? 5) - (SEVERITY_ORDER[b.status] ?? 5)),
@@ -37,7 +39,9 @@ export default function NamespaceCard({ group, expanded, onToggle, onPodDescribe
 
   return (
     <article
-      className="ksl-card"
+      className={`ksl-card${flashing ? ' ksl-flash' : ''}`}
+      data-status={status}
+      onAnimationEnd={(e) => { if (e.animationName === 'ksl-card-flash') flashDone(); }}
       style={{ '--tone': STATUS_COLORS[status] ?? STATUS_COLORS.Unknown } as React.CSSProperties}
     >
       <button
@@ -61,13 +65,17 @@ export default function NamespaceCard({ group, expanded, onToggle, onPodDescribe
             colorMap={STATUS_COLORS}
             order={POD_STATUS_ORDER}
           />
-          <ResourceDonut
-            title="Jobs"
-            total={totalJobs}
-            statusCounts={jobStatusCounts}
-            colorMap={JOB_STATUS_COLORS}
-            order={JOB_STATUS_ORDER}
-          />
+          {totalJobs > 0 ? (
+            <ResourceDonut
+              title="Jobs"
+              total={totalJobs}
+              statusCounts={jobStatusCounts}
+              colorMap={JOB_STATUS_COLORS}
+              order={JOB_STATUS_ORDER}
+            />
+          ) : (
+            <span className="ksl-card__nojobs">No jobs</span>
+          )}
         </span>
 
         <span className="ksl-card__status-row">

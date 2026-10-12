@@ -49,3 +49,13 @@ export function worstStatus(statuses: (PodStatusKind | NamespaceStatusKind)[]): 
   }
   return 'Idle';
 }
+
+/** The Beacon's lit lens: red for failures, amber while anything is in progress, green when all idle. */
+export type Lens = 'stop' | 'caution' | 'go' | null;
+
+export function lensFor(worst: NamespaceStatusKind | null): Lens {
+  if (!worst) return null;
+  if (worst === 'Failed') return 'stop';
+  if (worst === 'Changing' || worst === 'Busy') return 'caution';
+  return 'go';
+}

@@ -42,6 +42,13 @@ const STATE_TONE: Record<string, StatusTone> = {
   terminated: 'error',
 };
 
+// Only phases that need a look get a tone; Running and Succeeded read plain.
+const PHASE_TONE: Record<string, StatusTone | undefined> = {
+  Pending: 'warning',
+  Failed: 'error',
+  Unknown: 'warning',
+};
+
 function ContainerBlock({ c }: { c: ContainerDetail }) {
   const stateLabel = c.state === 'running' ? 'Running' : c.stateReason || (c.state === 'waiting' ? 'Waiting' : c.state === 'terminated' ? 'Terminated' : 'Unknown');
   const req = Object.entries(c.resources.requests);
@@ -53,8 +60,10 @@ function ContainerBlock({ c }: { c: ContainerDetail }) {
       <dl className="meta">
         <KV label="Image"><code>{c.image}</code></KV>
         <KV label="State"><Status tone={STATE_TONE[c.state]}>{stateLabel}</Status></KV>
-        <KV label="Ready">{c.ready ? 'Yes' : 'No'}</KV>
-        <KV label="Restarts">{c.restartCount}</KV>
+        <KV label="Ready">{c.ready ? 'Yes' : <Status tone="error">No</Status>}</KV>
+        <KV label="Restarts">
+          {c.restartCount > 0 ? <Status tone="warning">{c.restartCount}</Status> : c.restartCount}
+        </KV>
         {c.startedAt && <KV label="Started">{new Date(c.startedAt).toLocaleString()}</KV>}
         {c.ports.length > 0 && <KV label="Ports">{c.ports.map((p) => `${p.containerPort}/${p.protocol}`).join(', ')}</KV>}
         {req.length > 0 && <KV label="Requests"><span className="ksl-mono">{req.map(([k, v]) => `${k} ${v}`).join(' · ')}</span></KV>}
@@ -117,7 +126,9 @@ export default function PodDescribeTab({ cluster, namespace, pod }: Props) {
         <KV label="Pod IP"><span className="ksl-mono">{data.podIP}</span></KV>
         <KV label="Host IP"><span className="ksl-mono">{data.hostIP}</span></KV>
         <KV label="QoS class">{data.qos}</KV>
-        <KV label="Phase">{data.phase}</KV>
+        <KV label="Phase">
+          {PHASE_TONE[data.phase] ? <Status tone={PHASE_TONE[data.phase]}>{data.phase}</Status> : data.phase}
+        </KV>
         <KV label="Service account">{data.serviceAccount}</KV>
         <KV label="Age">{data.age}</KV>
         <KV label="Created">{new Date(data.createdAt).toLocaleString()}</KV>

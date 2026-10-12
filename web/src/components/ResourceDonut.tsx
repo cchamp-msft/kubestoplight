@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useCountUp } from '../hooks/useCountUp';
 
 interface Props {
   title: string;
@@ -27,6 +28,8 @@ const ResourceDonut = memo(function ResourceDonut({ title, total, statusCounts, 
   const sum = slices.reduce((n, s) => n + s.count, 0);
   const label = `${title}: ${total}${slices.length ? ` — ${slices.map((s) => `${s.count} ${s.status.toLowerCase()}`).join(', ')}` : ''}`;
 
+  const shown = useCountUp(total);
+
   let offset = 0;
   return (
     <figure className="ksl-donut" role="img" aria-label={label}>
@@ -43,8 +46,8 @@ const ResourceDonut = memo(function ResourceDonut({ title, total, statusCounts, 
               r={R}
               strokeWidth={STROKE}
               fill="none"
-              style={{ stroke: colorMap[s.status] }}
-              strokeDasharray={`${len - gap} ${C - len + gap}`}
+              className="ksl-donut__slice"
+              style={{ stroke: colorMap[s.status], strokeDasharray: `${len - gap} ${C - len + gap}` }}
               strokeDashoffset={-offset}
               transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`}
             >
@@ -56,7 +59,7 @@ const ResourceDonut = memo(function ResourceDonut({ title, total, statusCounts, 
         })}
       </svg>
       <figcaption className="ksl-donut__center" aria-hidden="true">
-        <span className="ksl-donut__value">{total}</span>
+        <span className="ksl-donut__value">{shown}</span>
         <span className="ksl-donut__label">{title}</span>
       </figcaption>
     </figure>
