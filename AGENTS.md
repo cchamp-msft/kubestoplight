@@ -145,6 +145,18 @@ component or token over a new `ksl-` one.
   `--field-*`, `--state-*`, `--status-*`, `--space-*`, `--text-*` sizes, …)
   and the app's `--status-idle…` set. No hex values in component styles.
 
+- **Signature touches** (kept deliberately small, all on status tokens):
+  the header `ui/Beacon.tsx` (a traffic light whose lit lens is the worst
+  status; `useTabStatus` mirrors it into the favicon and tab title), the
+  health spectrum bar under the overview, a status-tinted glow on cards,
+  one-shot flashes when a pod or namespace changes status
+  (`useFlashOnChange`), a LIVE dot that ticks per snapshot and reads
+  "Stale" when updates stop, and donuts and stats that sweep and count
+  in (`useCountUp`). Every animation is off under
+  `prefers-reduced-motion`, which the screenshot script sets, so PNGs
+  stay deterministic. Status color still means status: don't use it for
+  decoration elsewhere.
+
 `design_handoff_carbon_redesign/README.md` is the original layout and
 interaction spec (it predates Jewel). It's still a checklist of what each
 screen must do: summary, filters, cards, auto-expand of failed namespaces,

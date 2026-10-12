@@ -2,10 +2,39 @@
    rides on a 2px left edge, the same tone-edge idiom as Jewel's .notice. */
 
 .ksl-card {
+  --glow: 4%;
   min-width: 0;
-  background: var(--field-fill);
+  /* Light through colored glass: a soft wash of the status tone from the
+     edge, strongest for failures and barely there when idle. */
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--tone) var(--glow), transparent), transparent 70%),
+    var(--field-fill);
   border: var(--hairline) solid var(--panel-border);
   box-shadow: inset var(--rule-strong) 0 0 var(--tone);
+}
+.ksl-card[data-status="Failed"] { --glow: 20%; }
+.ksl-card[data-status="Changing"] { --glow: 13%; }
+.ksl-card[data-status="Busy"] { --glow: 9%; }
+
+/* A live status change (useFlashOnChange) flashes the card or row in its
+   new tone once. Off for reduced motion: the color change itself remains. */
+.ksl-card.ksl-flash {
+  animation: ksl-card-flash 1.6s var(--ease-out) 1;
+}
+@keyframes ksl-card-flash {
+  0% { box-shadow: inset var(--rule-strong) 0 0 var(--tone), 0 0 0 2px var(--tone), 0 0 24px color-mix(in srgb, var(--tone) 60%, transparent); }
+  100% { box-shadow: inset var(--rule-strong) 0 0 var(--tone), 0 0 0 0 transparent, 0 0 0 transparent; }
+}
+.ksl-pod-row.ksl-flash > * {
+  animation: ksl-row-flash 1.6s var(--ease-out) 1;
+}
+@keyframes ksl-row-flash {
+  0% { background-color: color-mix(in srgb, var(--tone) 32%, transparent); }
+  100% { background-color: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ksl-card.ksl-flash,
+  .ksl-pod-row.ksl-flash > * { animation: none; }
 }
 
 /* The summary area is one big toggle button. */
@@ -66,6 +95,30 @@
 .ksl-donut__track {
   fill: none;
   stroke: var(--panel-border);
+}
+
+/* Slices sweep in from their start when a donut first draws. */
+.ksl-donut__slice {
+  animation: ksl-donut-in 700ms var(--ease-out) 1 backwards;
+  transition: stroke-dasharray var(--duration-slow) var(--ease-standard),
+    stroke-dashoffset var(--duration-slow) var(--ease-standard);
+}
+@keyframes ksl-donut-in {
+  from { stroke-dasharray: 0 252; } /* 252 ≥ the ring's circumference */
+}
+@media (prefers-reduced-motion: reduce) {
+  .ksl-donut__slice { animation: none; transition: none; }
+}
+
+/* Most namespaces run no jobs; an empty ring as big as the pods ring was
+   noise, so that case is a quiet note. */
+.ksl-card__nojobs {
+  align-self: center;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .ksl-donut__center {

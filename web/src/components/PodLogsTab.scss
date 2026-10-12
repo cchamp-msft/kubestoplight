@@ -56,18 +56,33 @@
 
 .ksl-log-line {
   display: block;
+  padding-left: var(--space-2);
+  box-shadow: inset 2px 0 0 var(--level-edge, transparent);
 }
 
+/* Timestamps are reference, not content: quieter than muted text. */
 .ksl-log-line__ts {
   color: var(--text-muted);
+  opacity: 0.65;
+}
+
+.ksl-log-line__level {
+  font-weight: var(--weight-semibold);
 }
 
 .ksl-log-line--error {
+  --level-edge: var(--status-failed);
   color: var(--status-failed-text);
+  background: color-mix(in srgb, var(--status-failed) 9%, transparent);
 }
 
 .ksl-log-line--warn {
+  --level-edge: var(--status-changing);
   color: var(--status-warn-text);
+}
+
+.ksl-log-line--debug {
+  color: var(--text-muted);
 }
 
 .ksl-logs__status {

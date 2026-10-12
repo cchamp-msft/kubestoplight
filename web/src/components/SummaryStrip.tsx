@@ -1,11 +1,17 @@
 import { useMemo } from 'react';
 import type { NamespaceGroup } from '../types/api';
+import { STATUS_COLORS } from '../constants/status';
+import { useCountUp } from '../hooks/useCountUp';
 
 interface StatProps {
   label: string;
   value: React.ReactNode;
   tone?: string;
   note?: string | null;
+}
+
+function Count({ value }: { value: number }) {
+  return <>{useCountUp(value)}</>;
 }
 
 // Jewel stat: uppercase label, big uncolored value. Status shows only as a dot.
@@ -44,33 +50,64 @@ export default function SummaryStrip({ groups }: Props) {
   }, [groups]);
 
   const pct = t.pods > 0 ? Math.round((t.idle / t.pods) * 100) : 0;
+  const spectrum = ([
+    ['Failed', t.failed],
+    ['Changing', t.changing],
+    ['Busy', t.busy],
+    ['Idle', t.idle],
+  ] as const).filter(([, n]) => n > 0);
+  const spectrumLabel = spectrum.map(([s, n]) => `${n} ${s.toLowerCase()}`).join(', ');
 
   return (
-    <dl className="stats ksl-stats">
-      <Stat label="Total pods" value={t.pods} note={`${groups.length} namespaces`} />
-      <Stat
-        label="Healthy"
-        tone={t.pods > 0 ? 'var(--status-idle)' : undefined}
-        value={<>{pct}<span className="stat__unit">%</span></>}
-        note={`${t.idle} idle`}
-      />
-      <Stat
-        label="Failed"
-        tone={t.failed > 0 ? 'var(--status-failed)' : undefined}
-        value={t.failed}
-        note={t.failed > 0 ? 'Needs attention' : 'None'}
-      />
-      <Stat
-        label="In progress"
-        tone={t.busy + t.changing > 0 ? 'var(--status-changing)' : undefined}
-        value={t.busy + t.changing}
-        note={t.busy || t.changing ? `${t.busy} busy, ${t.changing} changing` : null}
-      />
-      <Stat
-        label="Jobs"
-        value={t.jobs}
-        note={t.jobsFailed > 0 ? `${t.jobsFailed} failed` : null}
-      />
-    </dl>
+    <>
+      <dl className="stats ksl-stats">
+        <Stat label="Total pods" value={<Count value={t.pods} />} note={`${groups.length} namespaces`} />
+        <Stat
+          label="Healthy"
+          tone={t.pods > 0 ? 'var(--status-idle)' : undefined}
+          value={<><Count value={pct} /><span className="stat__unit">%</span></>}
+          note={`${t.idle} idle`}
+        />
+        <Stat
+          label="Failed"
+          tone={t.failed > 0 ? 'var(--status-failed)' : undefined}
+          value={<Count value={t.failed} />}
+          note={t.failed > 0 ? 'Needs attention' : 'None'}
+        />
+        <Stat
+          label="In progress"
+          tone={t.busy + t.changing > 0 ? 'var(--status-changing)' : undefined}
+          value={<Count value={t.busy + t.changing} />}
+          note={t.busy || t.changing ? `${t.busy} busy, ${t.changing} changing` : null}
+        />
+        <Stat
+          label="Jobs"
+          value={<Count value={t.jobs} />}
+          note={t.jobsFailed > 0 ? `${t.jobsFailed} failed` : null}
+        />
+      </dl>
+
+      {spectrum.length > 0 && (
+        <>
+          <div className="ksl-spectrum" role="img" aria-label={`Pods by status: ${spectrumLabel}`}>
+            {spectrum.map(([s, n]) => (
+              <span
+                key={s}
+                className="ksl-spectrum__seg"
+                style={{ flexGrow: n, '--tone': STATUS_COLORS[s] } as React.CSSProperties}
+              />
+            ))}
+          </div>
+          <p className="ksl-spectrum__legend" aria-hidden="true">
+            {spectrum.map(([s, n]) => (
+              <span key={s} className="ksl-spectrum__key">
+                <span className="ksl-dot" style={{ '--tone': STATUS_COLORS[s] } as React.CSSProperties} />
+                {n} {s.toLowerCase()}
+              </span>
+            ))}
+          </p>
+        </>
+      )}
+    </>
   );
 }

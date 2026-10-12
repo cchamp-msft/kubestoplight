@@ -10,6 +10,61 @@
   flex: 1;
 }
 
+/* Brand: the Beacon mark (ui/Beacon.tsx) beside the wordmark. Its lit lens
+   is the worst status across every cluster. */
+.ksl-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ksl-beacon {
+  flex: none;
+  width: 2.75rem;
+  height: 1.1rem;
+  overflow: visible;
+}
+.ksl-beacon__housing {
+  fill: var(--surface-solid);
+  stroke: var(--panel-border);
+}
+.ksl-beacon__lens {
+  fill: var(--tone);
+  opacity: 0.2;
+  transition: opacity var(--duration-slow) var(--ease-standard);
+}
+.ksl-beacon__lens.is-lit {
+  opacity: 1;
+  filter: drop-shadow(0 0 3px var(--tone)) drop-shadow(0 0 8px color-mix(in srgb, var(--tone) 60%, transparent));
+}
+
+/* Failed count: a steady red halo, plus one pulse each time the count rises
+   (App.tsx re-keys it). */
+.ksl-failed-badge {
+  box-shadow: 0 0 12px -2px color-mix(in srgb, var(--status-failed) 55%, transparent);
+  animation: ksl-alarm 1.2s var(--ease-out) 1;
+}
+@keyframes ksl-alarm {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--status-failed) 80%, transparent); }
+  40% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--status-failed) 0%, transparent); }
+}
+
+/* Live badge: the dot ticks once per snapshot instead of pulsing forever;
+   with no snapshot for a while it reads "Stale" in the neutral tone. */
+.ksl-live__beat {
+  animation: ksl-beat var(--duration-pulse) var(--ease-out) 1;
+}
+@keyframes ksl-beat {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 var(--badge-dot, currentColor); }
+  25% { transform: scale(1.6); }
+  100% { transform: scale(1); box-shadow: 0 0 0 5px transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ksl-failed-badge,
+  .ksl-live__beat { animation: none; }
+}
+
 .ksl-header__stats {
   font-size: var(--text-sm);
   color: var(--text-muted);
@@ -64,6 +119,35 @@
   gap: var(--space-2);
 }
 
+/* Health spectrum: every pod in scope as one bar, worst first. */
+.ksl-spectrum {
+  display: flex;
+  gap: 2px; /* Jewel chart spec: 2px cut between marks */
+  height: 0.375rem;
+  margin-top: var(--space-5);
+  border-radius: var(--radius-0); /* square, like Jewel's .progress */
+}
+.ksl-spectrum__seg {
+  min-width: 2px;
+  background: var(--tone);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--tone) 50%, transparent);
+  transition: flex-grow var(--duration-slow) var(--ease-standard);
+}
+.ksl-spectrum__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ksl-spectrum__key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 /* ── Filter bar ── */
 .ksl-filter {
   display: flex;
@@ -101,9 +185,32 @@
   min-height: var(--control-h);
 }
 
-/* Status-filter tag buttons carry a dot; pressed fills the pill. */
+/* Status-filter tag buttons carry a dot. Jewel's pressed tag is a solid
+   white pill; four of them on by default outshone everything else, so
+   pressed here is tinted glass edged in the status color, and off is a
+   plain outline with a dimmed dot. */
 .tag--button.ksl-status-filter {
   gap: var(--space-2);
+  color: var(--text-muted);
+}
+.tag--button.ksl-status-filter .ksl-dot {
+  opacity: 0.4;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+.tag--button.ksl-status-filter[aria-pressed="true"] {
+  color: var(--text-default);
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+  border-color: color-mix(in srgb, var(--tone) 55%, transparent);
+}
+.tag--button.ksl-status-filter[aria-pressed="true"] .ksl-dot {
+  opacity: 1;
+  box-shadow: 0 0 6px var(--tone);
+}
+.tag--button.ksl-status-filter[aria-pressed="true"]:hover {
+  border-color: var(--tone);
+}
+.tag--button.ksl-status-filter[aria-pressed="true"]:active:not(:disabled) {
+  background: color-mix(in srgb, var(--tone) 26%, transparent);
 }
 
 /* ── Status tags (StatusTag.tsx) ── */

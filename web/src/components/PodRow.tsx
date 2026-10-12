@@ -2,6 +2,8 @@ import type { PodItem } from '../types/api';
 import Status from './ui/Status';
 import Icon from './ui/Icon';
 import Tooltip from './ui/Tooltip';
+import { STATUS_COLORS } from '../constants/status';
+import { useFlashOnChange } from '../hooks/useFlashOnChange';
 
 interface Props {
   pod: PodItem;
@@ -10,8 +12,13 @@ interface Props {
 }
 
 export default function PodRow({ pod, onDescribe, onLogs }: Props) {
+  const [flashing, flashDone] = useFlashOnChange(pod.status);
   return (
-    <tr className="ksl-pod-row">
+    <tr
+      className={`ksl-pod-row${flashing ? ' ksl-flash' : ''}`}
+      style={{ '--tone': STATUS_COLORS[pod.status] ?? STATUS_COLORS.Unknown } as React.CSSProperties}
+      onAnimationEnd={(e) => { if (e.animationName === 'ksl-row-flash') flashDone(); }}
+    >
       <th scope="row" className="ksl-pod-row__name ksl-mono" title={pod.name}>{pod.name}</th>
       <td><Status status={pod.status} /></td>
       <td className="is-num ksl-mono">{pod.ready}/{pod.total}</td>

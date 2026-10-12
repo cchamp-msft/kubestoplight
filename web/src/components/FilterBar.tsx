@@ -68,10 +68,11 @@ export default function FilterBar({
             key={s}
             type="button"
             className="tag tag--button ksl-status-filter"
+            style={{ '--tone': STATUS_COLORS[s] } as React.CSSProperties}
             aria-pressed={statusFilters[s]}
             onClick={() => onStatusFilter(s, !statusFilters[s])}
           >
-            <span className="ksl-dot" style={{ '--tone': STATUS_COLORS[s] } as React.CSSProperties} aria-hidden="true" />
+            <span className="ksl-dot" aria-hidden="true" />
             {s}
             <span className="ksl-filter__count">{nsCounts[s] ?? 0}</span>
           </button>
