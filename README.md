@@ -149,9 +149,9 @@ direct config file editing.
 
 | Status   | TUI    | Web    | Meaning |
 |----------|--------|--------|---------|
-| Idle     | Green  | Teal   | Running, stable, no restarts |
-| Busy     | Blue   | Purple | Running but restarting |
-| Changing | Amber  | Orange | Pending or terminating |
+| Idle     | Green  | Green  | Running, stable, no restarts |
+| Busy     | Blue   | Blue   | Running but restarting |
+| Changing | Amber  | Amber  | Pending or terminating |
 | Failed   | Red    | Red    | CrashLoopBackOff, image errors, or terminated with error |
 | Empty    | Gray   | Gray   | No container status data |
 
@@ -188,7 +188,7 @@ go run . --web
 
 - **Backend:** Go stdlib `net/http` + `nhooyr.io/websocket`; no framework
 - **Frontend:** React 19 + TypeScript 6, built with Vite, embedded via `go:embed`
-- **UI kit:** [Jewel](https://github.com/willchambers/jewel-design-system), a CSS-only dark design system, vendored in `web/src/vendor/jewel`
+- **UI kit:** [Jewel](https://github.com/willchambers/jewel-design-system) 1.0, a CSS-only dark design system (MIT), vendored in `web/src/vendor/jewel`
 - **Live updates:** WebSocket at `/ws/pods` pushes `NamespaceGroup` snapshots every polling interval
 - **Single binary:** `go build` produces one self-contained executable
 - **Dual mode:** Same binary, same config file — TUI for terminals, web for browsers

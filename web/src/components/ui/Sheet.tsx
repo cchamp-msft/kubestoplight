@@ -5,13 +5,15 @@ interface Props {
   open: boolean;
   onClose: () => void;
   title: ReactNode;
-  /** center = modal, end = drawer from the right (app extension, see index.scss). */
+  /** center = modal, end = drawer from the right. */
   placement?: 'center' | 'end';
   /** Extra content in the head, after the title (tags, actions). */
   headExtra?: ReactNode;
   className?: string;
-  /** Use Jewel's small uppercase label style for the title. */
+  /** Use Jewel's small uppercase label style for the title (short form titles). */
   labelTitle?: boolean;
+  /** A small label above a heading title, for a drawer about one record. */
+  eyebrow?: ReactNode;
   children: ReactNode;
 }
 
@@ -21,7 +23,7 @@ interface Props {
  * The dialog gives focus trapping, Esc and the top layer for free.
  */
 export default function Sheet({
-  open, onClose, title, placement = 'center', headExtra, className, labelTitle = true, children,
+  open, onClose, title, placement = 'center', headExtra, className, labelTitle = true, eyebrow, children,
 }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -50,7 +52,14 @@ export default function Sheet({
     >
       <div className={`sheet__panel panel${placement === 'center' ? ' panel--content' : ''}`}>
         <header className="sheet__head">
-          <h2 className={`sheet__title${labelTitle ? ' label' : ''}`} id={titleId}>{title}</h2>
+          {eyebrow ? (
+            <div className="sheet__titles">
+              <p className="sheet__eyebrow label">{eyebrow}</p>
+              <h2 className="sheet__title" id={titleId}>{title}</h2>
+            </div>
+          ) : (
+            <h2 className={`sheet__title${labelTitle ? ' label' : ''}`} id={titleId}>{title}</h2>
+          )}
           {headExtra}
           <button className="btn btn--ghost btn--icon" type="button" aria-label="Close" onClick={onClose}>
             <Icon name="close" />

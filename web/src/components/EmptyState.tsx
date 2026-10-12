@@ -12,7 +12,7 @@ interface Props {
 export default function EmptyState({ title, message, icon = 'cluster', actions }: Props) {
   return (
     <div className="empty-state empty-state--boxed">
-      <Icon name={icon} className="empty-state__icon" />
+      <Icon name={icon} size="lg" className="empty-state__icon" />
       <h3 className="empty-state__title">{title}</h3>
       <p className="empty-state__text">{message}</p>
       {actions && <div className="empty-state__actions">{actions}</div>}

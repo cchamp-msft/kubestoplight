@@ -85,7 +85,7 @@ a pod's Describe / Logs / YAML tabs.
 ```bash
 cd web
 npm run screenshots              # all → docs/screenshots/*.png
-npm run screenshots -- overview  # or just some: overview failing large empty describe logs add-cluster social bg-* (incl. bg-wax-*)
+npm run screenshots -- overview  # or just some: overview failing large empty describe logs add-cluster social bg-* (palettes incl. bg-ember/lagoon/dusk, bg-wax-*)
 ```
 
 `web/scripts/screenshots.mjs` boots its own mock server with frozen data and a
@@ -105,34 +105,45 @@ Go side (only if you touched Go): `go build ./... && go vet ./...`. Note
 
 ## Design system: Jewel
 
-The UI is built on [Jewel](https://github.com/willchambers/jewel-design-system),
-a CSS-only dark design system (glass panels over an animated gradient). Before
-this it was IBM Carbon; `git log` has the swap if you need to compare.
+The UI is built on [Jewel](https://github.com/willchambers/jewel-design-system)
+1.0 (MIT), a CSS-only dark design system (glass panels over an animated
+gradient). Before this it was IBM Carbon; `git log` has the swap if you need
+to compare. Jewel 1.0 filled the gaps this app found, so prefer a Jewel
+component or token over a new `ksl-` one.
 
-- **Where it lives:** `web/src/vendor/jewel/css/` is upstream's CSS, vendored
-  as-is (see its README for the pinned commit and how to update). It's
-  imported once in `web/src/main.tsx`. Don't edit it.
-- **App layer:** `web/src/styles/index.scss` overrides Jewel tokens (page
-  width, panel padding, Inter from `@fontsource-variable/inter`) and adds what
-  Jewel lacks: `--status-*` colors, `.btn--danger`, `.sheet--end` (right
-  drawer), `.ksl-dot`. App CSS is unlayered, so it always beats Jewel's layers.
-- **Status colors:** `web/src/constants/status.ts` maps pod/job status →
-  `--status-*` tokens, which sit on Jewel's chart palette: Idle=teal,
-  Busy=purple, Changing=orange, Failed=red, Empty/Unknown=gray. The meanings
-  (healthy / restarting / pending / error / no data) are the semantic core;
-  keep them. Following Jewel, status color goes on dots, ring segments and
-  2px tone edges, not on text (except log lines, via `--status-*-text`).
-- **Components:** use Jewel's classes on plain elements (`.btn`, `.tag`,
-  `.badge`, `.stats`, `.search`, `.choice`, `.field`/`.input`, `.table`,
-  `.accordion`, `.tabs`, `.code`, `.notice`, `.empty-state`, `.side-nav`,
-  `.sheet`). Jewel's `js/` isn't used, because it mutates the DOM. The React
-  equivalents are `components/ui/Sheet.tsx` (native `<dialog>`), the tabs in
-  `PodDetailPanel.tsx`, `components/ui/Icon.tsx` (hairline icons, since Jewel
-  ships none), `components/ui/Loading.tsx`, and `ResourceDonut.tsx` (SVG drawn
-  to Jewel's chart spec).
+- **Where it lives:** `web/src/vendor/jewel/` holds upstream's `css/` and
+  icon sprite (`media/icons.svg`), vendored as-is with its LICENSE (see its
+  README for the pinned commit and how to update). The CSS is imported once
+  in `web/src/main.tsx`. Don't edit it.
+- **App layer:** `web/src/styles/index.scss` overrides a few Jewel tokens
+  (page width, Inter from `@fontsource-variable/inter`, a wider `.sheet--end`)
+  and names the app's status set. `data-density="compact"` on `<html>`
+  (`web/index.html`) gives the dashboard Jewel's tighter panels and 32px
+  controls. App CSS is unlayered, so it always beats Jewel's layers.
+- **Status colors:** Jewel's traffic light. `--status-idle|busy|changing|failed|empty`
+  in `index.scss` map onto Jewel's `--status-success|info|warning|error|neutral-mark`
+  (green, blue, amber, red, gray: the TUI's colors too), and
+  `constants/status.ts` maps pod/job status to those tokens (`STATUS_COLORS`,
+  for dots and chart marks) and to `.status` tones (`STATUS_TONES`). The
+  meanings (healthy / restarting / pending / error / no data) are the
+  semantic core; keep them. A state with its word uses Jewel's `.status`
+  (`components/ui/Status.tsx`); a lone dot uses `.ksl-dot`. Never use the
+  `--chart-*` colors for status.
+- **Components:** use Jewel's classes on plain elements (`.btn`,
+  `.btn--danger`, `.tag`, `.badge`, `.status`, `.stats`, `.search`, `.choice`,
+  `.field`/`.input`, `.password`, `.table`, `.accordion`, `.tabs`, `.code`,
+  `.notice`, `.meta`, `.empty-state`, `.side-nav`, `.sheet` incl. `--end`
+  and `.sheet__eyebrow`, `.spinner`/`.loading`, `.icon`). Jewel's `js/`
+  isn't used, because it mutates the DOM; each Jewel component page has a
+  "Without Jewel's JS" section for this case. The React equivalents are
+  `components/ui/Sheet.tsx` (native `<dialog>`), `ui/Tooltip.tsx` (popover,
+  like `tooltip.js`), `ui/Icon.tsx` (draws from the sprite), `ui/Status.tsx`,
+  `ui/Loading.tsx`, the tabs in `PodDetailPanel.tsx`, the token toggle in
+  `ClusterFormModal.tsx`, and `ResourceDonut.tsx` (SVG drawn to Jewel's
+  chart spec). Icon buttons get a `Tooltip`, not `title=`.
 - **Tokens only:** use Jewel's resolved tokens (`--text-*`, `--panel-*`,
-  `--field-*`, `--state-*`, `--space-*`, `--text-*` sizes, …) and the
-  `--status-*` set. No hex values in component styles.
+  `--field-*`, `--state-*`, `--status-*`, `--space-*`, `--text-*` sizes, …)
+  and the app's `--status-idle…` set. No hex values in component styles.
 
 `design_handoff_carbon_redesign/README.md` is the original layout and
 interaction spec (it predates Jewel). It's still a checklist of what each
@@ -142,9 +153,12 @@ drill-down tabs, and the cluster add/edit/remove flow.
 ## Backgrounds, link previews, public preview
 
 - `web/src/components/BgPicker.tsx` + `styles/backgrounds.scss`: background
-  options for Jewel's sky. "hot" is Jewel's default; there are cool gradient
-  palettes (`glacier`, `aurora`, `deepsea`, `polar`) and Grok Imagine renders
-  in `web/public/bg/` (stills and a looping video). Choose with `?bg=<id>`.
+  options for Jewel's sky. "hot" is Jewel's default. Jewel's own palettes
+  (`ember`, `lagoon`, `dusk`) set `data-palette`; the app's cool palettes
+  (`glacier`, `aurora`, `deepsea`, `polar`) set `data-ksl-bg` and are just
+  Jewel's `--bg-1…5` / `--bg-base` tokens. There are also Grok Imagine
+  renders in `web/public/bg/` (stills and a looping video). Choose with
+  `?bg=<id>`.
   The picker shows in dev and in builds with `VITE_BG_PICKER=1`, and
   `?picker=0` hides it.
 - Motion: `?motion=jewel` is Jewel's own *lava lamp animation* (its name for

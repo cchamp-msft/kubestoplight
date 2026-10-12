@@ -1,0 +1,34 @@
+/* Skeleton — gray blocks in the shape of content that's on its way, with
+   a slow, gentle pulse. Use it when you know the layout (a card, a table,
+   a meta list) and loading takes more than a moment.
+
+   <div class="skeleton" aria-busy="true" aria-label="Loading pod details">
+     <span class="skeleton__line skeleton__line--title"></span>
+     <span class="skeleton__line"></span>
+     <span class="skeleton__line"></span>
+     <span class="skeleton__line skeleton__line--short"></span>
+   </div>
+   <span class="skeleton__block" style="--skeleton-h: 12rem"></span>   a chart or image
+
+   Swap the whole skeleton for the real content in one go, and keep the
+   container's aria-busy until then. Screen readers hear the label, not
+   the blocks. */
+
+.skeleton { display: grid; gap: var(--space-2); }
+
+.skeleton__line,
+.skeleton__block {
+  display: block;
+  background: var(--state-pressed-fill);
+  animation: skeleton-pulse calc(var(--duration-pulse) + var(--duration-base)) var(--ease-standard) infinite;
+}
+.skeleton__line { height: 0.75rem; }
+.skeleton__line:nth-child(even) { width: 92%; }
+.skeleton__line--title { height: 1.25rem; width: 55%; margin-bottom: var(--space-2); }
+.skeleton__line--short { width: 60%; }
+.skeleton__block { height: var(--skeleton-h, 8rem); }
+
+@keyframes skeleton-pulse { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton__line, .skeleton__block { animation: none; }
+}

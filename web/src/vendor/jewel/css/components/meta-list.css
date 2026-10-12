@@ -1,7 +1,12 @@
 /* Meta list — label/value pairs separated by hairlines.
    <dl class="meta">
      <dt class="label">Role</dt><dd>Art direction</dd>
-   </dl> */
+   </dl>
+
+   .meta--stacked puts each label above its value, for long keys and values
+   (Kubernetes labels, file paths, IDs). The default layout stacks too on
+   phones (below --bp-sm). Long unbroken strings wrap anywhere rather than
+   push the page wider. */
 
 .meta {
   display: grid;
@@ -11,8 +16,20 @@
 .meta dt,
 .meta dd {
   margin: 0;
+  min-width: 0;
   padding-block: var(--space-3);
   border-bottom: var(--hairline) solid var(--panel-border);
+  overflow-wrap: anywhere;
 }
 .meta dt { padding-right: var(--space-5); }
 .meta dd { font-size: var(--text-sm); }
+
+.meta--stacked { grid-template-columns: minmax(0, 1fr); }
+.meta--stacked dt { padding-right: 0; padding-bottom: 0; border-bottom: 0; }
+.meta--stacked dd { padding-top: var(--space-1); }
+
+@media (max-width: 40rem) {   /* below --bp-sm */
+  .meta { grid-template-columns: minmax(0, 1fr); }
+  .meta dt { padding-right: 0; padding-bottom: 0; border-bottom: 0; }
+  .meta dd { padding-top: var(--space-1); }
+}

@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react';
 import type { PodItem } from '../types/api';
 import Sheet from './ui/Sheet';
-import StatusTag from './StatusTag';
+import Status from './ui/Status';
 import PodDescribeTab from './PodDescribeTab';
 import PodLogsTab from './PodLogsTab';
 import PodYamlTab from './PodYamlTab';
@@ -51,14 +51,9 @@ export default function PodDetailPanel({ pod, initialTab, onClose }: Props) {
       placement="end"
       className="ksl-detail"
       labelTitle={false}
+      eyebrow={`Pod · ${pod.namespace} · ${pod.cluster}`}
       title={<span className="ksl-mono ksl-detail__name">{pod.name}</span>}
-      headExtra={
-        <span className="ksl-detail__meta">
-          <span className="tag">{pod.namespace}</span>
-          <span className="tag">{pod.cluster}</span>
-          <StatusTag status={pod.status} />
-        </span>
-      }
+      headExtra={<Status status={pod.status} />}
     >
       <div className="tabs ksl-detail__tabs">
         <div className="tabs__list" role="tablist" aria-label="Pod details" onKeyDown={onKeyDown}>

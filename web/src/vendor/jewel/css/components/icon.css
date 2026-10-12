@@ -1,0 +1,32 @@
+/* Icon — hairline icons from Jewel's sprite, media/icons.svg: Lucide
+   icons (ISC license) drawn at Jewel's 1.25 stroke with square ends. The
+   stroke comes from CSS, so every icon matches.
+
+   <svg class="icon" aria-hidden="true"><use href="media/icons.svg#search"></use></svg>
+   <svg class="icon icon--md" role="img" aria-label="Warning"><use href="media/icons.svg#alert-triangle"></use></svg>
+
+   Sizes: .icon--xs (14), default (16, in buttons and fields), .icon--md
+   (22, header actions), .icon--lg (28, empty states). It takes the text
+   color. Decorative icons get aria-hidden="true"; an icon that is the
+   only label (an icon button) puts aria-label on the button instead.
+
+   The sprite loads over http(s). From file:// most browsers block it;
+   paste the icon's <path>s inline (the specimen's Icons page has them). */
+
+.icon {
+  --icon-size: var(--icon-sm);
+
+  display: inline-block;
+  flex: none;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  vertical-align: middle;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+.icon--xs { --icon-size: var(--icon-xs); }
+.icon--md { --icon-size: var(--icon-md); }
+.icon--lg { --icon-size: var(--icon-lg); }

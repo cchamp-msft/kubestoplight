@@ -99,9 +99,9 @@
   --cluster-gap: var(--space-1);
 }
 
+/* Annotation keys are identifiers, not labels: keep their case. */
 .ksl-desc__annotations dt {
   text-transform: none;
   letter-spacing: 0;
   font-family: var(--font-mono);
-  overflow-wrap: anywhere;
 }

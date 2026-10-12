@@ -46,7 +46,7 @@
     radial-gradient(ellipse 38% 64% at var(--bg-x4) var(--bg-y4),
       color-mix(in oklab, var(--bg-c4) var(--i), transparent) 0%, transparent 74%),
     radial-gradient(ellipse 120% 90% at 50% 110%,
-      color-mix(in oklab, var(--jewel-orange) calc(var(--i) * 0.55), transparent) 0%, transparent 60%);
+      color-mix(in oklab, var(--bg-5) calc(var(--i) * 0.55), transparent) 0%, transparent 60%);
 
   animation:
     jewel-hue-1 var(--bg-speed) linear infinite,
@@ -70,34 +70,35 @@
   background-position: top left;
 }
 
-/* Color cycles: each slot walks the five Jewel colors, offset by one step. */
+/* Color cycles: each slot walks the palette's five colors (--bg-1…5 in
+   tokens.css), offset by one step. */
 @keyframes jewel-hue-1 {
-  0%, 100% { --bg-c1: var(--jewel-purple); }
-  20% { --bg-c1: var(--jewel-magenta); }
-  40% { --bg-c1: var(--jewel-teal); }
-  60% { --bg-c1: var(--jewel-red); }
-  80% { --bg-c1: var(--jewel-orange); }
+  0%, 100% { --bg-c1: var(--bg-1); }
+  20% { --bg-c1: var(--bg-2); }
+  40% { --bg-c1: var(--bg-3); }
+  60% { --bg-c1: var(--bg-4); }
+  80% { --bg-c1: var(--bg-5); }
 }
 @keyframes jewel-hue-2 {
-  0%, 100% { --bg-c2: var(--jewel-magenta); }
-  20% { --bg-c2: var(--jewel-teal); }
-  40% { --bg-c2: var(--jewel-red); }
-  60% { --bg-c2: var(--jewel-orange); }
-  80% { --bg-c2: var(--jewel-purple); }
+  0%, 100% { --bg-c2: var(--bg-2); }
+  20% { --bg-c2: var(--bg-3); }
+  40% { --bg-c2: var(--bg-4); }
+  60% { --bg-c2: var(--bg-5); }
+  80% { --bg-c2: var(--bg-1); }
 }
 @keyframes jewel-hue-3 {
-  0%, 100% { --bg-c3: var(--jewel-teal); }
-  20% { --bg-c3: var(--jewel-red); }
-  40% { --bg-c3: var(--jewel-orange); }
-  60% { --bg-c3: var(--jewel-purple); }
-  80% { --bg-c3: var(--jewel-magenta); }
+  0%, 100% { --bg-c3: var(--bg-3); }
+  20% { --bg-c3: var(--bg-4); }
+  40% { --bg-c3: var(--bg-5); }
+  60% { --bg-c3: var(--bg-1); }
+  80% { --bg-c3: var(--bg-2); }
 }
 @keyframes jewel-hue-4 {
-  0%, 100% { --bg-c4: var(--jewel-red); }
-  20% { --bg-c4: var(--jewel-orange); }
-  40% { --bg-c4: var(--jewel-purple); }
-  60% { --bg-c4: var(--jewel-magenta); }
-  80% { --bg-c4: var(--jewel-teal); }
+  0%, 100% { --bg-c4: var(--bg-4); }
+  20% { --bg-c4: var(--bg-5); }
+  40% { --bg-c4: var(--bg-1); }
+  60% { --bg-c4: var(--bg-2); }
+  80% { --bg-c4: var(--bg-3); }
 }
 
 /* Drift: two groups on different periods so the loop never looks mirrored. */
@@ -118,5 +119,9 @@
 /* Reduced motion: no animation; the registered initial values give a
    composed, static gradient. */
 @media (prefers-reduced-motion: reduce) {
-  .jewel-bg, .jewel-cap { animation: none; }
+  .jewel-bg, .jewel-cap {
+    animation: none;
+    /* The registered initial values are Jewel's own colors; follow the palette. */
+    --bg-c1: var(--bg-1); --bg-c2: var(--bg-2); --bg-c3: var(--bg-3); --bg-c4: var(--bg-4);
+  }
 }

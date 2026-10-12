@@ -12,8 +12,17 @@
        <div class="sheet__body">…form…</div>
      </div>
    </dialog>
-   Swap .sheet--bottom for .sheet--center to get the modal, or .sheet--start
-   for a drawer from the left edge (the side nav on phones, side-nav.css). */
+   Swap .sheet--bottom for .sheet--center to get the modal, .sheet--start
+   for a drawer from the left edge (the side nav on phones, side-nav.css),
+   or .sheet--end for a drawer from the right edge (details of a record).
+
+   Title: .sheet__title is a heading. For a drawer about one record, add a
+   small label above it for context:
+     <div class="sheet__titles">
+       <p class="sheet__eyebrow label">Pod · default</p>
+       <h2 class="sheet__title" id="pod-title">api-7f9c4d-x2k8q</h2>
+     </div>
+   A short form title ("New post") can stay a label: class="sheet__title label". */
 
 .sheet {
   --sheet-max-w: 40rem;
@@ -53,7 +62,24 @@
   padding: var(--space-3) var(--space-3) var(--space-3) var(--panel-padding);
   border-bottom: var(--hairline) solid var(--panel-border);
 }
-.sheet__title { margin: 0; color: var(--text-default); }
+.sheet__titles { display: grid; gap: var(--space-1); min-width: 0; }
+.sheet__eyebrow { margin: 0; color: var(--text-muted); }
+.sheet__title {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-subheading);
+  color: var(--text-default);
+}
+.sheet__title.label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-label);
+  letter-spacing: var(--tracking-label);
+}
 .sheet__body {
   flex: 1 1 auto;
   min-height: 0;
@@ -116,6 +142,23 @@
 }
 .sheet--start .sheet__body { padding: var(--space-3) var(--space-4); padding-left: max(var(--space-4), env(safe-area-inset-left, 0px)); }
 
+/* ---- End drawer (record details) ------------------------------------- */
+.sheet--end {
+  --sheet-max-w: 28rem;
+  width: min(calc(100% - var(--hit-min)), var(--sheet-max-w));  /* leave a strip to tap out */
+  height: 100dvh;
+  max-height: none;
+  margin: 0 0 0 auto;
+  inset: 0 0 0 auto;
+}
+.sheet--end .sheet__panel {
+  height: 100%;
+  border-radius: var(--panel-radius-bottom) var(--radius-0) var(--radius-0) var(--panel-radius-bottom);
+  border-right: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.sheet--end .sheet__body { padding-right: max(var(--panel-padding), env(safe-area-inset-right, 0px)); }
+
 /* ---- Motion: enter and exit both animate (display/overlay discrete) ---- */
 .sheet,
 .sheet::backdrop {
@@ -128,11 +171,13 @@
 .sheet--bottom:not([open]) { transform: translateY(100%); }
 .sheet--center:not([open]) { opacity: 0; transform: translateY(var(--space-4)); }
 .sheet--start:not([open]) { transform: translateX(-100%); }
+.sheet--end:not([open]) { transform: translateX(100%); }
 .sheet:not([open])::backdrop { opacity: 0; }
 @starting-style {
   .sheet--bottom[open] { transform: translateY(100%); }
   .sheet--center[open] { opacity: 0; transform: translateY(var(--space-4)); }
   .sheet--start[open] { transform: translateX(-100%); }
+  .sheet--end[open] { transform: translateX(100%); }
   .sheet[open]::backdrop { opacity: 0; }
 }
 

@@ -1,0 +1,41 @@
+/* Spinner — a hairline ring that turns, for "busy" when there's no
+   progress to show: a tab or panel loading, a refresh in flight. The same
+   ring the busy button uses. For a known amount of work, use .progress;
+   for content whose shape you know, use .skeleton.
+
+   <span class="spinner" role="status" aria-label="Loading pods"></span>
+   <span class="loading"><span class="spinner" aria-hidden="true"></span>Loading pods…</span>
+
+   Sizes: .spinner--sm (14px, inline in a tab or label), default (16px),
+   .spinner--lg (28px, an empty panel). It takes the text color, so
+   .text-muted or any color on a parent tints it. */
+
+.spinner {
+  --spinner-size: var(--icon-sm);
+
+  display: inline-block;
+  flex: none;
+  width: var(--spinner-size);
+  height: var(--spinner-size);
+  vertical-align: middle;
+  border: var(--hairline) solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-round);
+  animation: spinner-turn var(--duration-spin) linear infinite;
+}
+.spinner--sm { --spinner-size: var(--icon-xs); }
+.spinner--lg { --spinner-size: var(--icon-lg); }
+@keyframes spinner-turn { to { transform: rotate(1turn); } }
+
+/* A spinner with a line of text beside it. */
+.loading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; border-right-color: currentColor; opacity: 0.6; }
+}

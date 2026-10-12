@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Cluster, NamespaceGroup } from '../types/api';
 import { STATUS_COLORS } from '../constants/status';
 import Icon from './ui/Icon';
+import Tooltip from './ui/Tooltip';
 import './ClusterSidebar.scss';
 
 interface Props {
@@ -45,15 +46,13 @@ export default function ClusterSidebar({ clusters, groups, selectedCluster, onSe
     <nav className="side-nav ksl-sidebar" aria-label="Clusters">
       <div className="ksl-sidebar__head">
         <p className="side-nav__heading">Clusters</p>
-        {!readOnly && <button
-          className="btn btn--ghost btn--icon ksl-btn-sm"
-          type="button"
-          aria-label="Add cluster"
-          title="Add cluster"
-          onClick={onAdd}
-        >
-          <Icon name="plus" />
-        </button>}
+        {!readOnly && (
+          <Tooltip label="Add cluster">
+            <button className="btn btn--ghost btn--icon" type="button" aria-label="Add cluster" onClick={onAdd}>
+              <Icon name="plus" />
+            </button>
+          </Tooltip>
+        )}
       </div>
 
       <ul className="side-nav__list">
@@ -89,24 +88,16 @@ export default function ClusterSidebar({ clusters, groups, selectedCluster, onSe
               </button>
               {r.config && !readOnly && (
                 <span className="ksl-sidebar__actions">
-                  <button
-                    className="btn btn--ghost btn--icon ksl-btn-sm"
-                    type="button"
-                    aria-label={`Edit ${r.name}`}
-                    title="Edit"
-                    onClick={() => onEdit(r.config!)}
-                  >
-                    <Icon name="edit" />
-                  </button>
-                  <button
-                    className="btn btn--ghost btn--icon ksl-btn-sm"
-                    type="button"
-                    aria-label={`Remove ${r.name}`}
-                    title="Remove"
-                    onClick={() => onRemove(r.name)}
-                  >
-                    <Icon name="trash" />
-                  </button>
+                  <Tooltip label="Edit">
+                    <button className="btn btn--ghost btn--icon" type="button" aria-label={`Edit ${r.name}`} onClick={() => onEdit(r.config!)}>
+                      <Icon name="edit" />
+                    </button>
+                  </Tooltip>
+                  <Tooltip label="Remove">
+                    <button className="btn btn--ghost btn--icon" type="button" aria-label={`Remove ${r.name}`} onClick={() => onRemove(r.name)}>
+                      <Icon name="trash" />
+                    </button>
+                  </Tooltip>
                 </span>
               )}
             </li>

@@ -3,19 +3,25 @@ import { createPortal } from 'react-dom';
 import '../styles/backgrounds.scss';
 
 // Background options for reviewing Jewel's sky. "hot" is Jewel's default.
-// Palettes restyle the CSS gradient; media options are Grok Imagine renders
-// in public/bg/ layered over it.
+// Palettes recolor the lava lamp animation: Jewel's own set data-palette,
+// kubestoplight's set data-ksl-bg (styles/backgrounds.scss). Media options
+// are Grok Imagine renders in public/bg/ layered over it.
 interface BgOption {
   id: string;
   label: string;
   swatch: string;
   kind: 'palette' | 'still' | 'video';
+  /** A palette that ships with Jewel (data-palette). */
+  jewel?: boolean;
   src?: string;
   poster?: string;
 }
 
 const OPTIONS: BgOption[] = [
-  { id: 'hot', label: 'Jewel (hot)', kind: 'palette', swatch: 'linear-gradient(135deg,#6d28d9,#c026d3,#dc2626,#ea580c)' },
+  { id: 'hot', label: 'Jewel', kind: 'palette', jewel: true, swatch: 'linear-gradient(135deg,#6d28d9,#c026d3,#dc2626,#ea580c)' },
+  { id: 'ember', label: 'Ember', kind: 'palette', jewel: true, swatch: 'linear-gradient(135deg,#dc2626,#ea580c,#d97706,#be185d)' },
+  { id: 'lagoon', label: 'Lagoon', kind: 'palette', jewel: true, swatch: 'linear-gradient(135deg,#0f9488,#0369a1,#4338ca,#2563eb)' },
+  { id: 'dusk', label: 'Dusk', kind: 'palette', jewel: true, swatch: 'linear-gradient(135deg,#6d28d9,#be185d,#1d4ed8,#db2777)' },
   { id: 'glacier', label: 'Glacier', kind: 'palette', swatch: 'linear-gradient(135deg,#0ea5e9,#22d3ee,#4f46e5)' },
   { id: 'aurora', label: 'Aurora', kind: 'palette', swatch: 'linear-gradient(135deg,#10b981,#8b5cf6,#06b6d4)' },
   { id: 'deepsea', label: 'Deep Sea', kind: 'palette', swatch: 'linear-gradient(135deg,#0369a1,#0e7490,#1d4ed8)' },
@@ -68,11 +74,11 @@ function initialMotion(): Motion {
 // Wax blobs: position (vw/vh), size, travel, period and phase. Out-of-phase
 // periods keep the lamp from ever visibly repeating.
 const BLOBS = [
-  { x: '18vw', y: '62vh', s: '62vmax', dx: '14vw', t: '34s', d: '-6s', c: 'var(--blob-1)' },
-  { x: '78vw', y: '70vh', s: '54vmax', dx: '-18vw', t: '28s', d: '-19s', c: 'var(--blob-2)' },
-  { x: '42vw', y: '88vh', s: '46vmax', dx: '22vw', t: '41s', d: '-31s', c: 'var(--blob-3)' },
-  { x: '88vw', y: '22vh', s: '40vmax', dx: '-24vw', t: '25s', d: '-11s', c: 'var(--blob-4)' },
-  { x: '6vw', y: '18vh', s: '36vmax', dx: '18vw', t: '47s', d: '-38s', c: 'var(--blob-5)' },
+  { x: '18vw', y: '62vh', s: '62vmax', dx: '14vw', t: '34s', d: '-6s', c: 'var(--bg-1)' },
+  { x: '78vw', y: '70vh', s: '54vmax', dx: '-18vw', t: '28s', d: '-19s', c: 'var(--bg-2)' },
+  { x: '42vw', y: '88vh', s: '46vmax', dx: '22vw', t: '41s', d: '-31s', c: 'var(--bg-3)' },
+  { x: '88vw', y: '22vh', s: '40vmax', dx: '-24vw', t: '25s', d: '-11s', c: 'var(--bg-4)' },
+  { x: '6vw', y: '18vh', s: '36vmax', dx: '18vw', t: '47s', d: '-38s', c: 'var(--bg-5)' },
 ];
 
 function WaxLayer() {
@@ -116,7 +122,9 @@ export default function BgPicker() {
     const root = document.documentElement;
     // Media options sit over a matching cool palette, which shows while they load.
     const palette = option.kind === 'palette' ? option.id : option.id.startsWith('glacier') ? 'glacier' : option.id.startsWith('deepsea') ? 'deepsea' : 'aurora';
-    if (palette === 'hot') root.removeAttribute('data-ksl-bg');
+    root.removeAttribute('data-palette');
+    root.removeAttribute('data-ksl-bg');
+    if (option.jewel) { if (palette !== 'hot') root.setAttribute('data-palette', palette); }
     else root.setAttribute('data-ksl-bg', palette);
     try { localStorage.setItem(STORAGE_KEY, option.id); } catch { /* storage blocked */ }
     const url = new URL(window.location.href);
@@ -126,9 +134,10 @@ export default function BgPicker() {
     window.history.replaceState(null, '', url);
   }, [option]);
 
-  const groups: [string, BgOption['kind'][]][] = [
-    ['Gradient palettes', ['palette']],
-    ['Generated (Grok Imagine)', ['still', 'video']],
+  const groups: [string, (o: BgOption) => boolean][] = [
+    ['Jewel palettes', (o) => !!o.jewel],
+    ['Cool palettes (kubestoplight)', (o) => o.kind === 'palette' && !o.jewel],
+    ['Generated (Grok Imagine)', (o) => o.kind !== 'palette'],
   ];
 
   return (
@@ -159,11 +168,11 @@ export default function BgPicker() {
         <div className="ksl-bgpicker">
           {open && (
             <div className="panel ksl-bgpicker__panel" role="dialog" aria-label="Background">
-              {groups.map(([title, kinds]) => (
+              {groups.map(([title, inGroup]) => (
                 <div key={title} className="ksl-bgpicker__group">
                   <p className="label">{title}</p>
                   <div className="cluster ksl-bgpicker__options" role="group" aria-label={title}>
-                    {OPTIONS.filter((o) => kinds.includes(o.kind)).map((o) => (
+                    {OPTIONS.filter(inGroup).map((o) => (
                       <button
                         key={o.id}
                         type="button"

@@ -20,7 +20,7 @@
 
 /* ---- Form layout ------------------------------------------------------- */
 .form {
-  --form-gap: var(--space-5);
+  --form-gap: var(--density-gap);
   display: grid;
   gap: var(--form-gap);
 }

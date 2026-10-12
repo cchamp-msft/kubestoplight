@@ -2,6 +2,7 @@
    <a class="btn" href="…">Label</a>
    <button class="btn btn--ghost" type="button">Label</button>
    <button class="btn btn--ghost btn--icon" type="button" aria-label="…"><svg…></button>
+   <button class="btn btn--danger" type="button">Delete</button>   destructive: filled red, so it's never overlooked
 
    Each variant only sets --btn-bg / --btn-fg / --btn-border, so a new
    variant is three lines. */
@@ -71,6 +72,19 @@
 .btn--text:hover { text-underline-offset: 0.18em; }
 
 .btn--icon { padding: 0; width: var(--control-h); justify-content: center; }
+
+/* Destructive: filled in the error red with dark text (9.33:1). Use it for
+   the one action that deletes or can't be undone, usually in a confirm
+   step, with a plain way out (Cancel) beside it. */
+.btn--danger {
+  --btn-bg: var(--status-error);
+  --btn-fg: var(--text-inverse);
+  --btn-border: var(--status-error);
+  --btn-bg-hover: color-mix(in srgb, var(--status-error) 65%, var(--text-default));
+  --btn-fg-hover: var(--text-inverse);
+  --btn-border-hover: var(--btn-bg-hover);
+  --btn-bg-active: color-mix(in srgb, var(--status-error) 80%, var(--text-inverse));
+}
 
 /* Touch screens: 44px minimum targets. */
 @media (pointer: coarse) {

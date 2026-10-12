@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { usePodDescribe } from '../hooks/usePodDescribe';
 import { usePodLogs } from '../hooks/usePodLogs';
 import Icon, { type IconName } from './ui/Icon';
+import Tooltip from './ui/Tooltip';
 import Loading from './ui/Loading';
 import './PodLogsTab.scss';
 
@@ -38,9 +39,11 @@ function LogLine({ line }: { line: string }) {
 
 function ToolButton({ icon, label, onClick }: { icon: IconName; label: string; onClick: () => void }) {
   return (
-    <button className="btn btn--ghost btn--icon ksl-btn-sm" type="button" aria-label={label} title={label} onClick={onClick}>
-      <Icon name={icon} />
-    </button>
+    <Tooltip label={label}>
+      <button className="btn btn--ghost btn--icon" type="button" aria-label={label} onClick={onClick}>
+        <Icon name={icon} />
+      </button>
+    </Tooltip>
   );
 }
 
@@ -145,7 +148,7 @@ export default function PodLogsTab({ cluster, namespace, pod }: Props) {
           <ToolButton icon="arrowDown" label="Scroll to bottom" onClick={scrollToBottom} />
           <ToolButton icon="copy" label="Copy logs" onClick={handleCopy} />
           <ToolButton icon="trash" label="Clear" onClick={clear} />
-          <ToolButton icon={active ? 'stop' : 'play'} label={active ? 'Stop' : 'Resume'} onClick={toggleActive} />
+          <ToolButton icon={active ? 'pause' : 'play'} label={active ? 'Stop' : 'Resume'} onClick={toggleActive} />
         </figcaption>
 
         {loading && <div className="ksl-logs__loading"><Loading label="Connecting to log stream…" /></div>}

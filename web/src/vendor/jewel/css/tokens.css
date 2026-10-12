@@ -38,6 +38,15 @@
   --jewel-red:     #DC2626;
   --jewel-orange:  #EA580C;
 
+  /* ---- Lava lamp palette --------------------------------------------- */
+  /* The five colors the animation cycles through, and the base under them.
+     Jewel's own by default; [data-palette] below swaps in another set. */
+  --bg-1: var(--jewel-purple);
+  --bg-2: var(--jewel-magenta);
+  --bg-3: var(--jewel-teal);
+  --bg-4: var(--jewel-red);
+  --bg-5: var(--jewel-orange);
+
   /* ---- Lava lamp animation (tune these) -------------------------------- */
   --bg-speed: 32s;          /* one full color/position cycle; 20–40s reads as "slow" */
   --bg-intensity: 1;        /* 0–1: opacity of the gradient layers over the base */
@@ -100,6 +109,7 @@
   --page-max: 80rem;
   --page-margin: clamp(1rem, 0.25rem + 3.5vw, 3.5rem);
   --panel-padding: clamp(var(--space-5), 3vw, var(--space-7));
+  --density-gap: var(--space-5);  /* between fields in a form; compact density tightens it */
   /* Gap above the sticky header; .jewel-cap fills it. It includes the iPhone
      status bar when a home-screen app draws under it (viewport-fit=cover +
      black-translucent), so the gradient fills the status bar too. */
@@ -195,6 +205,39 @@
   --glass-saturate: 140%;
 }
 
+/* ---- Density ---------------------------------------------------------
+   data-density="compact" on <html>, a page region or one panel, for
+   dashboards and dense tools: less panel padding, tighter forms, 32px
+   buttons and table rows with a mouse. Touch screens keep 44px targets. */
+[data-density="compact"] {
+  --panel-padding: var(--space-4);
+  --panel-stack-gap: var(--space-3);
+  --density-gap: var(--space-3);
+  --control-h: var(--control-h-sm);
+}
+@media (pointer: fine) {
+  [data-density="compact"] { --control-h-touch: 2.25rem; }   /* 36  fields and table rows */
+}
+
+/* ---- Lava lamp palettes ----------------------------------------------
+   Put data-palette on <html> (or any element that holds .jewel-bg) to
+   change the animation's colors. Jewel (no attribute) mixes warm and cool;
+   ember is warm, lagoon is cool, dusk is violet and rose. Text contrast
+   doesn't change: the worst case on glass is a near-white backdrop, and
+   every palette color is darker than that (docs/accessibility.md). */
+[data-palette="ember"] {
+  --bg-1: #DC2626; --bg-2: #EA580C; --bg-3: #D97706; --bg-4: #BE185D; --bg-5: #C026D3;
+  --bg-base: #9A3412;
+}
+[data-palette="lagoon"] {
+  --bg-1: #0F9488; --bg-2: #0369A1; --bg-3: #4338CA; --bg-4: #0E7490; --bg-5: #2563EB;
+  --bg-base: #155E75;
+}
+[data-palette="dusk"] {
+  --bg-1: #6D28D9; --bg-2: #BE185D; --bg-3: #1D4ED8; --bg-4: #7E22CE; --bg-5: #DB2777;
+  --bg-base: #4C1D95;
+}
+
 /* ==========================================================================
    2. Theme color set — dark is the only active theme.
    The light theme is parked in css/parked/light-theme.css (not loaded).
@@ -224,6 +267,19 @@
   --color-field-border-hover: rgb(244 244 245 / 0.60); /* 5.35:1 */
   --color-field-fill:         rgb(244 244 245 / 0.03); /* texture only */
   --color-error:              #FCA5A5;                 /* 6.86:1 text and edge */
+
+  /* Status — the traffic light. Each status has a text tone (4.5:1 or
+     better, also used for notice titles and edges) and a stronger mark
+     tone for dots, bars and fills (3:1 or better). Worst cases on glass are
+     in docs/accessibility.md "Contrast". Status colors always mean
+     something; chart colors never do, so don't swap one for the other. */
+  --color-success:            #86EFAC;   /* 9.23:1 */
+  --color-success-mark:       #22C55E;   /* 5.69:1 */
+  --color-warning:            #FCD34D;   /* 8.99:1 */
+  --color-warning-mark:       #FBBF24;   /* 7.77:1 */
+  --color-info:               #93C5FD;   /* 7.19:1 */
+  --color-info-mark:          #60A5FA;   /* 5.10:1 */
+  --color-error-mark:         #EF4444;   /* 3.45:1, marks only */
 
   /* Charts — categorical series, in this fixed order (never cycled).
      Jewel's hues, stepped for the dark surface and ordered by the dataviz
@@ -278,6 +334,17 @@
   --field-focus:        var(--text-accent);
   --field-error:        var(--color-error);
   --field-placeholder:  var(--text-muted);
+
+  --status-success:       var(--color-success);
+  --status-success-mark:  var(--color-success-mark);
+  --status-warning:       var(--color-warning);
+  --status-warning-mark:  var(--color-warning-mark);
+  --status-info:          var(--color-info);
+  --status-info-mark:     var(--color-info-mark);
+  --status-error:         var(--color-error);
+  --status-error-mark:    var(--color-error-mark);
+  --status-neutral:       var(--text-muted);
+  --status-neutral-mark:  var(--color-chart-context);
 
   --chart-1:            var(--color-chart-1);
   --chart-2:            var(--color-chart-2);

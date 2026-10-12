@@ -11,7 +11,8 @@
    </div>
 
    Indeterminate (unknown length): leave out value → <progress max="100"></progress>.
-   Tones: .progress--accent (default bar is text color), .progress--error.
+   Tones: .progress--accent (default bar is text color), .progress--success,
+   .progress--warning, .progress--error.
    .progress--thick for a 6px bar. Set the value from JS: bar.value = 72. */
 
 .progress {
@@ -24,6 +25,8 @@
 .progress--thick { --progress-h: calc(var(--space-1) * 1.5); }
 .progress--accent { --progress-fill: var(--text-accent); }
 .progress--error  { --progress-fill: var(--field-error); }
+.progress--success { --progress-fill: var(--status-success-mark); }
+.progress--warning { --progress-fill: var(--status-warning-mark); }
 
 .progress__meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-4); }
 .progress__label { font-size: var(--text-sm); color: var(--text-default); }
