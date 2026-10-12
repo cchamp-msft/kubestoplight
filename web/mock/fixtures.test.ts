@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SCENARIOS, churn, createState, describePod, rng, toGroups } from './fixtures.ts';
+import { SCENARIOS, churn, cpuHot, createState, describePod, rng, toGroups } from './fixtures.ts';
 
 describe('mock fixtures', () => {
   it.each(SCENARIOS)('%s: groups are internally consistent', (scenario) => {
@@ -10,7 +10,19 @@ describe('mock fixtures', () => {
       expect(g.pods).toHaveLength(g.totalPods);
       expect(g.jobs).toHaveLength(g.totalJobs);
       expect(g.readyPods).toBeLessThanOrEqual(g.activePods);
+      expect(g.hotPods).toBe(g.pods.filter((p) => p.cpu?.hot).length);
     }
+  });
+
+  it('CPU: hot follows the Go rule, never changes status, and some clusters have no metrics', () => {
+    const s = createState('mixed');
+    const withCpu = s.pods.filter((p) => p.cpu);
+    for (const p of withCpu) expect(p.cpu!.hot).toBe(cpuHot(p.cpu!));
+    expect(withCpu.some((p) => p.cpu!.hot)).toBe(true);
+    expect(s.pods.some((p) => p.cluster === 'staging' && p.cpu)).toBe(false);
+    // Hot pods still roll up by status alone.
+    for (const g of toGroups(createState('healthy'))) expect(g.status).toBe('Idle');
+    expect(toGroups(createState('healthy')).some((g) => g.hotPods > 0)).toBe(true);
   });
 
   it('is deterministic per seed so screenshots are comparable', () => {

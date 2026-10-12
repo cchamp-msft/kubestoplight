@@ -41,6 +41,7 @@ type nsGroupJSON struct {
 	Jobs            []jobJSON      `json:"jobs"`
 	TotalJobs       int            `json:"totalJobs"`
 	JobStatusCounts map[string]int `json:"jobStatusCounts"`
+	HotPods         int            `json:"hotPods"`
 }
 
 // jobJSON is the JSON-serialisable form of model.Job.
@@ -58,16 +59,26 @@ type jobJSON struct {
 
 // podJSON is the JSON-serialisable form of model.Pod.
 type podJSON struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Cluster   string `json:"cluster"`
-	Node      string `json:"node"`
-	Status    string `json:"status"`
-	Phase     string `json:"phase"`
-	Ready     int    `json:"ready"`
-	Total     int    `json:"total"`
-	Age       string `json:"age"`
-	QOS       string `json:"qos"`
+	Name      string   `json:"name"`
+	Namespace string   `json:"namespace"`
+	Cluster   string   `json:"cluster"`
+	Node      string   `json:"node"`
+	Status    string   `json:"status"`
+	Phase     string   `json:"phase"`
+	Ready     int      `json:"ready"`
+	Total     int      `json:"total"`
+	Age       string   `json:"age"`
+	QOS       string   `json:"qos"`
+	CPU       *cpuJSON `json:"cpu,omitempty"`
+}
+
+// cpuJSON is a pod's CPU use in millicores, present only when the cluster
+// serves metrics. request/limit are 0 when the pod doesn't set them.
+type cpuJSON struct {
+	Used    int64 `json:"used"`
+	Request int64 `json:"request"`
+	Limit   int64 `json:"limit"`
+	Hot     bool  `json:"hot"`
 }
 
 // wsMessage is the shape pushed to WebSocket clients.
@@ -792,6 +803,10 @@ func toGroupsJSON(groups []model.NamespaceGroup) []nsGroupJSON {
 		}
 		pods := make([]podJSON, 0, len(g.Pods))
 		for _, p := range g.Pods {
+			var cpu *cpuJSON
+			if p.CPU != nil {
+				cpu = &cpuJSON{Used: p.CPU.Used, Request: p.CPU.Request, Limit: p.CPU.Limit, Hot: p.CPU.Hot()}
+			}
 			pods = append(pods, podJSON{
 				Name:      p.Name,
 				Namespace: p.Namespace,
@@ -803,6 +818,7 @@ func toGroupsJSON(groups []model.NamespaceGroup) []nsGroupJSON {
 				Total:     p.Total,
 				Age:       formatAge(p.Age),
 				QOS:       p.QOS,
+				CPU:       cpu,
 			})
 		}
 		jobs := make([]jobJSON, 0, len(g.Jobs))
@@ -835,6 +851,7 @@ func toGroupsJSON(groups []model.NamespaceGroup) []nsGroupJSON {
 			Jobs:            jobs,
 			TotalJobs:       g.TotalJobs,
 			JobStatusCounts: jsc,
+			HotPods:         g.HotPods,
 		})
 	}
 	return out

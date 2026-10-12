@@ -2,16 +2,19 @@ import type { PodItem } from '../types/api';
 import Status from './ui/Status';
 import Icon from './ui/Icon';
 import Tooltip from './ui/Tooltip';
+import CpuCell from './CpuCell';
 import { STATUS_COLORS } from '../constants/status';
 import { useFlashOnChange } from '../hooks/useFlashOnChange';
 
 interface Props {
   pod: PodItem;
+  /** The namespace has CPU readings, so this row gets a CPU cell. */
+  showCpu: boolean;
   onDescribe: (pod: PodItem) => void;
   onLogs: (pod: PodItem) => void;
 }
 
-export default function PodRow({ pod, onDescribe, onLogs }: Props) {
+export default function PodRow({ pod, showCpu, onDescribe, onLogs }: Props) {
   const [flashing, flashDone] = useFlashOnChange(pod.status);
   return (
     <tr
@@ -22,6 +25,7 @@ export default function PodRow({ pod, onDescribe, onLogs }: Props) {
       <th scope="row" className="ksl-pod-row__name ksl-mono" title={pod.name}>{pod.name}</th>
       <td><Status status={pod.status} /></td>
       <td className="is-num ksl-mono">{pod.ready}/{pod.total}</td>
+      {showCpu && <CpuCell cpu={pod.cpu} />}
       <td className="is-num table__muted">{pod.age}</td>
       <td className="table__actions">
         <Tooltip label="Describe">

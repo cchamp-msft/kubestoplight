@@ -7,6 +7,7 @@ import ResourceDonut from './ResourceDonut';
 import PodRow from './PodRow';
 import StatusTag from './StatusTag';
 import Icon from './ui/Icon';
+import HotTag from './HotTag';
 import { useFlashOnChange } from '../hooks/useFlashOnChange';
 import './NamespaceCard.scss';
 
@@ -31,6 +32,10 @@ export default function NamespaceCard({ group, expanded, onToggle, onPodDescribe
   const jobStatusCounts = group.jobStatusCounts ?? {};
   const detailId = useId();
   const [flashing, flashDone] = useFlashOnChange(status);
+
+  // A cluster without metrics-server has no readings: no CPU column then.
+  const showCpu = useMemo(() => pods.some((p) => p.cpu), [pods]);
+  const hotPods = group.hotPods ?? 0;
 
   const sortedPods = useMemo(
     () => [...pods].sort((a, b) => (SEVERITY_ORDER[a.status] ?? 5) - (SEVERITY_ORDER[b.status] ?? 5)),
@@ -88,6 +93,7 @@ export default function NamespaceCard({ group, expanded, onToggle, onPodDescribe
                 <StatusTag key={s} status={s}>{statusCounts[s]} {label}</StatusTag>
               ) : null,
             )}
+            {hotPods > 0 && <HotTag count={hotPods} />}
             {(jobStatusCounts.Failed ?? 0) > 0 && (
               <StatusTag tone={JOB_STATUS_COLORS.Failed}>{jobStatusCounts.Failed} job failed</StatusTag>
             )}
@@ -97,20 +103,21 @@ export default function NamespaceCard({ group, expanded, onToggle, onPodDescribe
 
       {expanded && (
         <div className="ksl-card__detail table-wrap" id={detailId}>
-          <table className="table table--compact ksl-pods">
+          <table className={`table table--compact ksl-pods${showCpu ? ' ksl-pods--cpu' : ''}`}>
             <caption className="visually-hidden">Pods in {namespace} on {cluster}</caption>
             <thead>
               <tr>
                 <th scope="col">Name</th>
                 <th scope="col">Status</th>
                 <th scope="col" className="is-num">Ready</th>
+                {showCpu && <th scope="col" className="is-num">CPU</th>}
                 <th scope="col" className="is-num">Age</th>
                 <th scope="col"><span className="visually-hidden">Actions</span></th>
               </tr>
             </thead>
             <tbody>
               {sortedPods.map((pod) => (
-                <PodRow key={pod.name} pod={pod} onDescribe={onPodDescribe} onLogs={onPodLogs} />
+                <PodRow key={pod.name} pod={pod} showCpu={showCpu} onDescribe={onPodDescribe} onLogs={onPodLogs} />
               ))}
             </tbody>
           </table>

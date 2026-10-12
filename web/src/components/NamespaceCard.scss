@@ -179,8 +179,42 @@
 }
 .ksl-pods th:nth-child(2) { width: 6.5rem; }
 .ksl-pods th:nth-child(3) { width: 3.5rem; }
-.ksl-pods th:nth-child(4) { width: 3.75rem; }
-.ksl-pods th:nth-child(5) { width: 4.5rem; }
+.ksl-pods th:nth-last-child(2) { width: 3.75rem; } /* age */
+.ksl-pods th:last-child { width: 4.5rem; }         /* actions */
+.ksl-pods--cpu th:nth-child(4) { width: 4rem; }    /* cpu */
+
+/* CPU: the number, and a hairline bar of use against the limit (or
+   request) underneath. Hot pods take the load color, never a status one. */
+.ksl-cpu__value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.ksl-cpu__bar {
+  display: block;
+  block-size: 2px;
+  margin-block-start: 2px;
+  margin-inline-start: auto;
+  inline-size: 2.5rem;
+  background: var(--panel-border);
+  > span {
+    display: block;
+    block-size: 100%;
+    background: var(--text-muted);
+  }
+}
+.ksl-cpu.is-hot {
+  color: var(--load-hot);
+  .ksl-cpu__bar > span { background: var(--load-hot); }
+}
+
+/* "N hot" on the card: a plain tag with the gauge in the load color. */
+.ksl-hot-tag {
+  gap: var(--space-1);
+  color: var(--text-default);
+  white-space: nowrap;
+  .icon { color: var(--load-hot); }
+}
 
 .ksl-pods :is(th, td) {
   padding-inline: var(--space-1);

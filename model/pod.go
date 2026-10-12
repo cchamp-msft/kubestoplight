@@ -68,6 +68,10 @@ type Pod struct {
 	Total      int
 	Age        time.Duration
 	QOS        string
+	// CPU is nil unless the cluster serves metrics (see WithCPU).
+	CPU *CPU
+
+	cpuRequest, cpuLimit int64
 }
 
 // Container holds the state of a single container within a pod.
@@ -196,7 +200,11 @@ func ExtractPod(raw v1.Pod, clusterName string) Pod {
 		age = 0
 	}
 
+	request, limit := cpuSpec(raw.Spec)
+
 	return Pod{
+		cpuRequest: request,
+		cpuLimit:   limit,
 		Name:       raw.Name,
 		Namespace:  raw.Namespace,
 		Cluster:    clusterName,
@@ -276,6 +284,8 @@ type NamespaceGroup struct {
 	Jobs            []Job
 	TotalJobs       int
 	JobStatusCounts map[JobStatus]int
+	// HotPods counts pods whose CPU.Hot() is true. It never affects Status.
+	HotPods int
 }
 
 // GroupByNamespace groups all pods and jobs by namespace and cluster, computing status per group.
@@ -321,6 +331,9 @@ func GroupByNamespace(pods []Pod, jobs []Job) []NamespaceGroup {
 
 		if p.Phase != v1.PodSucceeded && p.Ready == p.Total && p.Total > 0 {
 			ng.ReadyPods++
+		}
+		if p.CPU != nil && p.CPU.Hot() {
+			ng.HotPods++
 		}
 	}
 

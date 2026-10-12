@@ -47,6 +47,21 @@ const SHOTS = {
       await page.getByText('Overview', { exact: true }).first().waitFor();
     },
   },
+  // CPU load with every light green: hot pods are busy, not broken.
+  load: {
+    scenario: 'healthy',
+    run: async (page) => {
+      await page.getByRole('button', { name: 'Expand all' }).click();
+      const hot = page.getByRole('cell', { name: /, hot$/ }).first();
+      await hot.waitFor();
+      // Bring its card to the top, clear of the sticky header.
+      await hot.evaluate((el) => {
+        const card = el.closest('article');
+        if (card) window.scrollTo(0, card.getBoundingClientRect().top + window.scrollY - 100);
+      });
+      await page.mouse.move(0, 0); // no hover tooltip left over from the click
+    },
+  },
   logs: {
     scenario: 'mixed',
     run: async (page) => {
