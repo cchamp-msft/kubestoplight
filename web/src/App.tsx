@@ -6,6 +6,7 @@ import { useWebSocket } from './hooks/useWebSocket';
 import { useServerInfo } from './hooks/useServerInfo';
 import { useTabStatus } from './hooks/useTabStatus';
 import { useBumpOnRise } from './hooks/useFlashOnChange';
+import { usePath } from './hooks/usePath';
 import ClusterSidebar from './components/ClusterSidebar';
 import SummaryStrip from './components/SummaryStrip';
 import FilterBar from './components/FilterBar';
@@ -17,6 +18,7 @@ import './App.scss';
 const ClusterFormModal = lazy(() => import('./components/ClusterFormModal'));
 const RemoveClusterModal = lazy(() => import('./components/RemoveClusterModal'));
 const PodDetailPanel = lazy(() => import('./components/PodDetailPanel'));
+const VillageView = lazy(() => import('./village/VillageView'));
 
 const ALL_STATUSES = { Idle: true, Busy: true, Changing: true, Failed: true };
 
@@ -46,6 +48,12 @@ export default function App() {
 
   // Cluster selection
   const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
+
+  // Grid at /, the village map at /village. The map is a map of everything,
+  // so it ignores the cluster selection and the namespace filters below:
+  // hiding half a settlement makes it a worse map.
+  const { path, follow } = usePath();
+  const village = path === '/village';
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -147,6 +155,9 @@ export default function App() {
   const summaryGroups = selectedCluster ? groups.filter((g) => g.cluster === selectedCluster) : groups;
   const scopeGroups = summaryGroups.filter((g) => !hideEmpty || g.activePods > 0);
 
+  // Matches the Dweller key built in village/adapter.ts.
+  const selectedKey = panelPod ? `{panelPod.cluster}/{panelPod.namespace}/{panelPod.name}` : null;
+
   return (
     <>
       {/* Jewel's animated background and the strip that hides content above the header */}
@@ -154,7 +165,7 @@ export default function App() {
       <div className="jewel-cap" aria-hidden="true" />
       <BgPicker />
 
-      <div className="page ksl-page">
+      <div className={`page ksl-page${village ? ' ksl-page--map' : ''}`}>
         {/* ── Header ── */}
         <header className="site-header">
           <div className="panel site-header__inner ksl-header">
@@ -169,8 +180,14 @@ export default function App() {
               // Re-keyed when the count rises, so its one-shot pulse replays.
               <span key={failedBumps} className="badge badge--error ksl-failed-badge">{failedCount} failed</span>
             )}
+            <nav className="nav nav--keep ksl-header__views" aria-label="Views">
+              <div className="nav__links">
+                <a href="/" onClick={follow} aria-current={village ? undefined : 'page'}>Grid</a>
+                <a href="/village" onClick={follow} aria-current={village ? 'page' : undefined}>Village</a>
+              </div>
+            </nav>
             <span className="ksl-header__spacer" />
-            {readOnly && <span className="badge" title="Cluster add/edit/remove is disabled on this server">Read-only</span>}
+            {readOnly && <span className="badge ksl-header__readonly" title="Cluster add/edit/remove is disabled on this server">Read-only</span>}
             <span className="ksl-header__stats">
               {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} &middot; {totalPods} pods
             </span>
@@ -182,7 +199,14 @@ export default function App() {
           </div>
         </header>
 
-        {/* ── Body (sidebar + main) ── */}
+        {village ? (
+          <main className="panel ksl-map">
+            <Suspense fallback={null}>
+              <VillageView groups={groups} onPodSelect={onPodDescribe} selectedKey={selectedKey} />
+            </Suspense>
+          </main>
+        ) : (
+        /* ── Body (sidebar + main) ── */
         <div className="with-side-nav ksl-layout">
           <aside className="with-side-nav__aside panel">
             <ClusterSidebar
@@ -243,6 +267,7 @@ export default function App() {
             </section>
           </main>
         </div>
+        )}
       </div>
 
       {/* ── Modals ── */}

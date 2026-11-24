@@ -104,7 +104,7 @@ function makePod(r: () => number, cluster: string, namespace: string, status: Po
   const app = pick(r, APPS);
   const total = status === 'Empty' ? 0 : 1 + Math.floor(r() * 3);
   const ready = status === 'Idle' || status === 'Busy' ? total : Math.floor(r() * total);
-  return {
+  const pod: PodItem = {
     name: podName(r, app),
     namespace,
     cluster,
@@ -115,7 +115,37 @@ function makePod(r: () => number, cluster: string, namespace: string, status: Po
     total,
     age: pick(r, ['<1m', '4m', '37m', '2h15m', '6h', '3d4h', '19d', '112d']),
     qos: pick(r, ['Guaranteed', 'Burstable', 'BestEffort']),
+    restarts: 0,
+    hasMetrics: false,
   };
+  return withUsage(pod);
+}
+
+/**
+ * Restarts and metrics-server readings, as model.ExtractPod + ApplyUsage would
+ * fill them. Seeded from the pod's name rather than the shared generator, so
+ * adding these fields did not reshuffle every other value in a scenario.
+ * `staging` plays the cluster with no metrics-server: hasMetrics stays false.
+ */
+function withUsage(pod: PodItem): PodItem {
+  let h = 2166136261;
+  for (let i = 0; i < pod.name.length; i++) h = Math.imul(h ^ pod.name.charCodeAt(i), 16777619);
+  const r = rng(h);
+  const running = pod.phase === 'Running' && pod.total > 0;
+  pod.restarts = pod.status === 'Failed' ? 14 : pod.status === 'Busy' ? 2 : r() < 0.25 ? 1 + Math.floor(r() * 6) : 0;
+  if (r() < 0.6) {
+    pod.cpuRequest = 100;
+    pod.cpuLimit = 500;
+    pod.memRequest = 128 << 20;
+    pod.memLimit = 512 << 20;
+  }
+  if (running && pod.cluster !== 'staging') {
+    pod.hasMetrics = true;
+    // Mostly quiet, with a few working hard.
+    pod.cpuMilli = Math.round(r() < 0.12 ? 300 + r() * 250 : 2 + r() * 60);
+    pod.memBytes = Math.round((40 + r() * 360) * (1 << 20));
+  }
+  return pod;
 }
 
 function makeJob(r: () => number, cluster: string, namespace: string): JobItem {

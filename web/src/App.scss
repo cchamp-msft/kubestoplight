@@ -95,6 +95,64 @@
   }
 }
 
+/* ── Views (Grid | Village) ── */
+.ksl-header__views {
+  margin-left: var(--space-4);
+}
+.ksl-header__views .nav__links {
+  flex-wrap: nowrap;
+}
+
+/* Phone: two rows. Brand and the live state on top; the view links and the
+   quieter badges underneath. The ::after is the line break between them. */
+@media (max-width: 40rem) { /* --bp-sm */
+  .ksl-header {
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+  .ksl-header::after {
+    content: "";
+    order: 1;
+    flex-basis: 100%;
+  }
+  .ksl-header__views {
+    order: 2;
+    margin-left: 0;
+    margin-right: auto;
+  }
+  .ksl-header__readonly,
+  .ksl-header .ksl-failed-badge {
+    order: 3;
+  }
+}
+
+/* ── Village map (/village) ──
+   The map pans and zooms instead of scrolling, so the page is exactly one
+   viewport tall and the map takes whatever the header leaves. It also gets
+   the full window width: a map wants room more than it wants a measure. */
+.ksl-page--map {
+  --page-max: none;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+/* Nothing on the map page scrolls, so the document must not either: on a
+   phone a scrollable page rubber-bands under a drag and snaps back. */
+html:has(.ksl-page--map) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.ksl-map {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  margin-block: var(--space-4);
+}
+
 /* ── Content panels ── */
 .ksl-section__head {
   display: flex;

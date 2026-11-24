@@ -1,0 +1,219 @@
+/* The map's chrome is Jewel (tokens only). The map itself is a canvas with
+   its own palette in render.ts; the stage behind it is the one raw color. */
+.ksl-village {
+  display: flex;
+  flex-direction: column;
+  /* Fills the flex parent in both axes — without flex:1 the column sizes to the
+     legend bar's content width and the map gets a 400px-wide viewport. */
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    padding: var(--space-1) var(--space-2) var(--space-1) var(--space-4);
+    border-bottom: var(--hairline) solid var(--panel-border);
+    flex: 0 0 auto;
+  }
+
+  &__spacer {
+    flex: 1;
+  }
+
+  /* On a phone the counts wrap to two or three lines; the fit button stays
+     pinned top right instead of dropping onto a line of its own. */
+  @media (max-width: 40rem) { /* --bp-sm */
+    &__bar {
+      position: relative;
+      gap: var(--space-1) var(--space-3);
+      padding: var(--space-2) calc(var(--control-h) + var(--space-3)) var(--space-2) var(--space-3);
+    }
+
+    &__spacer {
+      display: none;
+    }
+
+    &__bar > :last-child {
+      position: absolute;
+      top: var(--space-1);
+      right: var(--space-1);
+    }
+  }
+
+  &__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Soot is history, not a status: a dark mark with a neutral edge. */
+  &__soot {
+    background: var(--surface-solid);
+    box-shadow: inset 0 0 0 1px var(--status-empty);
+  }
+
+  &__note {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    cursor: help;
+  }
+
+  &__stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    background: #161616; /* the canvas's own night, matches render.ts */
+  }
+
+  &__canvas {
+    display: block;
+    /* Every gesture on the map is the map's: no page scroll, no browser zoom,
+       no text selection or long-press callout on a phone. */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &__tip {
+    position: absolute;
+    pointer-events: none;
+    z-index: 3;
+    max-width: 22rem;
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface-solid);
+    border: var(--hairline) solid var(--panel-border);
+    border-left-width: 3px;
+    border-left-style: solid;
+    box-shadow: var(--shadow-2, 0 2px 12px rgb(0 0 0 / 55%));
+    font-size: var(--text-xs);
+    line-height: 1.35;
+  }
+
+  &__tip-name {
+    font-family: var(--font-mono);
+    color: var(--text-default);
+    word-break: break-all;
+  }
+
+  &__tip-meta {
+    color: var(--text-muted);
+    margin-top: var(--space-1);
+  }
+
+  &__tip-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    color: var(--text-muted);
+  }
+
+  &__tip-state {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-default);
+  }
+
+  &__livery {
+    position: absolute;
+    right: var(--space-3);
+    bottom: var(--space-3);
+    z-index: 2;
+    max-height: 55%;
+    overflow-y: auto;
+    padding: var(--space-2) var(--space-3);
+    background: color-mix(in srgb, var(--surface-solid) 88%, transparent);
+    border: var(--hairline) solid var(--panel-border);
+    backdrop-filter: blur(2px);
+    font-size: var(--text-xs);
+  }
+
+  /* Bottom left on a phone, clear of the background picker's corner. */
+  @media (max-width: 40rem) { /* --bp-sm */
+    &__livery {
+      right: auto;
+      left: var(--space-3);
+      max-width: calc(100% - var(--space-6));
+    }
+  }
+
+  &__livery-title {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: var(--space-2);
+
+    &:hover {
+      color: var(--text-default);
+    }
+  }
+
+  &__livery--closed &__livery-title {
+    margin-bottom: 0;
+  }
+
+  &__livery-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    font: inherit;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 2px var(--space-1);
+
+    i {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 auto;
+    }
+
+    &:hover {
+      background: var(--state-hover, color-mix(in srgb, var(--text-default) 8%, transparent));
+      color: var(--text-default);
+    }
+
+    &--on {
+      background: color-mix(in srgb, var(--text-default) 14%, transparent);
+      color: var(--text-default);
+      font-weight: 600;
+    }
+  }
+
+  &__livery-count {
+    margin-left: auto;
+    padding-left: var(--space-3);
+    font-variant-numeric: tabular-nums;
+  }
+}

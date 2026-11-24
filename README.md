@@ -20,7 +20,7 @@ More: [failing](docs/screenshots/failing.png) · [large](docs/screenshots/large.
 
 | Tool | Minimum version | Purpose |
 |------|----------------|---------|
-| Go   | 1.21+          | Build the binary |
+| Go   | 1.25+          | Build the binary |
 | Node | 20+            | Build the React frontend |
 | npm  | 9+             | Install frontend dependencies |
 
@@ -80,8 +80,15 @@ Open `http://127.0.0.1:8080` in your browser. The dashboard features:
 - **Namespace cards** — pod and job donuts, status counts, expand for a pod table
 - **Pod drill-down** — Describe / Logs (streaming, follow) / YAML in a side drawer
 - **Auto-expand** — namespaces with failed pods expand automatically on first load
+- **Village** — the same clusters as a map at `/village` (header link): nodes are settlements, pods are buildings that keep their plot for life. Health is the ring, live CPU is chimney smoke, restarts are soot. Drag to pan, wheel to zoom, click a building for its drill-down. See [`web/src/village/README.md`](web/src/village/README.md).
 
 Pod status cards update live every polling interval (default 3 s).
+
+The village's smoke and "running hot" count come from
+[metrics-server](https://github.com/kubernetes-sigs/metrics-server)
+(`metrics.k8s.io/v1beta1`), read with the same credentials as the pod list.
+It's optional: a cluster without it, or an account that can't read pod
+metrics, still gets the full map and dashboard, with a "no load data" note.
 
 ### First-time setup (no config file)
 
@@ -192,6 +199,7 @@ go run . --web
 - **Frontend:** React 19 + TypeScript 6, built with Vite, embedded via `go:embed`
 - **UI kit:** [Jewel](https://github.com/willchambers/jewel-design-system) 1.0, a CSS-only dark design system (MIT), vendored in `web/src/vendor/jewel`
 - **Live updates:** WebSocket at `/ws/pods` pushes `NamespaceGroup` snapshots every polling interval
+- **Two pages, no router:** `/` is the dashboard and `/village` the map; the server answers any non-file path with the app
 - **Single binary:** `go build` produces one self-contained executable
 - **Dual mode:** Same binary, same config file — TUI for terminals, web for browsers
 

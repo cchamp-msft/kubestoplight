@@ -68,6 +68,21 @@ type Pod struct {
 	Total      int
 	Age        time.Duration
 	QOS        string
+
+	// Restarts is the lifetime restart total across containers. Status Busy only
+	// says "this is non-zero"; the count itself is what tells you how bad.
+	Restarts int
+
+	// Live usage from metrics-server, and the ceiling it is measured against.
+	// HasMetrics distinguishes "genuinely idle" from "no metrics-server", which
+	// look identical if you only look at CPUMilli.
+	HasMetrics bool
+	CPUMilli   int64
+	MemBytes   int64
+	CPULimit   int64 // millicores; 0 means no limit set
+	MemLimit   int64 // bytes; 0 means no limit set
+	CPURequest int64 // millicores; 0 means no request set
+	MemRequest int64 // bytes; 0 means no request set
 }
 
 // Container holds the state of a single container within a pod.
@@ -179,6 +194,7 @@ func isFailureTerminated(reason string) bool {
 // ExtractPod builds a domain Pod from a K8s v1.Pod.
 func ExtractPod(raw v1.Pod, clusterName string) Pod {
 	ready := 0
+	restarts := 0
 	var containers []Container
 	for _, cs := range raw.Status.ContainerStatuses {
 		containers = append(containers, Container{
@@ -188,6 +204,25 @@ func ExtractPod(raw v1.Pod, clusterName string) Pod {
 		})
 		if cs.Ready {
 			ready++
+		}
+		restarts += int(cs.RestartCount)
+	}
+
+	// Sum the pod's resource ceilings so usage can be shown as a fraction of
+	// what it is actually allowed, not just a raw number.
+	var cpuLimit, memLimit, cpuReq, memReq int64
+	for _, ctr := range raw.Spec.Containers {
+		if q, ok := ctr.Resources.Limits[v1.ResourceCPU]; ok {
+			cpuLimit += q.MilliValue()
+		}
+		if q, ok := ctr.Resources.Limits[v1.ResourceMemory]; ok {
+			memLimit += q.Value()
+		}
+		if q, ok := ctr.Resources.Requests[v1.ResourceCPU]; ok {
+			cpuReq += q.MilliValue()
+		}
+		if q, ok := ctr.Resources.Requests[v1.ResourceMemory]; ok {
+			memReq += q.Value()
 		}
 	}
 
@@ -208,6 +243,31 @@ func ExtractPod(raw v1.Pod, clusterName string) Pod {
 		Total:      len(containers),
 		Age:        age,
 		QOS:        string(raw.Status.QOSClass),
+		Restarts:   restarts,
+		CPULimit:   cpuLimit,
+		MemLimit:   memLimit,
+		CPURequest: cpuReq,
+		MemRequest: memReq,
+	}
+}
+
+// PodUsage is live usage keyed by namespace/name, as returned by metrics-server.
+type PodUsage struct {
+	CPUMilli int64
+	MemBytes int64
+}
+
+// ApplyUsage merges metrics-server readings into a pod slice in place. Pods with
+// no reading keep HasMetrics=false rather than reporting zero usage.
+func ApplyUsage(pods []Pod, usage map[string]PodUsage) {
+	for i := range pods {
+		u, ok := usage[pods[i].Namespace+"/"+pods[i].Name]
+		if !ok {
+			continue
+		}
+		pods[i].HasMetrics = true
+		pods[i].CPUMilli = u.CPUMilli
+		pods[i].MemBytes = u.MemBytes
 	}
 }
 
