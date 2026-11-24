@@ -21,9 +21,13 @@ export default function Beacon({ lit, label }: { lit: Lens; label: string }) {
           style={{ '--tone': color } as React.CSSProperties}
           cx={8 + i * 12}
           cy="8"
-          r="4.25"
+          r="4.5"
         />
       ))}
+      {/* A small highlight on the lit lens, so it reads as glass with a lamp behind it. */}
+      {LENSES.map(([name], i) =>
+        lit === name ? <circle key={name} className="ksl-beacon__glint" cx={6.6 + i * 12} cy="6.6" r="1.3" /> : null,
+      )}
     </svg>
   );
 }

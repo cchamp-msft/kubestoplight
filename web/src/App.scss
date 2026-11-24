@@ -20,22 +20,29 @@
 
 .ksl-beacon {
   flex: none;
-  width: 2.75rem;
-  height: 1.1rem;
+  width: 3.25rem;
+  height: 1.3rem;
   overflow: visible;
 }
+/* A dark housing with a light rim, so the lenses have something to shine
+   against whatever the sky behind the header is doing. */
 .ksl-beacon__housing {
-  fill: var(--surface-solid);
-  stroke: var(--panel-border);
+  fill: color-mix(in srgb, var(--surface-solid) 70%, black);
+  stroke: color-mix(in srgb, var(--text-default) 35%, transparent);
 }
 .ksl-beacon__lens {
   fill: var(--tone);
-  opacity: 0.2;
+  opacity: 0.3;
   transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .ksl-beacon__lens.is-lit {
+  fill: color-mix(in srgb, var(--tone) 82%, white);
   opacity: 1;
-  filter: drop-shadow(0 0 3px var(--tone)) drop-shadow(0 0 8px color-mix(in srgb, var(--tone) 60%, transparent));
+  filter: drop-shadow(0 0 2px var(--tone)) drop-shadow(0 0 6px var(--tone)) drop-shadow(0 0 14px var(--tone));
+}
+.ksl-beacon__glint {
+  fill: white;
+  opacity: 0.7;
 }
 
 /* Failed count: a steady red halo, plus one pulse each time the count rises
@@ -77,54 +84,56 @@
 }
 
 /* ── Body ── */
-.ksl-layout {
-  margin-top: var(--space-4);
-  padding-bottom: var(--space-8);
-}
-
 .ksl-main {
-  margin-block: 0;
-}
-
-/* Below --bp-lg Jewel hides the column and expects a drawer; this app has
-   no menu button, so the cluster list stacks above the content instead. */
-@media (max-width: 63.99rem) {
-  .with-side-nav__aside {
-    display: block;
-    padding: var(--space-3);
-  }
+  margin-block: var(--space-4) 0;
+  padding-bottom: var(--space-8);
 }
 
 /* ── Views (Grid | Village) ── */
 .ksl-header__views {
   margin-left: var(--space-4);
 }
-.ksl-header__views .nav__links {
-  flex-wrap: nowrap;
-}
 
-/* Phone: two rows. Brand and the live state on top; the view links and the
-   quieter badges underneath. The ::after is the line break between them. */
+/* Phone: one row. The view links are in the menu drawer, the failed badge
+   drops its word, and the row may still wrap on the narrowest screens. */
 @media (max-width: 40rem) { /* --bp-sm */
   .ksl-header {
     flex-wrap: wrap;
-    gap: var(--space-1) var(--space-3);
-    padding: var(--space-3) var(--space-4);
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-2) var(--space-3);
   }
-  .ksl-header::after {
-    content: "";
-    order: 1;
-    flex-basis: 100%;
-  }
-  .ksl-header__views {
-    order: 2;
-    margin-left: 0;
-    margin-right: auto;
-  }
-  .ksl-header__readonly,
-  .ksl-header .ksl-failed-badge {
-    order: 3;
-  }
+  .ksl-header__views { display: none; }
+  .ksl-failed-badge__word { display: none; }
+}
+
+/* ── Page head: the page's name and one line on what it shows ── */
+.ksl-pagehead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-4);
+  margin-top: var(--space-5);
+  padding-inline: var(--space-2);
+}
+.ksl-pagehead__title {
+  font-size: var(--text-xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-heading);
+}
+.ksl-pagehead__lede {
+  max-width: none;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* On a phone the map needs the room more than it needs introducing. */
+@media (max-width: 40rem) { /* --bp-sm */
+  .ksl-page--map .ksl-pagehead { margin-top: var(--space-3); }
+  .ksl-page--map .ksl-pagehead__lede { display: none; }
+}
+
+.ksl-footer {
+  padding-inline: var(--space-2);
 }
 
 /* ── Village map (/village) ──
@@ -143,6 +152,20 @@
 html:has(.ksl-page--map) {
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+/* Full screen: the map's panel leaves the page and covers the window, header
+   included. Fixed has to go on the panel itself; inside it, the panel's own
+   backdrop-filter would become the containing block. */
+.ksl-map:has(.ksl-village--full) {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+  margin: 0;
+  /* Keep the bar and the map's corners clear of a phone's notch and home bar. */
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  background: var(--surface-solid);
 }
 
 .ksl-map {

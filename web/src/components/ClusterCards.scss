@@ -1,0 +1,108 @@
+/* ClusterCards: the cluster filter as a row of small cards. The pressed card
+   is the cluster on screen. One row that scrolls sideways on a phone, so the
+   list never pushes the page down. */
+
+.ksl-clusters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ksl-cluster {
+  display: flex;
+  min-width: 9rem;
+  border: var(--hairline) solid var(--panel-border);
+  transition: border-color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.ksl-cluster:hover {
+  background: var(--state-hover-fill);
+}
+
+/* The card in focus: accent edge and fill, the selected look Jewel gives a
+   chosen row. */
+.ksl-cluster:has([aria-pressed="true"]) {
+  border-color: var(--text-accent);
+  background: var(--state-selected-fill);
+}
+
+.ksl-cluster__pick {
+  flex: 1;
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  text-align: left;
+  color: var(--text-muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.ksl-cluster__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-default);
+  white-space: nowrap;
+}
+
+.ksl-cluster__count {
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Edit / remove sit at the card's end and show on hover or keyboard focus. */
+.ksl-cluster__actions {
+  display: flex;
+  align-items: center;
+  padding-right: var(--space-1);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.ksl-cluster:hover .ksl-cluster__actions,
+.ksl-cluster:focus-within .ksl-cluster__actions {
+  opacity: 1;
+}
+
+/* Touch has no hover: the card in focus carries its actions, the rest stay
+   small. */
+@media (pointer: coarse) {
+  .ksl-cluster__actions { display: none; }
+  .ksl-cluster:has([aria-pressed="true"]) .ksl-cluster__actions { display: flex; opacity: 1; }
+}
+
+.ksl-cluster__add {
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  background: none;
+  border-style: dashed;
+  cursor: pointer;
+}
+
+.ksl-cluster__add:hover {
+  color: var(--text-default);
+}
+
+@media (max-width: 40rem) { /* --bp-sm */
+  .ksl-clusters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    /* Run out to the panel's edges, so a cut-off card hints at more. */
+    margin-inline: calc(-1 * var(--panel-padding));
+    padding-inline: var(--panel-padding);
+  }
+  .ksl-cluster { flex: none; min-width: 0; }
+}

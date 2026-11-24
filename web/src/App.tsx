@@ -7,13 +7,31 @@ import { useServerInfo } from './hooks/useServerInfo';
 import { useTabStatus } from './hooks/useTabStatus';
 import { useBumpOnRise } from './hooks/useFlashOnChange';
 import { usePath } from './hooks/usePath';
-import ClusterSidebar from './components/ClusterSidebar';
+import ClusterCards from './components/ClusterCards';
 import SummaryStrip from './components/SummaryStrip';
 import FilterBar from './components/FilterBar';
 import NamespaceGrid from './components/NamespaceGrid';
 import BgPicker from './components/BgPicker';
 import Beacon from './components/ui/Beacon';
+import Icon from './components/ui/Icon';
+import Sheet from './components/ui/Sheet';
 import './App.scss';
+
+/** The app's pages: the header links, the phone menu and each page's heading. */
+const VIEWS = [
+  {
+    path: '/',
+    name: 'Grid',
+    title: 'Grid',
+    lede: 'Every namespace as a card, worst status first. Pick a cluster to show only its namespaces.',
+  },
+  {
+    path: '/village',
+    name: 'Village',
+    title: 'Village',
+    lede: 'The same clusters as a map. Each node is a settlement and each pod a building that keeps its plot.',
+  },
+] as const;
 
 const ClusterFormModal = lazy(() => import('./components/ClusterFormModal'));
 const RemoveClusterModal = lazy(() => import('./components/RemoveClusterModal'));
@@ -54,6 +72,8 @@ export default function App() {
   // hiding half a settlement makes it a worse map.
   const { path, follow } = usePath();
   const village = path === '/village';
+  const view = village ? VIEWS[1] : VIEWS[0];
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,7 +176,7 @@ export default function App() {
   const scopeGroups = summaryGroups.filter((g) => !hideEmpty || g.activePods > 0);
 
   // Matches the Dweller key built in village/adapter.ts.
-  const selectedKey = panelPod ? `{panelPod.cluster}/{panelPod.namespace}/{panelPod.name}` : null;
+  const selectedKey = panelPod ? `${panelPod.cluster}/${panelPod.namespace}/${panelPod.name}` : null;
 
   return (
     <>
@@ -178,16 +198,16 @@ export default function App() {
             </span>
             {failedCount > 0 && (
               // Re-keyed when the count rises, so its one-shot pulse replays.
-              <span key={failedBumps} className="badge badge--error ksl-failed-badge">{failedCount} failed</span>
+              <span key={failedBumps} className="badge badge--error ksl-failed-badge">{failedCount}<span className="ksl-failed-badge__word"> failed</span></span>
             )}
-            <nav className="nav nav--keep ksl-header__views" aria-label="Views">
+            <nav className="nav ksl-header__views" aria-label="Views">
               <div className="nav__links">
-                <a href="/" onClick={follow} aria-current={village ? undefined : 'page'}>Grid</a>
-                <a href="/village" onClick={follow} aria-current={village ? 'page' : undefined}>Village</a>
+                {VIEWS.map((v) => (
+                  <a key={v.path} href={v.path} onClick={follow} aria-current={view === v ? 'page' : undefined}>{v.name}</a>
+                ))}
               </div>
             </nav>
             <span className="ksl-header__spacer" />
-            {readOnly && <span className="badge ksl-header__readonly" title="Cluster add/edit/remove is disabled on this server">Read-only</span>}
             <span className="ksl-header__stats">
               {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} &middot; {totalPods} pods
             </span>
@@ -196,7 +216,23 @@ export default function App() {
               <span key={beat} className={`badge__dot${connected && !stale && beat > 0 ? ' ksl-live__beat' : ''}`} />
               {liveLabel}
             </span>
+            {/* Phones: Jewel hides the view links below --bp-md and this opens them in a drawer. */}
+            <button
+              className="btn btn--ghost btn--icon nav__menu"
+              type="button"
+              aria-label="Menu"
+              aria-haspopup="dialog"
+              onClick={() => setMenuOpen(true)}
+            >
+              <Icon name="menu" />
+            </button>
           </div>
+        </header>
+
+        {/* ── Page head: what this page is ── */}
+        <header className="ksl-pagehead">
+          <h1 className="ksl-pagehead__title">{view.title}</h1>
+          <p className="ksl-pagehead__lede">{view.lede}</p>
         </header>
 
         {village ? (
@@ -206,25 +242,29 @@ export default function App() {
             </Suspense>
           </main>
         ) : (
-        /* ── Body (sidebar + main) ── */
-        <div className="with-side-nav ksl-layout">
-          <aside className="with-side-nav__aside panel">
-            <ClusterSidebar
-              clusters={clusters}
-              groups={groups}
-              selectedCluster={selectedCluster}
-              onSelect={setSelectedCluster}
-              readOnly={readOnly}
-              onAdd={() => setAddOpen(true)}
-              onEdit={setEditTarget}
-              onRemove={setRemoveTarget}
-            />
-          </aside>
-
           <main className="panel-stack ksl-main">
+            <section className="panel panel--pad ksl-section" aria-labelledby="clusters-title">
+              <header className="section-head ksl-section__head">
+                <h2 className="label" id="clusters-title">01 — Clusters</h2>
+                <span className="label ksl-section__scope">
+                  {selectedCluster ? `Showing ${selectedCluster}` : 'Showing all'}
+                </span>
+              </header>
+              <ClusterCards
+                clusters={clusters}
+                groups={groups}
+                selectedCluster={selectedCluster}
+                onSelect={setSelectedCluster}
+                readOnly={readOnly}
+                onAdd={() => setAddOpen(true)}
+                onEdit={setEditTarget}
+                onRemove={setRemoveTarget}
+              />
+            </section>
+
             <section className="panel panel--pad ksl-section" aria-labelledby="overview-title">
               <header className="section-head ksl-section__head">
-                <h2 className="label" id="overview-title">01 — Overview</h2>
+                <h2 className="label" id="overview-title">02 — Overview</h2>
                 <span className="label ksl-section__scope">{selectedCluster ?? 'All clusters'}</span>
               </header>
               <SummaryStrip groups={summaryGroups} />
@@ -232,7 +272,7 @@ export default function App() {
 
             <section className="panel panel--pad ksl-section" aria-labelledby="ns-title">
               <header className="section-head ksl-section__head">
-                <h2 className="label" id="ns-title">02 — Namespaces</h2>
+                <h2 className="label" id="ns-title">03 — Namespaces</h2>
                 <span className="label ksl-section__scope">
                   {filtered.length} of {scopeGroups.length}
                 </span>
@@ -265,10 +305,32 @@ export default function App() {
                 onPodLogs={onPodLogs}
               />
             </section>
+            <p className="caption ksl-footer">
+              kubestoplight v0.2.0{readOnly ? ' · read-only: clusters are set in the server config' : ''}
+            </p>
           </main>
-        </div>
         )}
       </div>
+
+      {/* ── Menu drawer (phones): opens from the right, where its button is ── */}
+      <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title="Menu" placement="end" className="ksl-menu">
+        <nav className="side-nav" aria-label="Views">
+          <ul className="side-nav__list">
+            {VIEWS.map((v) => (
+              <li key={v.path}>
+                <a
+                  className="side-nav__link"
+                  href={v.path}
+                  aria-current={view === v ? 'page' : undefined}
+                  onClick={(e) => { follow(e); setMenuOpen(false); }}
+                >
+                  {v.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </Sheet>
 
       {/* ── Modals ── */}
       <Suspense fallback={null}>
