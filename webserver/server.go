@@ -68,6 +68,17 @@ type podJSON struct {
 	Total     int    `json:"total"`
 	Age       string `json:"age"`
 	QOS       string `json:"qos"`
+	Restarts  int    `json:"restarts"`
+
+	// Usage is omitted entirely when metrics-server is absent, so clients can
+	// tell "idle" apart from "unmeasured".
+	HasMetrics bool  `json:"hasMetrics"`
+	CPUMilli   int64 `json:"cpuMilli,omitempty"`
+	MemBytes   int64 `json:"memBytes,omitempty"`
+	CPULimit   int64 `json:"cpuLimit,omitempty"`
+	MemLimit   int64 `json:"memLimit,omitempty"`
+	CPURequest int64 `json:"cpuRequest,omitempty"`
+	MemRequest int64 `json:"memRequest,omitempty"`
 }
 
 // wsMessage is the shape pushed to WebSocket clients.
@@ -741,22 +752,36 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 // Static SPA handler
 // -------------------------------------------------------------------------
 
-// spaHandler serves files from the embedded FS. Unknown paths fall back to
-// index.html so that React Router (or plain hash routing) works correctly.
+// spaHandler serves files from the embedded FS. Anything that is not a file
+// falls back to index.html, so the app's own paths (/village) load the SPA.
 func (s *Server) spaHandler() http.Handler {
-	fsHandler := http.FileServer(http.FS(s.staticFS))
+	return spaHandler(s.staticFS)
+}
+
+func spaHandler(static fs.FS) http.Handler {
+	fsHandler := http.FileServer(http.FS(static))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Try to open the requested path.
-		f, err := s.staticFS.Open(strings.TrimPrefix(r.URL.Path, "/"))
-		if err != nil {
-			// Not found → serve index.html for SPA routing.
-			r2 := r.Clone(r.Context())
-			r2.URL.Path = "/"
-			fsHandler.ServeHTTP(w, r2)
-			return
+		name := strings.Trim(r.URL.Path, "/")
+		if name != "" {
+			if info, err := fs.Stat(static, name); err == nil && !info.IsDir() {
+				fsHandler.ServeHTTP(w, r)
+				return
+			}
+			// The bundle's asset URLs are relative (vite base './'), so an app
+			// path must not end in a slash or they resolve underneath it.
+			if strings.HasSuffix(r.URL.Path, "/") {
+				target := "/" + name
+				if r.URL.RawQuery != "" {
+					target += "?" + r.URL.RawQuery
+				}
+				http.Redirect(w, r, target, http.StatusMovedPermanently)
+				return
+			}
 		}
-		f.Close()
-		fsHandler.ServeHTTP(w, r)
+		// Not a file (unknown path, or a directory: no listings) → index.html.
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/"
+		fsHandler.ServeHTTP(w, r2)
 	})
 }
 
@@ -793,16 +818,24 @@ func toGroupsJSON(groups []model.NamespaceGroup) []nsGroupJSON {
 		pods := make([]podJSON, 0, len(g.Pods))
 		for _, p := range g.Pods {
 			pods = append(pods, podJSON{
-				Name:      p.Name,
-				Namespace: p.Namespace,
-				Cluster:   p.Cluster,
-				Node:      p.Node,
-				Status:    p.Status.String(),
-				Phase:     string(p.Phase),
-				Ready:     p.Ready,
-				Total:     p.Total,
-				Age:       formatAge(p.Age),
-				QOS:       p.QOS,
+				Name:       p.Name,
+				Namespace:  p.Namespace,
+				Cluster:    p.Cluster,
+				Node:       p.Node,
+				Status:     p.Status.String(),
+				Phase:      string(p.Phase),
+				Ready:      p.Ready,
+				Total:      p.Total,
+				Age:        formatAge(p.Age),
+				QOS:        p.QOS,
+				Restarts:   p.Restarts,
+				HasMetrics: p.HasMetrics,
+				CPUMilli:   p.CPUMilli,
+				MemBytes:   p.MemBytes,
+				CPULimit:   p.CPULimit,
+				MemLimit:   p.MemLimit,
+				CPURequest: p.CPURequest,
+				MemRequest: p.MemRequest,
 			})
 		}
 		jobs := make([]jobJSON, 0, len(g.Jobs))

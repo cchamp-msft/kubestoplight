@@ -44,6 +44,16 @@ export interface PodItem {
   total: number;
   age: string;
   qos: string;
+  /** Lifetime restarts across containers. Status 'Busy' only means this is > 0. */
+  restarts: number;
+  /** False when the cluster has no metrics-server — distinct from "idle". */
+  hasMetrics: boolean;
+  cpuMilli?: number;
+  memBytes?: number;
+  cpuLimit?: number;
+  memLimit?: number;
+  cpuRequest?: number;
+  memRequest?: number;
 }
 
 // -------------------------------------------------------------------------

@@ -194,4 +194,25 @@ drill-down tabs, and the cluster add/edit/remove flow.
   `web/src/hooks/` own all network I/O (components never `fetch` directly).
 - Don't commit `*.yaml` at the repo root (real configs hold credentials;
   `.gitignore` excludes them), built binaries, or `web/dist/`.
-- The `village` branch is an experimental map view; ignore it unless asked.
+
+## Village map (`/village`)
+
+A second view of the same snapshot: nodes are settlements, pods are buildings,
+and a pod keeps its plot for life. Code and its own README are in
+`web/src/village/`; art is in `web/public/village-art/`.
+
+- **Routing:** `hooks/usePath.ts` (no router library). `/` is the grid,
+  `/village` the map, linked from the header. `webserver/server.go#spaHandler`
+  serves `index.html` for any path that isn't a file and redirects a trailing
+  slash away, because the bundle's asset URLs are relative. Don't put a
+  directory in `web/public/` with the same name as an app path.
+- **Chrome vs canvas:** the bar, tooltip and livery panel are Jewel like the
+  rest of the app. The canvas has its own palette in `render.ts`
+  (`STATE_COLOR`), which the legend reuses so the two always agree.
+- **Data:** the map needs `restarts` and the metrics-server usage fields on
+  `PodItem` (`polling/metrics.go`, best-effort; `hasMetrics` false means
+  unmeasured, not idle). In the mock, `staging` has no metrics.
+- **Status:** `village/adapter.ts#stateOf` maps pod status to building state.
+  If `determineStatusAt` changes meaning again, change it there too.
+- It isn't in `npm run screenshots`: the canvas animates, so its pixels
+  aren't repeatable, and it doesn't yet honor `prefers-reduced-motion`.

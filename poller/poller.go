@@ -21,6 +21,7 @@ type clusterResult struct {
 	cluster string
 	pods    []v1.Pod
 	jobs    []batchv1.Job
+	usage   map[string]model.PodUsage
 	err     error
 }
 
@@ -169,8 +170,19 @@ func (p *Poller) pollCluster(ctx context.Context, name string) {
 		return
 	}
 	jobs, _ := client.ListJobs()
+
+	// Usage is best-effort: a cluster without metrics-server still gets a full
+	// snapshot, just with HasMetrics false on every pod.
+	var usage map[string]model.PodUsage
+	if metrics, mErr := client.ListPodMetrics(ctx); mErr == nil {
+		usage = make(map[string]model.PodUsage, len(metrics))
+		for _, m := range metrics {
+			usage[m.Namespace+"/"+m.Name] = model.PodUsage{CPUMilli: m.CPUMilli, MemBytes: m.MemBytes}
+		}
+	}
+
 	select {
-	case p.resultCh <- clusterResult{cluster: name, pods: pods, jobs: jobs}:
+	case p.resultCh <- clusterResult{cluster: name, pods: pods, jobs: jobs, usage: usage}:
 	case <-ctx.Done():
 	case <-p.stopCh:
 	}
@@ -198,6 +210,9 @@ func (p *Poller) mergeLoop() {
 				pods := make([]model.Pod, 0, len(res.pods))
 				for _, raw := range res.pods {
 					pods = append(pods, model.ExtractPod(raw, res.cluster))
+				}
+				if res.usage != nil {
+					model.ApplyUsage(pods, res.usage)
 				}
 				podCache[res.cluster] = pods
 
