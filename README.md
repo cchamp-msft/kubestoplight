@@ -75,7 +75,7 @@ short-lived public preview behind a Cloudflare tunnel, see
 Open `http://127.0.0.1:8080` in your browser. The dashboard features:
 
 - **Summary** — total pods, healthy %, failed, in progress and jobs, for all clusters or the selected one
-- **Sidebar** — cluster list with per-cluster status dots; click to filter, **+** to add, hover for edit/remove
+- **Clusters** — one small card per cluster with its status dot and pod count; click a card to show only that cluster, **Add cluster** to add, hover for edit/remove
 - **Filter bar** — live search (`/` to focus), status filter tags with counts, hide-idle and hide-empty switches
 - **Namespace cards** — pod and job donuts, status counts, expand for a pod table
 - **Pod drill-down** — Describe / Logs (streaming, follow) / YAML in a side drawer
@@ -94,11 +94,11 @@ metrics, still gets the full map and dashboard, with a "no load data" note.
 
 In **web mode**, if no config file exists kubestoplight creates a blank one at
 `~/.kubestoplight/config.yaml` and starts with an empty cluster list.
-Use the **Add cluster** button (+ icon in the sidebar) to register your first remote.
+Use the **Add cluster** card to register your first remote.
 
 ## Managing remote clusters via the UI
 
-Click the **+** icon in the sidebar header to open the **Add cluster** modal.
+Click **Add cluster** at the end of the cluster cards to open the **Add cluster** modal.
 
 | Auth method | When to use | Required fields |
 |-------------|------------|-----------------|
@@ -108,7 +108,7 @@ Click the **+** icon in the sidebar header to open the **Add cluster** modal.
 Changes are saved immediately to `config.yaml` and the polling engine connects
 (or disconnects) without a server restart.
 
-To **edit** or **remove** a cluster, hover over it in the sidebar — Edit and Remove
+To **edit** or **remove** a cluster, hover over its card — Edit and Remove
 buttons appear inline.
 
 ## Configuration file

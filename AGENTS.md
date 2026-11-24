@@ -201,6 +201,13 @@ A second view of the same snapshot: nodes are settlements, pods are buildings,
 and a pod keeps its plot for life. Code and its own README are in
 `web/src/village/`; art is in `web/public/village-art/`.
 
+- **Shell:** `VIEWS` in `App.tsx` lists the pages; it feeds the header links,
+  the phone menu drawer (a narrow end `Sheet`, opened by Jewel's `.nav__menu`
+  button below `--bp-md`, on the right where that button is) and each page's heading and one-line
+  description (`.ksl-pagehead`). A new page is one more entry there.
+- **Cluster filter:** `components/ClusterCards.tsx`, a row of small cards on
+  the grid page. The pressed card is the cluster on screen. There is no
+  sidebar, and no read-only badge: read-only is noted in the page footer.
 - **Routing:** `hooks/usePath.ts` (no router library). `/` is the grid,
   `/village` the map, linked from the header. `webserver/server.go#spaHandler`
   serves `index.html` for any path that isn't a file and redirects a trailing

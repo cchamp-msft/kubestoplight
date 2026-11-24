@@ -150,7 +150,7 @@ export default function VillageView({ groups, onPodSelect, selectedKey }: Props)
     // The packing follows the stage's shape, but only while the camera is still
     // ours. Once someone has panned or zoomed, a resize must not move the
     // villages under them, and a phone resizes the stage every time its
-    // toolbar slides in or out. "Fit map" hands the camera back.
+    // toolbar slides in or out. "Reset view" hands the camera back.
     if (!userMovedRef.current || aspectRef.current === null) {
       aspectRef.current = h > 0 ? usableWidth() / h : 2.2;
     }
@@ -403,11 +403,52 @@ export default function VillageView({ groups, onPodSelect, selectedKey }: Props)
     userMovedRef.current = true;
   };
 
+  // Full screen: the map's panel covers the window (App.scss does the covering,
+  // keyed off the class below). Esc leaves, unless a pod drawer is open, which
+  // takes Esc for itself.
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    if (!full) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) setFull(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [full]);
+
   const hovered = hover ? dwellersRef.current.get(hover.key) : null;
 
   return (
-    <div className="ksl-village">
+    <div className={`ksl-village${full ? ' ksl-village--full' : ''}`}>
       <div className="ksl-village__bar">
+        {/* First in the markup so the counts can wrap around it on a phone;
+            the stylesheet puts it last on wider screens. */}
+        <span className="ksl-village__tools">
+          <Tooltip label="Reset view">
+            <button type="button" className="btn btn--ghost btn--icon" aria-label="Reset view"
+              onClick={() => {
+                // Hand the camera back first, so the villages re-pack for the
+                // stage as it is now before being framed.
+                userMovedRef.current = false;
+                relayout();
+                fit();
+              }}
+            >
+              <Icon name="reset" />
+            </button>
+          </Tooltip>
+          <Tooltip label={full ? 'Exit full screen' : 'Full screen'}>
+            <button
+              type="button"
+              className="btn btn--ghost btn--icon"
+              aria-label={full ? 'Exit full screen' : 'Full screen'}
+              aria-pressed={full}
+              onClick={() => setFull((f) => !f)}
+            >
+              <Icon name={full ? 'shrink' : 'expand'} />
+            </button>
+          </Tooltip>
+        </span>
         {(['collapsing', 'raising', 'settled', 'fading', 'derelict'] as const).map((s) =>
           stats.byState[s] ? (
             <span key={s} className="ksl-village__legend-item">
@@ -440,19 +481,6 @@ export default function VillageView({ groups, onPodSelect, selectedKey }: Props)
             <Icon name="info" size="xs" /> no load data
           </span>
         )}
-        <Tooltip label="Fit map">
-          <button type="button" className="btn btn--ghost btn--icon" aria-label="Fit map"
-            onClick={() => {
-              // Hand the camera back first, so the villages re-pack for the
-              // stage as it is now before being framed.
-              userMovedRef.current = false;
-              relayout();
-              fit();
-            }}
-          >
-            <Icon name="fit" />
-          </button>
-        </Tooltip>
       </div>
 
       <div className="ksl-village__stage" ref={wrapRef}>

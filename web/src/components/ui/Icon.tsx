@@ -20,7 +20,10 @@ const SYMBOLS = {
   show: 'eye',
   hide: 'eye-off',
   cluster: 'boxes',
-  fit: 'maximize-2',
+  expand: 'maximize-2',
+  shrink: 'minimize-2',
+  reset: 'rotate-ccw',
+  menu: 'menu',
 } as const;
 
 export type IconName = keyof typeof SYMBOLS;

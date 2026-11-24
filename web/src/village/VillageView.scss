@@ -24,22 +24,39 @@
     flex: 1;
   }
 
+  /* Reset and full screen: a notch smaller than a standard icon button, at
+     every pointer size, so the counts beside them keep their room. */
+  &__tools {
+    --tool: 2.25rem;
+    display: flex;
+    gap: var(--space-1);
+    order: 1; /* last on the row, after the spacer */
+
+    .btn--icon {
+      width: var(--tool);
+      height: var(--tool);
+      min-height: 0;
+    }
+  }
+
   /* On a phone the counts wrap to two or three lines; the fit button stays
      pinned top right instead of dropping onto a line of its own. */
   @media (max-width: 40rem) { /* --bp-sm */
     &__bar {
       position: relative;
       gap: var(--space-1) var(--space-3);
-      padding: var(--space-2) calc(var(--control-h) + var(--space-3)) var(--space-2) var(--space-3);
+      /* The right padding is the room the two tools take. */
+      padding: var(--space-2) calc(2 * 2.25rem + 2 * var(--space-1)) var(--space-2) var(--space-3);
+      min-height: calc(2.25rem + 2 * var(--space-2));
     }
 
     &__spacer {
       display: none;
     }
 
-    &__bar > :last-child {
+    &__tools {
       position: absolute;
-      top: var(--space-1);
+      top: var(--space-2);
       right: var(--space-1);
     }
   }

@@ -54,3 +54,8 @@
 .sheet--end {
   --sheet-max-w: 60rem;
 }
+
+/* The phone menu is a short list of links, so it stays narrow. */
+.sheet--end.ksl-menu {
+  --sheet-max-w: 18rem;
+}
