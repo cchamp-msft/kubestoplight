@@ -165,7 +165,7 @@
     font-size: var(--text-xs);
   }
 
-  /* Bottom left on a phone, clear of the background picker's corner. */
+  /* Bottom left on a phone. */
   @media (max-width: 40rem) { /* --bp-sm */
     &__livery {
       right: auto;

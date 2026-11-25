@@ -175,8 +175,9 @@ drill-down tabs, and the cluster add/edit/remove flow.
   Jewel's `--bg-1…5` / `--bg-base` tokens. There are also Grok Imagine
   renders in `web/public/bg/` (stills and a looping video). Choose with
   `?bg=<id>`.
-  The picker shows in dev and in builds with `VITE_BG_PICKER=1`, and
-  `?picker=0` hides it.
+  The picker is the Theme sheet, opened from the menu drawer's footer. It is
+  offered in dev and in builds with `VITE_BG_PICKER=1`, and `?picker=0`
+  hides it (`constants/theme.ts`).
 - Motion: `?motion=jewel` is Jewel's own *lava lamp animation* (its name for
   the drifting gradient in `background.css`); `?motion=wax` adds rising wax
   blobs on top of it (`.ksl-wax`, tune with `--wax-speed`). Use Jewel's name
@@ -201,15 +202,18 @@ A second view of the same snapshot: nodes are settlements, pods are buildings,
 and a pod keeps its plot for life. Code and its own README are in
 `web/src/village/`; art is in `web/public/village-art/`.
 
-- **Shell:** `VIEWS` in `App.tsx` lists the pages; it feeds the header links,
-  the phone menu drawer (a narrow end `Sheet`, opened by Jewel's `.nav__menu`
-  button below `--bp-md`, on the right where that button is) and each page's heading and one-line
-  description (`.ksl-pagehead`). A new page is one more entry there.
-- **Cluster filter:** `components/ClusterCards.tsx`, a row of small cards on
-  the grid page. The pressed card is the cluster on screen. There is no
+- **Shell:** `VIEWS` in `App.tsx` lists the pages; it feeds the menu drawer
+  (a narrow end `Sheet`, opened by the header's menu button on the right,
+  where the drawer opens) and each page's heading and one-line description
+  (`.ksl-pagehead`). The header is Jewel's menu-only `.nav--drawer` at every
+  width, so phone and desktop navigate the same way. The drawer's footer
+  holds the Theme button. A new page is one more entry in `VIEWS`.
+- **Cluster filter:** `components/ClusterCards.tsx`, a row of small cards at
+  the top of the grid page's Overview panel, above the numbers they scope.
+  Panels are not numbered. The pressed card is the cluster on screen. There is no
   sidebar, and no read-only badge: read-only is noted in the page footer.
 - **Routing:** `hooks/usePath.ts` (no router library). `/` is the grid,
-  `/village` the map, linked from the header. `webserver/server.go#spaHandler`
+  `/village` the map, linked from the menu. `webserver/server.go#spaHandler`
   serves `index.html` for any path that isn't a file and redirects a trailing
   slash away, because the bundle's asset URLs are relative. Don't put a
   directory in `web/public/` with the same name as an app path.

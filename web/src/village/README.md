@@ -18,8 +18,7 @@ things stay where you left them. Everything here follows from that.
 |---|---|
 | A settlement | One node. Two clusters can both have a node called `fedora`, so settlements are keyed `cluster/node`. |
 | The shape of the land | Not a container — the union of a disc around every claimed plot, with an edge that fades out over 40px. A settlement's outline is whatever its buildings actually cover. |
-| Open country | Everything that is not a node: forest, meadow, watercourses, and loose rock and scrub. A pure function of world position, so it never crawls when the camera moves. |
-| Woods thinning out near a village | Scenery is culled wherever settled land reaches, so a node taking on pods visibly clears the ground around it. |
+| Open country | Everything that is not a node: forest, meadow and watercourses. A pure function of world position, so it never crawls when the camera moves. |
 | A village in a clearing | The canopy is held back around settled land, so a node sits in a glade it made. |
 | Streets | Namespace seams. A street appears where two districts meet, so buildings front onto the road and neighbouring namespaces are across it. Which seams get paved is fixed per namespace pair, so some districts share a wall instead. Buildings either side step back to give the road its verge. |
 | A trunk road between settlements | Those nodes are in the same cluster, and it is drawn wider than a village street because that is what it is — the link between two machines, not the gap between two districts. Separate clusters stay separate landmasses with open ground between them. |
@@ -53,9 +52,9 @@ buildings          painted back to front
 particles          smoke, sparks, dust
 ```
 
-Forest is a *texture*, not ten thousand tree sprites. The sprites only supply
-silhouette on top of it, which is how the country can read as crowded woodland
-at 60fps. Two clipped passes — a thinner outer fringe and a solid interior —
+Forest is a *texture*, with no tree or rock sprites on top: scattered props
+meant nothing and popped in and out with zoom, so the country is canopy,
+meadow and water only. Two clipped passes — a thinner outer fringe and a solid interior —
 give the wood an edge that scatters out instead of a coastline.
 
 ## Layout

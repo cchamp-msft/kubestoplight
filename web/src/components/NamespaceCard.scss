@@ -201,3 +201,39 @@
 .ksl-pod-row:focus-within .table__actions {
   opacity: 1;
 }
+
+/* A narrow card (a phone, or a three-up grid on a small laptop) has no room
+   for the name beside four fixed columns: the name column shrank to nothing
+   and its heading printed over "Status". There the name takes a line of its
+   own above the pod's status, readiness, age and actions. */
+.ksl-card__detail {
+  container-type: inline-size;
+}
+
+@container (max-width: 30rem) {
+  .ksl-pods,
+  .ksl-pods :is(thead, tbody) {
+    display: block;
+  }
+  .ksl-pods tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 3.5rem 3.75rem calc(2 * var(--hit-min));
+    align-items: center;
+    border-bottom: var(--hairline) solid var(--panel-border);
+  }
+  .ksl-pods :is(th, td) {
+    height: auto;
+    border-bottom: 0;
+  }
+  .ksl-pods :is(th, td):nth-child(2) {
+    padding-left: 0;
+  }
+  /* The names label themselves; the other headings stay over their columns. */
+  .ksl-pods thead th:first-child {
+    display: none;
+  }
+  .ksl-pod-row__name {
+    grid-column: 1 / -1;
+    padding: var(--space-2) 0 0;
+  }
+}

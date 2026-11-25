@@ -55,7 +55,17 @@
   --sheet-max-w: 60rem;
 }
 
-/* The phone menu is a short list of links, so it stays narrow. */
+/* The menu is a short list of links, so it stays narrow. Its footer (theme
+   settings) sits at the bottom of the drawer. */
 .sheet--end.ksl-menu {
   --sheet-max-w: 18rem;
+}
+.ksl-menu .sheet__body {
+  display: flex;
+  flex-direction: column;
+}
+.ksl-menu__foot {
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: var(--hairline) solid var(--panel-border);
 }

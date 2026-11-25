@@ -266,7 +266,7 @@ describe('variantOf', () => {
 
   it('borrows the village pack when its own art is missing', () => {
     resetPacks();
-    const atlas = { building: { cottage: {} }, wild: {}, ground: {} } as never;
+    const atlas = { building: { cottage: {} }, ground: {} } as never;
     for (let i = 0; i < 200; i++) {
       expect(variantOf(`ns/pod-${i}-aaaaa`, 'cottage', `ns-${i % 9}`, atlas)).toBe('cottage');
     }

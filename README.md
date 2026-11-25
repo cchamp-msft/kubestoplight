@@ -80,7 +80,7 @@ Open `http://127.0.0.1:8080` in your browser. The dashboard features:
 - **Namespace cards** — pod and job donuts, status counts, expand for a pod table
 - **Pod drill-down** — Describe / Logs (streaming, follow) / YAML in a side drawer
 - **Auto-expand** — namespaces with failed pods expand automatically on first load
-- **Village** — the same clusters as a map at `/village` (header link): nodes are settlements, pods are buildings that keep their plot for life. Health is the ring, live CPU is chimney smoke, restarts are soot. Drag to pan, wheel to zoom, click a building for its drill-down. See [`web/src/village/README.md`](web/src/village/README.md).
+- **Village** — the same clusters as a map at `/village` (in the menu): nodes are settlements, pods are buildings that keep their plot for life. Health is the ring, live CPU is chimney smoke, restarts are soot. Drag to pan, wheel to zoom, click a building for its drill-down. See [`web/src/village/README.md`](web/src/village/README.md).
 
 Pod status cards update live every polling interval (default 3 s).
 

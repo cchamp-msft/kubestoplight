@@ -12,12 +12,13 @@ import SummaryStrip from './components/SummaryStrip';
 import FilterBar from './components/FilterBar';
 import NamespaceGrid from './components/NamespaceGrid';
 import BgPicker from './components/BgPicker';
+import { THEME_SETTINGS } from './constants/theme';
 import Beacon from './components/ui/Beacon';
 import Icon from './components/ui/Icon';
 import Sheet from './components/ui/Sheet';
 import './App.scss';
 
-/** The app's pages: the header links, the phone menu and each page's heading. */
+/** The app's pages: the menu drawer's links and each page's heading. */
 const VIEWS = [
   {
     path: '/',
@@ -74,6 +75,7 @@ export default function App() {
   const village = path === '/village';
   const view = village ? VIEWS[1] : VIEWS[0];
   const [menuOpen, setMenuOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -183,7 +185,7 @@ export default function App() {
       {/* Jewel's animated background and the strip that hides content above the header */}
       <div className="jewel-bg" aria-hidden="true" />
       <div className="jewel-cap" aria-hidden="true" />
-      <BgPicker />
+      <BgPicker open={themeOpen} onClose={() => setThemeOpen(false)} />
 
       <div className={`page ksl-page${village ? ' ksl-page--map' : ''}`}>
         {/* ── Header ── */}
@@ -200,13 +202,6 @@ export default function App() {
               // Re-keyed when the count rises, so its one-shot pulse replays.
               <span key={failedBumps} className="badge badge--error ksl-failed-badge">{failedCount}<span className="ksl-failed-badge__word"> failed</span></span>
             )}
-            <nav className="nav ksl-header__views" aria-label="Views">
-              <div className="nav__links">
-                {VIEWS.map((v) => (
-                  <a key={v.path} href={v.path} onClick={follow} aria-current={view === v ? 'page' : undefined}>{v.name}</a>
-                ))}
-              </div>
-            </nav>
             <span className="ksl-header__spacer" />
             <span className="ksl-header__stats">
               {clusterCount} cluster{clusterCount !== 1 ? 's' : ''} &middot; {totalPods} pods
@@ -216,16 +211,18 @@ export default function App() {
               <span key={beat} className={`badge__dot${connected && !stale && beat > 0 ? ' ksl-live__beat' : ''}`} />
               {liveLabel}
             </span>
-            {/* Phones: Jewel hides the view links below --bp-md and this opens them in a drawer. */}
-            <button
-              className="btn btn--ghost btn--icon nav__menu"
-              type="button"
-              aria-label="Menu"
-              aria-haspopup="dialog"
-              onClick={() => setMenuOpen(true)}
-            >
-              <Icon name="menu" />
-            </button>
+            {/* Jewel's menu-only header: the pages and settings are in the drawer at every width. */}
+            <nav className="nav nav--drawer" aria-label="Primary">
+              <button
+                className="btn btn--ghost btn--icon nav__menu"
+                type="button"
+                aria-label="Menu"
+                aria-haspopup="dialog"
+                onClick={() => setMenuOpen(true)}
+              >
+                <Icon name="menu" />
+              </button>
+            </nav>
           </div>
         </header>
 
@@ -243,13 +240,12 @@ export default function App() {
           </main>
         ) : (
           <main className="panel-stack ksl-main">
-            <section className="panel panel--pad ksl-section" aria-labelledby="clusters-title">
+            {/* One panel: the cluster cards choose what the numbers under them count. */}
+            <section className="panel panel--pad ksl-section" aria-labelledby="overview-title">
               <header className="section-head ksl-section__head">
-                <h2 className="label" id="clusters-title">01 — Clusters</h2>
-                <span className="label ksl-section__scope">
-                  {selectedCluster ? `Showing ${selectedCluster}` : 'Showing all'}
-                </span>
+                <h2 className="label" id="overview-title">Overview</h2>
               </header>
+              <p className="label ksl-section__sub">Cluster</p>
               <ClusterCards
                 clusters={clusters}
                 groups={groups}
@@ -260,19 +256,12 @@ export default function App() {
                 onEdit={setEditTarget}
                 onRemove={setRemoveTarget}
               />
-            </section>
-
-            <section className="panel panel--pad ksl-section" aria-labelledby="overview-title">
-              <header className="section-head ksl-section__head">
-                <h2 className="label" id="overview-title">02 — Overview</h2>
-                <span className="label ksl-section__scope">{selectedCluster ?? 'All clusters'}</span>
-              </header>
               <SummaryStrip groups={summaryGroups} />
             </section>
 
             <section className="panel panel--pad ksl-section" aria-labelledby="ns-title">
               <header className="section-head ksl-section__head">
-                <h2 className="label" id="ns-title">03 — Namespaces</h2>
+                <h2 className="label" id="ns-title">Namespaces</h2>
                 <span className="label ksl-section__scope">
                   {filtered.length} of {scopeGroups.length}
                 </span>
@@ -312,7 +301,7 @@ export default function App() {
         )}
       </div>
 
-      {/* ── Menu drawer (phones): opens from the right, where its button is ── */}
+      {/* ── Menu drawer: opens from the right, where its button is ── */}
       <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title="Menu" placement="end" className="ksl-menu">
         <nav className="side-nav" aria-label="Views">
           <ul className="side-nav__list">
@@ -330,6 +319,18 @@ export default function App() {
             ))}
           </ul>
         </nav>
+        {THEME_SETTINGS && (
+          <footer className="ksl-menu__foot">
+            <button
+              className="btn btn--ghost"
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => { setMenuOpen(false); setThemeOpen(true); }}
+            >
+              <Icon name="settings" /> Theme
+            </button>
+          </footer>
+        )}
       </Sheet>
 
       {/* ── Modals ── */}
