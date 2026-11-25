@@ -5,11 +5,8 @@ import {
   makeCanvas,
   variantOf,
   TERRAIN_SIZE,
-  WILD_SPRITES,
-  WILD_TRAITS,
   type Atlas,
   type Sprite,
-  type WildName,
 } from './sprites';
 
 export const TILE = 64;
@@ -387,8 +384,8 @@ export function emitImplosion(store: ParticleStore, cx: number, cy: number) {
 // Open country
 //
 // The space between villages used to be the page background, which read as a
-// void the map floated in. It is scenery now: mottled ground, watercourses on a
-// fixed lattice, and scattered trees and rock. All of it is a pure function of
+// void the map floated in. It is scenery now: mottled ground, canopy, and
+// watercourses on a fixed lattice. All of it is a pure function of
 // world position, so it never crawls when the camera moves — and all of it is
 // culled wherever a settlement's land reaches, which is what makes a growing
 // village look like it is clearing ground rather than being pasted on top.
@@ -503,30 +500,6 @@ function drawRivers(
   ctx.restore();
 }
 
-/** Distance from a point to a river, using the river's uniform x step as an index. */
-function nearRiver(courses: Array<Array<[number, number]>>, x: number, y: number, r: number): boolean {
-  for (const pts of courses) {
-    const i = Math.round((x - pts[0][0]) / RIVER_STEP);
-    for (let j = Math.max(0, i - 1); j <= Math.min(pts.length - 1, i + 1); j++) {
-      const dx = x - pts[j][0];
-      const dy = y - pts[j][1];
-      if (dx * dx + dy * dy < r * r) return true;
-    }
-  }
-  return false;
-}
-
-const WILD_TOTAL = WILD_SPRITES.reduce((n, k) => n + WILD_TRAITS[k].weight, 0);
-
-function wildKind(roll: number): WildName {
-  let r = roll % WILD_TOTAL;
-  for (const k of WILD_SPRITES) {
-    r -= WILD_TRAITS[k].weight;
-    if (r < 0) return k;
-  }
-  return WILD_SPRITES[0];
-}
-
 /** Smooth value noise on a coarse lattice, for anything that should come in patches. */
 function fieldNoise(x: number, y: number, cell: number): number {
   const fx = x / cell;
@@ -577,7 +550,6 @@ function onLand(
   return false;
 }
 
-const WILD_CELL = 66;
 const CANOPY_CELL = 150;
 
 /**
@@ -616,18 +588,16 @@ function canopyPath(
 }
 
 /**
- * The bottom of the stack: general terrain, then watercourses, then loose
- * scenery. Everything above this — trunk roads, village ground, village
+ * The bottom of the stack: general terrain, then watercourses. No loose
+ * scenery: the woods are the canopy texture alone. Everything above this — trunk roads, village ground, village
  * streets, buildings — is drawn over it in that order.
  */
 function drawCountry(
   ctx: CanvasRenderingContext2D,
   view: View,
-  scale: number,
   settlements: Settlement[],
   placements: Map<string, Placement>,
   courses: Array<Array<[number, number]>>,
-  roads: Array<Array<[number, number]>>,
   atlas: Atlas | null,
 ) {
   const tiles = atlas?.terrain ?? null;
@@ -679,59 +649,6 @@ function drawCountry(
   ctx.restore();
 
   drawRivers(ctx, courses, atlas);
-
-  if (!atlas) return;
-  // Below this the props are a couple of pixels each and cost more than they say.
-  if (scale < 0.22) return;
-  const stride = scale < 0.45 ? 2 : 1;
-
-  const props: Array<{ x: number; y: number; kind: WildName; w: number; flip: boolean }> = [];
-  const gx0 = Math.floor(view.x0 / WILD_CELL) - 1;
-  const gx1 = Math.ceil(view.x1 / WILD_CELL) + 1;
-  const gy0 = Math.floor(view.y0 / WILD_CELL) - 1;
-  const gy1 = Math.ceil(view.y1 / WILD_CELL) + 1;
-
-  for (let gy = gy0; gy <= gy1; gy += stride) {
-    for (let gx = gx0; gx <= gx1; gx += stride) {
-      const h = hash2(gx, gy);
-      // Country is patchy: thickets and clearings, not an even sprinkle. The
-      // same field also picks a locally dominant species, so a wood is a wood
-      // rather than one of everything.
-      const density = fieldNoise(gx, gy, 5);
-      if ((h & 0xff) / 255 > 0.06 + density * 0.92) continue;
-      const x = gx * WILD_CELL + (((h >>> 8) & 0x3f) / 63) * WILD_CELL;
-      const y = gy * WILD_CELL + (((h >>> 14) & 0x3f) / 63) * WILD_CELL;
-      const dominant = ((h >>> 20) & 0x7) < 5;
-      const kind = wildKind(dominant ? hash2(Math.floor(gx / 5), Math.floor(gy / 5)) : (h >>> 20) & 0x3ff);
-      const traits = WILD_TRAITS[kind];
-      // Reeds and shingle want the water's edge; trees and boulders do not.
-      if (nearRiver(courses, x, y, 30) !== traits.wet) continue;
-      if (nearHighway(roads, x, y, 34)) continue;
-      if (onLand(x, y, settlements, placements, 12)) continue;
-      const w = traits.w * (0.78 + (((h >>> 26) & 0x1f) / 31) * 0.5) * stride;
-      props.push({ x, y, kind, w, flip: ((h >>> 25) & 1) === 1 });
-    }
-  }
-
-  props.sort((a, b) => a.y - b.y);
-  for (const p of props) {
-    const sp = atlas.wild[p.kind];
-    if (!sp) continue;
-    const h = p.w * sp.aspect;
-    ctx.fillStyle = 'rgba(0,0,0,0.34)';
-    ctx.beginPath();
-    ctx.ellipse(p.x, p.y, p.w * 0.3, p.w * 0.12, 0, 0, TAU);
-    ctx.fill();
-    if (p.flip) {
-      ctx.save();
-      ctx.translate(p.x, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(sp.img, -p.w / 2, p.y - h + p.w * 0.06, p.w, h);
-      ctx.restore();
-    } else {
-      ctx.drawImage(sp.img, p.x - p.w / 2, p.y - h + p.w * 0.06, p.w, h);
-    }
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1078,19 +995,6 @@ function drawWayfarers(
     }
   }
   ctx.restore();
-}
-
-/** Distance test against the trunk roads, so scenery leaves a verge. */
-function nearHighway(roads: Array<Array<[number, number]>>, x: number, y: number, r: number): boolean {
-  const r2 = r * r;
-  for (const pts of roads) {
-    for (const [px, py] of pts) {
-      const dx = x - px;
-      const dy = y - py;
-      if (dx * dx + dy * dy < r2) return true;
-    }
-  }
-  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -1698,7 +1602,7 @@ export function drawVillage(a: DrawArgs) {
 
   const courses = rivers(view);
   const roads = highways(settlements, placements);
-  drawCountry(ctx, view, camera.scale, settlements, placements, courses, roads, a.atlas);
+  drawCountry(ctx, view, settlements, placements, courses, a.atlas);
 
   // Trunk roads over the countryside but under the settlements they join, so
   // they appear to emerge from the edge of each one.

@@ -89,20 +89,14 @@
   padding-bottom: var(--space-8);
 }
 
-/* ── Views (Grid | Village) ── */
-.ksl-header__views {
-  margin-left: var(--space-4);
-}
-
-/* Phone: one row. The view links are in the menu drawer, the failed badge
-   drops its word, and the row may still wrap on the narrowest screens. */
+/* Phone: one row. The failed badge drops its word, and the row may still
+   wrap on the narrowest screens. */
 @media (max-width: 40rem) { /* --bp-sm */
   .ksl-header {
     flex-wrap: wrap;
     gap: var(--space-1) var(--space-2);
     padding: var(--space-2) var(--space-3);
   }
-  .ksl-header__views { display: none; }
   .ksl-failed-badge__word { display: none; }
 }
 
@@ -187,6 +181,16 @@ html:has(.ksl-page--map) {
 
 .ksl-section__scope {
   font-variant-numeric: tabular-nums;
+}
+
+/* A labelled part inside a panel: the cluster cards above the overview's
+   numbers. */
+.ksl-section__sub {
+  margin-bottom: var(--space-2);
+  color: var(--text-muted);
+}
+.ksl-clusters + .stats {
+  margin-top: var(--space-6);
 }
 
 /* ── Summary stats ── */

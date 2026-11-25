@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Sheet from './ui/Sheet';
+import { THEME_SETTINGS } from '../constants/theme';
 import '../styles/backgrounds.scss';
 
 // Background options for reviewing Jewel's sky. "hot" is Jewel's default.
@@ -34,9 +36,6 @@ const OPTIONS: BgOption[] = [
 
 const STORAGE_KEY = 'ksl-bg';
 const DEFAULT_BG = import.meta.env.VITE_DEFAULT_BG || 'hot';
-// Shown in dev and review builds; ?picker=0 hides it (the screenshot script uses that).
-const SHOW_PICKER = (import.meta.env.DEV || import.meta.env.VITE_BG_PICKER === '1')
-  && new URLSearchParams(window.location.search).get('picker') !== '0';
 
 function initialBg(): string {
   const fromUrl = new URLSearchParams(window.location.search).get('bg');
@@ -97,11 +96,15 @@ function WaxLayer() {
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** Renders the media layer for the chosen background and, in review builds, the picker. */
-export default function BgPicker() {
+interface Props {
+  open: boolean;
+  onClose: () => void;
+}
+
+/** Renders the media layer for the chosen background and the theme settings sheet. */
+export default function BgPicker({ open, onClose }: Props) {
   const [bg, setBg] = useState(initialBg);
   const [motion, setMotion] = useState(initialMotion);
-  const [open, setOpen] = useState(false);
   const option = OPTIONS.find((o) => o.id === bg) ?? OPTIONS[0];
   const wax = option.kind === 'palette' && motion === 'wax';
 
@@ -164,60 +167,49 @@ export default function BgPicker() {
         </div>
       )}
 
-      {SHOW_PICKER && (
-        <div className="ksl-bgpicker">
-          {open && (
-            <div className="panel ksl-bgpicker__panel" role="dialog" aria-label="Background">
-              {groups.map(([title, inGroup]) => (
-                <div key={title} className="ksl-bgpicker__group">
-                  <p className="label">{title}</p>
-                  <div className="cluster ksl-bgpicker__options" role="group" aria-label={title}>
-                    {OPTIONS.filter(inGroup).map((o) => (
-                      <button
-                        key={o.id}
-                        type="button"
-                        className="tag tag--button ksl-status-filter"
-                        aria-pressed={o.id === option.id}
-                        onClick={() => setBg(o.id)}
-                      >
-                        <span className="ksl-bgpicker__swatch" style={{ '--swatch': o.swatch } as React.CSSProperties} aria-hidden="true" />
-                        {o.label}
-                      </button>
-                    ))}
-                  </div>
+      {THEME_SETTINGS && (
+        <Sheet open={open} onClose={onClose} title="Theme" className="ksl-bgpicker">
+          <div className="ksl-bgpicker__panel">
+            {groups.map(([title, inGroup]) => (
+              <div key={title} className="ksl-bgpicker__group">
+                <p className="label">{title}</p>
+                <div className="cluster ksl-bgpicker__options" role="group" aria-label={title}>
+                  {OPTIONS.filter(inGroup).map((o) => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      className="tag tag--button ksl-status-filter"
+                      aria-pressed={o.id === option.id}
+                      onClick={() => setBg(o.id)}
+                    >
+                      <span className="ksl-bgpicker__swatch" style={{ '--swatch': o.swatch } as React.CSSProperties} aria-hidden="true" />
+                      {o.label}
+                    </button>
+                  ))}
                 </div>
-              ))}
-              {option.kind === 'palette' && (
-                <div className="ksl-bgpicker__group">
-                  <p className="label">Motion</p>
-                  <div className="cluster ksl-bgpicker__options" role="group" aria-label="Motion">
-                    {MOTIONS.map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        className="tag tag--button"
-                        aria-pressed={m.id === motion}
-                        onClick={() => setMotion(m.id)}
-                      >
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
+              </div>
+            ))}
+            {option.kind === 'palette' && (
+              <div className="ksl-bgpicker__group">
+                <p className="label">Motion</p>
+                <div className="cluster ksl-bgpicker__options" role="group" aria-label="Motion">
+                  {MOTIONS.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      className="tag tag--button"
+                      aria-pressed={m.id === motion}
+                      onClick={() => setMotion(m.id)}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
                 </div>
-              )}
-              <p className="ksl-bgpicker__note">Shareable: kept in the URL (?bg={option.id}{wax ? '&motion=wax' : ''})</p>
-            </div>
-          )}
-          <button
-            className="btn btn--ghost ksl-bgpicker__toggle panel"
-            type="button"
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <span className="ksl-bgpicker__swatch" style={{ '--swatch': option.swatch } as React.CSSProperties} aria-hidden="true" />
-            Background · {option.label}{wax ? ' · Wax' : ''}
-          </button>
-        </div>
+              </div>
+            )}
+            <p className="ksl-bgpicker__note">Shareable: kept in the URL (?bg={option.id}{wax ? '&motion=wax' : ''})</p>
+          </div>
+        </Sheet>
       )}
     </>
   );

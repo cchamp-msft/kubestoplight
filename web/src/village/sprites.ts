@@ -197,39 +197,6 @@ export function resetPacks(): void {
   taken.clear();
 }
 
-/** Trees, rocks and scrub for the open country between settlements. */
-export const WILD_SPRITES = [
-  'pine',
-  'oak',
-  'deadtree',
-  'pines',
-  'boulder',
-  'rocks',
-  'stones',
-  'stump',
-  'bush',
-  'reeds',
-  'log',
-  'menhir',
-] as const;
-export type WildName = (typeof WILD_SPRITES)[number];
-
-/** Draw weight and on-screen width, in world px, for each piece of scenery. */
-export const WILD_TRAITS: Record<WildName, { weight: number; w: number; wet: boolean }> = {
-  pine: { weight: 16, w: 30, wet: false },
-  oak: { weight: 14, w: 34, wet: false },
-  deadtree: { weight: 6, w: 28, wet: false },
-  pines: { weight: 9, w: 40, wet: false },
-  boulder: { weight: 8, w: 26, wet: false },
-  rocks: { weight: 9, w: 24, wet: false },
-  stones: { weight: 7, w: 18, wet: true },
-  stump: { weight: 5, w: 16, wet: false },
-  bush: { weight: 12, w: 22, wet: false },
-  reeds: { weight: 7, w: 22, wet: true },
-  log: { weight: 5, w: 26, wet: false },
-  menhir: { weight: 2, w: 18, wet: false },
-};
-
 const BUILDING_SPRITES: string[] = [
   ...new Set([
     ...PACK_NAMES.flatMap((p) => Object.values(PACKS[p].art).flat()),
@@ -246,9 +213,8 @@ const GROUND_FILES: Record<Terrain, string> = {
 
 /**
  * The bottom layer of the map: big seamless plan-view textures that carry the
- * mass of the countryside. Scattered tree and rock sprites on top only have to
- * supply silhouette, which is how the country can read as crowded forest without
- * the renderer pushing thousands of objects.
+ * mass of the countryside. Nothing is scattered on top of them: the forest
+ * is its texture.
  *
  * Pre-scaled to a world size at load, so patterns can be filled straight into
  * world space without juggling the transform.
@@ -276,7 +242,6 @@ export interface Sprite {
 
 export interface Atlas {
   building: Record<string, Sprite>;
-  wild: Record<string, Sprite>;
   /** Pre-scaled, ready to hand straight to createPattern. */
   ground: Record<Terrain, CanvasImageSource>;
   /** Pre-scaled to TERRAIN_SIZE, likewise. Absent if the tiles did not load. */
@@ -369,9 +334,8 @@ export function loadAtlas(base = 'village-art/'): Promise<Atlas | null> {
     };
 
     const terrains = Object.keys(GROUND_FILES) as Terrain[];
-    const [building, wild, grounds, tiles] = await Promise.all([
+    const [building, grounds, tiles] = await Promise.all([
       collect(BUILDING_SPRITES),
-      collect(WILD_SPRITES),
       Promise.all(terrains.map((t) => loadImage(`${base}${GROUND_FILES[t]}.png`))),
       Promise.all(TERRAIN_TILES.map((t) => loadImage(`${base}${TERRAIN_FILES[t]}.png`))),
     ]);
@@ -387,7 +351,7 @@ export function loadAtlas(base = 'village-art/'): Promise<Atlas | null> {
       terrain = {} as Record<TerrainTile, CanvasImageSource>;
       TERRAIN_TILES.forEach((t, i) => (terrain![t] = rescale(tiles[i]!, TERRAIN_SIZE[t])));
     }
-    return { building, wild, ground, terrain };
+    return { building, ground, terrain };
   })();
   return cached;
 }

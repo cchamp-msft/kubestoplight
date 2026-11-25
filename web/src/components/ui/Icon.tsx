@@ -24,6 +24,7 @@ const SYMBOLS = {
   shrink: 'minimize-2',
   reset: 'rotate-ccw',
   menu: 'menu',
+  settings: 'settings',
 } as const;
 
 export type IconName = keyof typeof SYMBOLS;
