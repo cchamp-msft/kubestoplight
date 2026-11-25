@@ -215,11 +215,31 @@
   .ksl-pods :is(thead, tbody) {
     display: block;
   }
+  /* The rows reach a little into the card's padding and pad themselves by
+     the same amount: the text stays in line with the card, and the row's
+     hover and flash fill has a margin around it. */
+  .ksl-pods {
+    width: auto;
+    margin-inline: calc(-1 * var(--space-2));
+  }
   .ksl-pods tr {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 3.5rem 3.75rem calc(2 * var(--hit-min));
+    grid-template-columns: minmax(0, 1fr) 3.5rem 3.75rem auto;
     align-items: center;
+    padding-inline: var(--space-2);
     border-bottom: var(--hairline) solid var(--panel-border);
+  }
+  /* Both buttons, edge to edge, in a column exactly their width; the empty
+     heading above them holds the same width so the columns line up. */
+  .ksl-pods :is(th, td):last-child {
+    display: flex;
+    justify-content: flex-end;
+    width: calc(2 * var(--ksl-act, var(--control-h)));
+    padding-inline: 0;
+  }
+  /* Icon buttons are wider on touch screens (button.css). */
+  @media (pointer: coarse) {
+    .ksl-pods { --ksl-act: var(--control-h-touch); }
   }
   .ksl-pods :is(th, td) {
     height: auto;
@@ -232,7 +252,7 @@
   .ksl-pods thead th:first-child {
     display: none;
   }
-  .ksl-pod-row__name {
+  .ksl-pods .ksl-pod-row__name {
     grid-column: 1 / -1;
     padding: var(--space-2) 0 0;
   }
