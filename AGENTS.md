@@ -189,7 +189,8 @@ drill-down tabs, and the cluster add/edit/remove flow.
   `og:image` is `web/public/og-image.png`, rendered from mock data by
   `npm run screenshots -- social`; `VITE_PUBLIC_URL` makes its URL absolute.
 - `Dockerfile` builds the single binary; `deploy/preview/` runs it
-  `--read-only` behind a Cloudflare tunnel. Personal settings live in the
+  `--read-only` with an access key (`.local/auth-key`, made on first `up`;
+  `preview.sh key` prints it) behind a Cloudflare tunnel. Personal settings live in the
   gitignored `deploy/preview/.local/`.
 
 ## Access key (`--auth-key`)

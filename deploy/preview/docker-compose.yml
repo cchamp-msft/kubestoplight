@@ -1,4 +1,4 @@
-# Read-only public preview: kubestoplight + a Cloudflare tunnel, nothing else.
+# Read-only, key-protected public preview: kubestoplight + a Cloudflare tunnel, nothing else.
 # Driven by deploy/preview/preview.sh (setup | up | down | status), which writes
 # .local/compose.override.yml with the config and kubeconfig mounts.
 name: ksl-preview
@@ -15,7 +15,11 @@ services:
     image: kubestoplight:preview
     container_name: ksl-preview
     # --read-only: no cluster add/edit/remove, cluster config redacted from the API.
-    command: ["--web", "--addr", "0.0.0.0:8080", "--read-only", "--config", "/config/config.yaml"]
+    # The access key (preview.sh keeps it in .local/auth-key) gates the API and
+    # the WebSocket: without it a visitor gets the lock screen and no data.
+    command: ["--web", "--addr", "0.0.0.0:8080", "--read-only", "--auth-ttl", "${AUTH_TTL:-24h}", "--config", "/config/config.yaml"]
+    environment:
+      - KUBESTOPLIGHT_AUTH_KEY=${AUTH_KEY:?preview.sh sets this from .local/auth-key}
     ports:
       - "127.0.0.1:8088:8080" # local peek only; the public path is the tunnel
     restart: on-failure
