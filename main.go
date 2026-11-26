@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"kubestoplight/clusters"
@@ -35,11 +36,15 @@ func main() {
 		webMode    bool
 		addr       string
 		readOnly   bool
+		authKey    string
+		authTTL    time.Duration
 	)
 	flag.StringVar(&configPath, "config", defaultConfigPath, "path to config file")
 	flag.BoolVar(&webMode, "web", false, "start web server instead of TUI")
 	flag.StringVar(&addr, "addr", "127.0.0.1:8080", "web server listen address (only used with --web)")
 	flag.BoolVar(&readOnly, "read-only", false, "web: disable cluster add/edit/remove and redact cluster config (use when exposing the UI)")
+	flag.StringVar(&authKey, "auth-key", os.Getenv("KUBESTOPLIGHT_AUTH_KEY"), "web: access key the browser must enter before any data loads (default $KUBESTOPLIGHT_AUTH_KEY; empty = no key)")
+	flag.DurationVar(&authTTL, "auth-ttl", 24*time.Hour, "web: how long a browser stays signed in after entering the access key")
 	flag.Parse()
 
 	cfg, err := config.Load(configPath)
@@ -66,7 +71,7 @@ func main() {
 	}
 
 	if webMode {
-		runWeb(cfg, man, configPath, addr, readOnly)
+		runWeb(cfg, man, configPath, addr, readOnly, authKey, authTTL)
 		return
 	}
 
@@ -79,7 +84,7 @@ func main() {
 	}
 }
 
-func runWeb(cfg *config.Config, man *clusters.ClusterManager, configPath, addr string, readOnly bool) {
+func runWeb(cfg *config.Config, man *clusters.ClusterManager, configPath, addr string, readOnly bool, authKey string, authTTL time.Duration) {
 	interval := polling.DurationFromString(cfg.PollingInterval)
 
 	p := poller.NewPoller(man, interval)
@@ -95,6 +100,11 @@ func runWeb(cfg *config.Config, man *clusters.ClusterManager, configPath, addr s
 	srv.SetReadOnly(readOnly)
 	if readOnly {
 		log.Printf("webserver: read-only mode")
+	}
+
+	srv.SetAuth(authKey, authTTL)
+	if authKey != "" {
+		log.Printf("webserver: access key required; sessions last %s", authTTL)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

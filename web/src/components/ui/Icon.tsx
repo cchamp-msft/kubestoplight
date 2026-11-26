@@ -25,6 +25,8 @@ const SYMBOLS = {
   reset: 'rotate-ccw',
   menu: 'menu',
   settings: 'settings',
+  lock: 'lock',
+  unlock: 'unlock',
 } as const;
 
 export type IconName = keyof typeof SYMBOLS;

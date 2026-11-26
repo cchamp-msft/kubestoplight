@@ -6,9 +6,12 @@
 //   MOCK_CHURN=0 npm run dev:mock            # freeze data and live log lines (screenshots)
 //   MOCK_NOW=2026-01-01T12:00:00Z ...        # pin the clock (timestamps, log lines)
 //   MOCK_READ_ONLY=1 npm run dev:mock        # behave like kubestoplight --web --read-only
+//   MOCK_AUTH_KEY=letmein npm run dev:mock   # behave like --auth-key: lock screen first
+//   MOCK_AUTH_TTL=30 ...                     # session length in seconds (default 24h)
 //
 // It serves the same routes the Go server does:
 //   GET/POST /api/clusters, PUT/DELETE /api/clusters/{name}
+//   GET /api/info, POST /api/login, GET /api/session
 //   GET /api/pods/{cluster}/{ns}/{pod}          (describe)
 //   GET /api/pods/{cluster}/{ns}/{pod}/logs     (text stream, ?follow=true)
 //   WS  /ws/pods                                ({type:'snapshot', groups})
@@ -20,7 +23,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Duplex } from 'node:stream';
 import type { Plugin, PreviewServer, ViteDevServer } from 'vite';
 import { WebSocketServer, type WebSocket } from 'ws';
-import type { Cluster } from '../src/types/api.ts';
+import type { Cluster, LoginResponse, ServerInfo } from '../src/types/api.ts';
 import {
   SCENARIOS, churn, clock, createState, describePod, logLine, rng, toGroups, type MockState, type Scenario,
 } from './fixtures.ts';
@@ -45,6 +48,14 @@ export function mockBackend(): Plugin {
   let state: MockState = createState(envScenario && SCENARIOS.includes(envScenario) ? envScenario : 'mixed');
   const churnEnabled = process.env.MOCK_CHURN !== '0';
   const readOnly = process.env.MOCK_READ_ONLY === '1';
+  // Access key (webserver/auth.go). The mock's tokens are "mock.<expiry ms>":
+  // unsigned, since there is nothing here to protect.
+  const authKey = process.env.MOCK_AUTH_KEY ?? '';
+  const authTTL = (Number(process.env.MOCK_AUTH_TTL) || 24 * 3600) * 1000;
+  const validToken = (t: string | undefined) => !!t && t.startsWith('mock.') && Number(t.slice(5)) > Date.now();
+  const requestToken = (req: IncomingMessage) =>
+    req.headers.authorization?.replace(/^Bearer /, '')
+    ?? String(req.headers['sec-websocket-protocol'] ?? '').split(',').map((p) => p.trim()).find((p) => p && p !== 'ksl.auth');
   const pinnedNow = process.env.MOCK_NOW ? Date.parse(process.env.MOCK_NOW) : NaN;
   if (!Number.isNaN(pinnedNow)) clock.now = () => pinnedNow;
   const r = rng(7);
@@ -75,7 +86,19 @@ export function mockBackend(): Plugin {
         return send(res, 200, { scenario: name });
       }
 
-      if (path === '/api/info') return send(res, 200, { readOnly });
+      if (path === '/api/info') return send(res, 200, { readOnly, authRequired: !!authKey } satisfies ServerInfo);
+      if (path === '/api/login') {
+        if (req.method !== 'POST') return send(res, 405, { error: 'method not allowed' });
+        if (!authKey) return send(res, 404, { error: 'this server has no access key' });
+        const { key } = await readJSON<{ key?: string }>(req);
+        if (key !== authKey) return send(res, 401, { error: 'wrong access key' });
+        const expiresAt = Date.now() + authTTL;
+        return send(res, 200, { token: `mock.${expiresAt}`, expiresAt } satisfies LoginResponse);
+      }
+      if (authKey && path.startsWith('/api/') && !validToken(requestToken(req))) {
+        return send(res, 401, { error: 'access key required' });
+      }
+      if (path === '/api/session') return send(res, 204);
       if (readOnly && path.startsWith('/api/clusters') && req.method !== 'GET') {
         return send(res, 403, { error: 'server is in read-only mode' });
       }
@@ -150,6 +173,10 @@ export function mockBackend(): Plugin {
     // Only claim /ws/pods; Vite's own HMR socket shares this HTTP server.
     server.httpServer?.on('upgrade', (req: IncomingMessage, socket: Duplex, head: Buffer) => {
       if (req.url?.startsWith('/ws/pods')) {
+        if (authKey && !validToken(requestToken(req))) {
+          socket.end('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+          return;
+        }
         wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
       }
     });

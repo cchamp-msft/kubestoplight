@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react';
-
-export interface ServerInfo {
-  /** Cluster add/edit/remove is disabled (kubestoplight --web --read-only). */
-  readOnly: boolean;
-}
+import type { ServerInfo } from '../types/api';
 
 /** Fetches /api/info once. Older servers without the route count as writable. */
-export function useServerInfo(): ServerInfo {
-  const [info, setInfo] = useState<ServerInfo>({ readOnly: false });
+export function useServerInfo(): Pick<ServerInfo, 'readOnly'> {
+  const [info, setInfo] = useState<Pick<ServerInfo, 'readOnly'>>({ readOnly: false });
   useEffect(() => {
     let cancelled = false;
     fetch('/api/info')

@@ -104,6 +104,7 @@ type Server struct {
 	configPath string
 	staticFS   fs.FS
 	readOnly   bool
+	auth       *authenticator // nil: no access key required
 
 	mu          sync.RWMutex
 	subscribers map[*subscriber]struct{}
@@ -133,6 +134,8 @@ func (s *Server) Start(ctx context.Context, addr string) error {
 
 	// REST API
 	mux.HandleFunc("/api/info", s.handleInfo)
+	mux.HandleFunc("/api/login", s.handleLogin)
+	mux.HandleFunc("/api/session", s.handleSession)
 	mux.HandleFunc("/api/clusters", s.handleClusters)
 	mux.HandleFunc("/api/clusters/", s.handleClusterByName)
 	mux.HandleFunc("/api/pods/", s.handlePodAPI)
@@ -145,7 +148,7 @@ func (s *Server) Start(ctx context.Context, addr string) error {
 
 	srv := &http.Server{
 		Addr:         addr,
-		Handler:      mux,
+		Handler:      s.requireAuth(mux),
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 0, // disabled for WebSocket connections
 	}
@@ -219,7 +222,7 @@ func (s *Server) unsubscribe(sub *subscriber) {
 
 // handleInfo tells the UI what this server allows.
 func (s *Server) handleInfo(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"readOnly": s.readOnly})
+	writeJSON(w, http.StatusOK, map[string]any{"readOnly": s.readOnly, "authRequired": s.auth != nil})
 }
 
 // denyWrite answers 403 for mutating requests in read-only mode.
@@ -707,6 +710,7 @@ func (s *Server) streamPodLogs(w http.ResponseWriter, r *http.Request, cluster, 
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		InsecureSkipVerify: true, // Allow any Origin for local use
+		Subprotocols:       []string{wsAuthProtocol},
 	})
 	if err != nil {
 		log.Printf("webserver: ws accept: %v", err)

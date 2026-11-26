@@ -52,6 +52,8 @@ curl -X POST "http://localhost:5173/__mock/scenario?name=large"
 
 Data is seeded, so the same scenario renders identically each run — take
 before/after screenshots per scenario when changing the design system.
+`MOCK_AUTH_KEY=letmein npm run dev:mock` turns on the access-key lock screen
+(`MOCK_AUTH_TTL=30` makes the session 30 seconds).
 Cluster add/edit/delete works in-memory (resets on restart). Logs stream a
 new line every second when "follow" is on; Failed pods emit panics/errors.
 
@@ -61,7 +63,8 @@ bundle.
 ### Keeping the mock honest
 
 The mock mirrors `web/src/types/api.ts`, which mirrors the Go JSON structs in
-`webserver/server.go` (`podJSON`, `nsGroupJSON`, `podDescribeJSON`, `wsMessage`).
+`webserver/server.go` (`podJSON`, `nsGroupJSON`, `podDescribeJSON`, `wsMessage`)
+and `webserver/auth.go` (`loginJSON`).
 If you change an API shape, update all three. Namespace status roll-up in
 `fixtures.ts#toGroups` mirrors `model/pod.go` (`podToNSStatus`, `worstStatus`).
 
@@ -189,10 +192,29 @@ drill-down tabs, and the cluster add/edit/remove flow.
   `--read-only` behind a Cloudflare tunnel. Personal settings live in the
   gitignored `deploy/preview/.local/`.
 
+## Access key (`--auth-key`)
+
+Optional, off by default. `webserver/auth.go` wraps the whole mux in
+`requireAuth`: with a key set, everything under `/api/` and `/ws/` needs a
+session token except `/api/info` (which reports `authRequired`) and
+`/api/login` (key in, `{token, expiresAt}` out). Static files stay open, so
+the SPA can load and show its lock screen. Tokens are stateless:
+`<expiry>.<HMAC>`, signed with a key derived from the access key.
+
+In the browser, `hooks/useAuth.ts` keeps the session in `localStorage`
+(`ksl.session`) and `components/AuthGate.tsx` (around `<App>` in `main.tsx`)
+renders the lock screen instead of the app until there is one, so no data
+hook mounts while locked. Hooks call `apiFetch` from `useAuth.ts`, never bare
+`fetch`, for anything under `/api/`: it adds the `Authorization: Bearer`
+header and locks the app on a 401. The WebSocket can't send headers, so the
+token rides in the subprotocol list (`['ksl.auth', token]`). A new guarded
+route needs nothing on the server; a new hook needs `apiFetch`.
+
 ## Conventions
 
 - Frontend: React 19 + TypeScript + Vite, SCSS per component, hooks in
-  `web/src/hooks/` own all network I/O (components never `fetch` directly).
+  `web/src/hooks/` own all network I/O (components never `fetch` directly;
+  hooks use `apiFetch`, see above).
 - Don't commit `*.yaml` at the repo root (real configs hold credentials;
   `.gitignore` excludes them), built binaries, or `web/dist/`.
 

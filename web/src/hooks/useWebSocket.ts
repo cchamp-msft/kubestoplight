@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { NamespaceGroup, WebSocketMessage } from '../types/api';
+import { WS_AUTH_PROTOCOL, checkSession, sessionToken } from './useAuth';
 
 const WS_RECONNECT_DELAY_MS = 3000;
 const STALE_MIN_MS = 15000;
@@ -33,11 +34,16 @@ export function useWebSocket(): UseWebSocketResult {
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const url = `${protocol}//${window.location.host}/ws/pods`;
-    const ws = new WebSocket(url);
+    // A browser can't set headers on a WebSocket, so the session token rides
+    // in the subprotocol list.
+    const token = sessionToken();
+    const ws = token ? new WebSocket(url, [WS_AUTH_PROTOCOL, token]) : new WebSocket(url);
     wsRef.current = ws;
+    let opened = false;
 
     ws.onopen = () => {
       if (unmounted.current) { ws.close(); return; }
+      opened = true;
       setConnected(true);
     };
 
@@ -66,6 +72,8 @@ export function useWebSocket(): UseWebSocketResult {
 
     ws.onclose = () => {
       if (unmounted.current) return;
+      // Refused before it opened: the token may have been revoked. If so this locks the app.
+      if (!opened) checkSession();
       setConnected(false);
       lastAt.current = 0;
       if (staleTimer.current) clearTimeout(staleTimer.current);
