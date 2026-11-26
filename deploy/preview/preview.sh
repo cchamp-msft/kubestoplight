@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Read-only public preview of the web UI against real clusters, through a
 # Cloudflare tunnel. Outbound-only: no port forward, TLS ends at Cloudflare.
+# Visitors need the access key before any data loads.
 #
 #   deploy/preview/preview.sh setup     # once: tunnel + DNS + token (Cloudflare API)
 #   deploy/preview/preview.sh up        # build this checkout and start (app + tunnel)
 #   deploy/preview/preview.sh down      # stop and remove both containers
 #   deploy/preview/preview.sh status    # containers + a request through the public URL
+#   deploy/preview/preview.sh key       # print the access key visitors must enter
 #   deploy/preview/preview.sh destroy   # down, then delete the DNS record and tunnel
 #
 # Settings live in deploy/preview/.local/preview.env (gitignored):
@@ -15,10 +17,14 @@
 #   CF_API_TOKEN_FILE=~/.secrets/cloudflare-token    # Account: Cloudflare Tunnel Edit; Zone: DNS Edit
 #   CF_ACCOUNT_ID_FILE=~/.secrets/cloudflare-account-id
 #   CLUSTERS="name1=/path/to/kubeconfig1 name2=/path/to/kubeconfig2"
+#   AUTH_TTL=24h                                     # optional: how long a browser stays signed in
 #
 # The server runs with --read-only (no cluster add/edit/remove; config redacted
-# from the API). Anyone with the URL can see pod names, describe output and
-# logs while it is up, so run `down` when you're done.
+# from the API) and an access key. `up` makes a random key in
+# deploy/preview/.local/auth-key the first time; put your own there if you
+# prefer, or delete the file and run `up` to rotate it (that signs everyone
+# out). Anyone with the URL and the key can see pod names, describe output
+# and logs while it is up, so run `down` when you're done.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 LOCAL="$HERE/.local"
@@ -32,8 +38,16 @@ HOST=${PUBLIC_HOST:?set PUBLIC_HOST in $ENV_FILE}
 expand() { echo "${1/#\~/$HOME}"; }
 # Docker Desktop on Windows wants C:/… paths; elsewhere this is a no-op.
 hostpath() { if command -v cygpath >/dev/null; then cygpath -m "$1"; else echo "$1"; fi; }
+KEY_FILE="$LOCAL/auth-key"
+auth_key() {
+  if [ ! -s "$KEY_FILE" ]; then
+    (umask 077; head -c 18 /dev/urandom | base64 | tr '+/' '-_' > "$KEY_FILE")
+    echo "access key written to $KEY_FILE (print it with: $0 key)" >&2
+  fi
+  tr -d '\r\n' < "$KEY_FILE"
+}
 compose() {
-  TUNNEL_TOKEN=$(cat "$LOCAL/tunnel-token" 2>/dev/null || true) PUBLIC_URL="https://$HOST" DEFAULT_BG=${DEFAULT_BG:-hot} DEFAULT_MOTION=${DEFAULT_MOTION:-jewel} \
+  AUTH_KEY=$(auth_key) AUTH_TTL=${AUTH_TTL:-24h}   TUNNEL_TOKEN=$(cat "$LOCAL/tunnel-token" 2>/dev/null || true) PUBLIC_URL="https://$HOST" DEFAULT_BG=${DEFAULT_BG:-hot} DEFAULT_MOTION=${DEFAULT_MOTION:-jewel} \
     docker compose -f "$HERE/docker-compose.yml" -f "$LOCAL/compose.override.yml" "$@"
 }
 
@@ -90,7 +104,7 @@ case "${1:-}" in
     [ -s "$LOCAL/tunnel-token" ] || { echo "run: $0 setup" >&2; exit 1; }
     write_mounts
     compose up -d --build
-    echo "up: https://$HOST  (local: http://127.0.0.1:8088)   stop with: $0 down"
+    echo "up: https://$HOST  (local: http://127.0.0.1:8088)   access key: $0 key   stop with: $0 down"
     ;;
   down) [ -f "$LOCAL/compose.override.yml" ] || write_mounts; compose down ;;
   status)
@@ -98,6 +112,7 @@ case "${1:-}" in
     compose ps
     printf 'https://%s/api/info -> ' "$HOST"; curl -sS -m 10 "https://$HOST/api/info" || true; echo
     ;;
+  key) auth_key; echo ;;
   destroy)
     "$0" down || true
     TUN=$(tunnel_id); Z=$(zone_id)
@@ -106,5 +121,5 @@ case "${1:-}" in
     [ -n "$TUN" ] && { ok "$(cf "/accounts/{account}/cfd_tunnel/$TUN" -X DELETE)"; echo "tunnel removed: $TUNNEL_NAME"; }
     rm -f "$LOCAL/tunnel-token"
     ;;
-  *) sed -n '2,20p' "$0"; exit 1 ;;
+  *) sed -n '2,27p' "$0"; exit 1 ;;
 esac
