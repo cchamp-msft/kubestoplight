@@ -4,6 +4,7 @@ import { SEVERITY_ORDER, worstStatus, lensFor } from './constants/status';
 import { useClusters } from './hooks/useClusters';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useServerInfo } from './hooks/useServerInfo';
+import { useAuth } from './hooks/useAuth';
 import { useTabStatus } from './hooks/useTabStatus';
 import { useBumpOnRise } from './hooks/useFlashOnChange';
 import { usePath } from './hooks/usePath';
@@ -45,6 +46,7 @@ export default function App() {
   const { clusters, addCluster, updateCluster, removeCluster } = useClusters();
   const { groups, connected, beat, stale } = useWebSocket();
   const { readOnly } = useServerInfo();
+  const auth = useAuth();
 
   // Cluster modals
   const [addOpen, setAddOpen] = useState(false);
@@ -319,16 +321,24 @@ export default function App() {
             ))}
           </ul>
         </nav>
-        {THEME_SETTINGS && (
+        {(THEME_SETTINGS || auth.state === 'authed') && (
           <footer className="ksl-menu__foot">
-            <button
-              className="btn btn--ghost"
-              type="button"
-              aria-haspopup="dialog"
-              onClick={() => { setMenuOpen(false); setThemeOpen(true); }}
-            >
-              <Icon name="settings" /> Theme
-            </button>
+            {THEME_SETTINGS && (
+              <button
+                className="btn btn--ghost"
+                type="button"
+                aria-haspopup="dialog"
+                onClick={() => { setMenuOpen(false); setThemeOpen(true); }}
+              >
+                <Icon name="settings" /> Theme
+              </button>
+            )}
+            {/* Only when the server asks for an access key: forget it in this browser. */}
+            {auth.state === 'authed' && (
+              <button className="btn btn--ghost" type="button" onClick={auth.logout}>
+                <Icon name="lock" /> Lock
+              </button>
+            )}
           </footer>
         )}
       </Sheet>

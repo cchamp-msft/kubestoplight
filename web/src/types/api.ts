@@ -169,3 +169,19 @@ export interface PodDescribe {
   nodeSelector?: Record<string, string>;
   deploymentName?: string;
 }
+
+// -------------------------------------------------------------------------
+// Server info and access-key session (webserver.handleInfo, webserver.loginJSON)
+// -------------------------------------------------------------------------
+export interface ServerInfo {
+  /** Cluster add/edit/remove is disabled (kubestoplight --web --read-only). */
+  readOnly: boolean;
+  /** The API needs a session token (kubestoplight --web --auth-key). */
+  authRequired: boolean;
+}
+
+export interface LoginResponse {
+  token: string;
+  /** Unix milliseconds. */
+  expiresAt: number;
+}

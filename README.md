@@ -66,7 +66,23 @@ go build -o kubestoplight .
 ./kubestoplight --web --addr 0.0.0.0:9090       # listen on all interfaces
 ./kubestoplight --web --config /path/to/cfg.yaml
 ./kubestoplight --web --read-only             # no cluster add/edit/remove; config redacted from the API
+KUBESTOPLIGHT_AUTH_KEY=... ./kubestoplight --web   # ask for an access key before any data loads
 ```
+
+### Access key
+
+Set `KUBESTOPLIGHT_AUTH_KEY` (or pass `--auth-key`, which is visible in the
+process list) and the browser shows a lock screen instead of the dashboard.
+Entering the key gets a session token that the browser keeps in
+`localStorage`, so it stays signed in for `--auth-ttl` (default `24h`, e.g.
+`--auth-ttl 8h`); **Lock** in the menu signs out early. Without a valid token
+the API and the WebSocket answer 401. Tokens are signed with the key, so
+they survive a restart and all stop working when you change the key. Ten
+wrong keys in a minute pause logins for everyone until the minute is up.
+
+This is one shared key, not user accounts, and it travels in the login
+request: put TLS in front of the server (a reverse proxy or tunnel) when it
+is reachable beyond your machine.
 
 Use `--read-only` whenever the UI is reachable by anyone but you. For a
 short-lived public preview behind a Cloudflare tunnel, see

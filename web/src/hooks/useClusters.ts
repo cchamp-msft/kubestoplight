@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Cluster } from '../types/api';
+import { apiFetch } from './useAuth';
 
 export interface UseClustersResult {
   clusters: Cluster[];
@@ -23,7 +24,7 @@ export function useClusters(): UseClustersResult {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/clusters');
+      const res = await apiFetch('/api/clusters');
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? `HTTP ${res.status}`);
@@ -40,7 +41,7 @@ export function useClusters(): UseClustersResult {
   useEffect(() => { refresh(); }, [refresh]);
 
   const addCluster = useCallback(async (c: Cluster) => {
-    const res = await fetch('/api/clusters', {
+    const res = await apiFetch('/api/clusters', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(c),
@@ -53,7 +54,7 @@ export function useClusters(): UseClustersResult {
   }, [refresh]);
 
   const updateCluster = useCallback(async (name: string, c: Cluster) => {
-    const res = await fetch(`/api/clusters/${encodeURIComponent(name)}`, {
+    const res = await apiFetch(`/api/clusters/${encodeURIComponent(name)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(c),
@@ -66,7 +67,7 @@ export function useClusters(): UseClustersResult {
   }, [refresh]);
 
   const removeCluster = useCallback(async (name: string) => {
-    const res = await fetch(`/api/clusters/${encodeURIComponent(name)}`, {
+    const res = await apiFetch(`/api/clusters/${encodeURIComponent(name)}`, {
       method: 'DELETE',
     });
     if (!res.ok && res.status !== 204) {

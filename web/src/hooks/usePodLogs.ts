@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { apiFetch } from './useAuth';
 
 const MAX_LINES = 10_000;
 
@@ -56,7 +57,7 @@ export function usePodLogs(
 
     const url = `/api/pods/${encodeURIComponent(cluster)}/${encodeURIComponent(namespace)}/${encodeURIComponent(pod)}/logs?${params}`;
 
-    fetch(url, { signal: ctrl.signal })
+    apiFetch(url, { signal: ctrl.signal })
       .then(async (res) => {
         if (!res.ok) {
           const text = await res.text();

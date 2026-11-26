@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { PodDescribe } from '../types/api';
+import { apiFetch } from './useAuth';
 
 interface UsePodDescribeResult {
   data: PodDescribe | null;
@@ -23,7 +24,7 @@ export function usePodDescribe(cluster: string, namespace: string, pod: string):
     setLoading(true);
     setError(null);
 
-    fetch(`/api/pods/${encodeURIComponent(cluster)}/${encodeURIComponent(namespace)}/${encodeURIComponent(pod)}`, {
+    apiFetch(`/api/pods/${encodeURIComponent(cluster)}/${encodeURIComponent(namespace)}/${encodeURIComponent(pod)}`, {
       signal: ctrl.signal,
     })
       .then(async (res) => {

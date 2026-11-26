@@ -1,0 +1,22 @@
+/* The lock screen: one Jewel panel, centered over the sky. */
+.ksl-lock {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: var(--space-4);
+}
+
+.ksl-lock__card {
+  width: min(100%, 24rem);
+}
+
+.ksl-lock__title {
+  font-size: var(--text-xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-heading);
+}
+
+.ksl-lock__lede {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
